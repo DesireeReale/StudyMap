@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { z } from "zod";
-import { PROVIDERS, REQUEST_TIMEOUT_MS, TASKS, type ModelConfig, type TaskId } from "@/config/ai";
+import { PROVIDERS, REQUEST_TIMEOUT_MS, RETRY_DELAYS_MS, TASKS, type ModelConfig, type TaskId } from "@/config/ai";
 
 export type Message = ChatCompletionMessageParam;
 
@@ -35,6 +35,7 @@ export type AiContext = {
   visionChain: ModelConfig[];
   chat: ChatFn;
   record: (usage: UsageRecord) => Promise<void>;
+  sleep?: (ms: number) => Promise<void>;
 };
 
 export class ProviderError extends Error {
@@ -88,6 +89,12 @@ export function costUsd(model: ModelConfig, inputTokens: number, outputTokens: n
   return (inputTokens * model.inputUsdPerMTok + outputTokens * model.outputUsdPerMTok) / 1_000_000;
 }
 
+function isBusy(e: unknown): boolean {
+  return e instanceof ProviderError && e.status !== undefined && (e.status === 429 || e.status >= 500);
+}
+
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 function shouldFallback(e: unknown): boolean {
   if (e instanceof InvalidOutputError) return true;
   if (!(e instanceof ProviderError)) return false;
@@ -123,23 +130,26 @@ export async function complete<T>(
     const messages = [...opts.messages];
     try {
       for (let attempt = 0; attempt < 2; attempt++) {
-        let res: ChatResponse;
-        try {
-          res = await ctx.chat({ task: opts.task, model, messages, maxTokens, jsonSchema });
-        } catch (e) {
-          await ctx.record({
-            task: opts.task,
-            provider: model.provider,
-            model: model.id,
-            promptVersion,
-            inputTokens: 0,
-            outputTokens: 0,
-            ocrPages: 0,
-            costUsd: 0,
-            ok: false,
-            error: e instanceof Error ? e.message.slice(0, 500) : String(e),
-          });
-          throw e;
+        let res: ChatResponse | undefined;
+        for (let retry = 0; !res; retry++) {
+          try {
+            res = await ctx.chat({ task: opts.task, model, messages, maxTokens, jsonSchema });
+          } catch (e) {
+            await ctx.record({
+              task: opts.task,
+              provider: model.provider,
+              model: model.id,
+              promptVersion,
+              inputTokens: 0,
+              outputTokens: 0,
+              ocrPages: 0,
+              costUsd: 0,
+              ok: false,
+              error: e instanceof Error ? e.message.slice(0, 500) : String(e),
+            });
+            if (!isBusy(e) || retry >= RETRY_DELAYS_MS.length) throw e;
+            await (ctx.sleep ?? wait)(RETRY_DELAYS_MS[retry]!);
+          }
         }
         totalInput += res.inputTokens;
 

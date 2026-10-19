@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { MODELS, TASKS } from "@/config/ai";
+import { MODELS, RETRY_DELAYS_MS, TASKS } from "@/config/ai";
 import {
   AiUnavailableError,
   ProviderError,
@@ -26,6 +26,7 @@ function ctx(chat: ChatFn) {
     record: async (u) => {
       usage.push(u);
     },
+    sleep: vi.fn(async () => {}),
   };
   return { c, usage };
 }
@@ -48,16 +49,41 @@ describe("complete", () => {
     expect(c.chat).toHaveBeenCalledWith(expect.objectContaining({ maxTokens: TASKS.mindmap.maxTokens }));
   });
 
-  it.each([429, 500, 503, undefined])("falls back to the next model on status %s", async (status) => {
+  it.each([429, 500, 503])("retries a busy model (status %s) with backoff, then falls back", async (status) => {
     const { c, usage } = ctx(async ({ model }) => {
-      if (model.id === "model-a") throw new ProviderError("boom", status);
+      if (model.id === "model-a") throw new ProviderError("busy", status);
       return ok('{"answer":"b"}');
     });
     await expect(run(c)).resolves.toMatchObject({ data: { answer: "b" } });
+    const attemptsOnA = RETRY_DELAYS_MS.length + 1;
     expect(usage.map((u) => [u.model, u.ok])).toEqual([
-      ["model-a", false],
+      ...Array.from({ length: attemptsOnA }, () => ["model-a", false]),
       ["model-b", true],
     ]);
+    expect(vi.mocked(c.sleep!).mock.calls.map(([ms]) => ms)).toEqual(RETRY_DELAYS_MS);
+  });
+
+  it("recovers on the same model when it is busy only once", async () => {
+    let calls = 0;
+    const { c, usage } = ctx(async () => {
+      if (calls++ === 0) throw new ProviderError("high demand", 503);
+      return ok('{"answer":"a"}');
+    });
+    await expect(run(c)).resolves.toMatchObject({ data: { answer: "a" } });
+    expect(usage.map((u) => [u.model, u.ok])).toEqual([
+      ["model-a", false],
+      ["model-a", true],
+    ]);
+  });
+
+  it("falls back without waiting on network errors and timeouts", async () => {
+    const { c, usage } = ctx(async ({ model }) => {
+      if (model.id === "model-a") throw new ProviderError("timeout");
+      return ok('{"answer":"b"}');
+    });
+    await expect(run(c)).resolves.toMatchObject({ data: { answer: "b" } });
+    expect(usage.map((u) => u.model)).toEqual(["model-a", "model-b"]);
+    expect(c.sleep).not.toHaveBeenCalled();
   });
 
   it("does not fall back on a 400", async () => {

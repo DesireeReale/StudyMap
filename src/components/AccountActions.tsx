@@ -41,10 +41,11 @@ export function AccountActions({ consentAt }: { consentAt: string | null }) {
           Uso dei tuoi contenuti da parte dei provider AI
         </h2>
         <p>
-          Di default i tuoi materiali vengono elaborati solo da provider che <strong>non</strong> li usano per
-          addestrare i propri modelli. Se acconsenti, in caso di sovraccarico potremo usare anche provider gratuiti che
-          possono conservare i contenuti inviati e usarli per migliorare i loro modelli. Puoi revocare il consenso in
-          qualsiasi momento; l&apos;app resta utilizzabile anche senza.
+          Senza consenso i tuoi materiali vengono elaborati solo da provider che <strong>non</strong> li usano per
+          addestrare i propri modelli. Se acconsenti, possiamo usare anche servizi AI gratuiti (Google Gemini,
+          OpenRouter) che possono conservare i contenuti inviati e usarli per migliorare i loro modelli. Puoi revocare
+          il consenso in qualsiasi momento; i contenuti già creati restano disponibili. In questa fase di sviluppo la
+          generazione con l&apos;AI funziona solo con il consenso.
         </p>
         <label className="flex items-center gap-3 font-bold">
           <input

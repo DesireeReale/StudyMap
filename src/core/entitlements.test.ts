@@ -20,11 +20,11 @@ describe("modelChain", () => {
   });
 
   it("includes them with consent", () => {
-    expect(keys("free", true)).toEqual(["gemini-flash", "openrouter-free"]);
+    expect(keys("free", true)).toEqual(["gemini-flash", "gemini-flash-lite", "openrouter-free"]);
   });
 
   it("filters vision-capable models", () => {
-    expect(keys("free", true, true)).toEqual(["gemini-flash"]);
+    expect(keys("free", true, true)).toEqual(["gemini-flash", "gemini-flash-lite"]);
   });
 
   it("skips disabled models and models without an API key", () => {

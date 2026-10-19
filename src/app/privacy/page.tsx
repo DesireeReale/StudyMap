@@ -30,14 +30,15 @@ export default function PrivacyPage() {
 
       <h2>Elaborazione con l&apos;intelligenza artificiale</h2>
       <p>
-        Per creare mappe e flashcard il testo dei tuoi materiali viene inviato a un provider AI. Di default usiamo
-        Mistral AI (Francia, UE), configurato in modo che i contenuti non vengano usati per addestrare i modelli.
+        Per creare mappe e flashcard il testo dei tuoi materiali viene inviato a un provider AI. Usiamo senza
+        ulteriori consensi solo provider configurati in modo che i contenuti non vengano usati per addestrare i
+        modelli.
       </p>
       <p>
-        <strong>Solo se dai un consenso separato</strong> nelle impostazioni, in caso di sovraccarico possiamo usare
-        anche provider gratuiti raggiunti tramite OpenRouter, che possono trovarsi fuori dall&apos;UE, conservare i
-        contenuti e usarli per migliorare i propri modelli. Il consenso è facoltativo, revocabile in qualsiasi momento e
-        l&apos;app funziona anche senza.
+        <strong>Solo se dai un consenso separato</strong> nelle impostazioni possiamo usare anche servizi AI gratuiti
+        (Google Gemini, provider raggiunti tramite OpenRouter), che possono trovarsi fuori dall&apos;UE, conservare i
+        contenuti e usarli per migliorare i propri modelli. Il consenso è facoltativo e revocabile in qualsiasi
+        momento. In questa fase di sviluppo le funzioni AI sono disponibili solo con il consenso.
       </p>
 
       <h2>I tuoi diritti</h2>

@@ -38,6 +38,18 @@ export const MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
+    key: "gemini-flash-lite",
+    provider: "gemini",
+    id: "gemini-flash-lite-latest",
+    inputUsdPerMTok: 0,
+    outputUsdPerMTok: 0,
+    contextTokens: 1_000_000,
+    vision: true,
+    structuredOutput: "json_schema",
+    usesDataForTraining: true,
+    enabled: true,
+  },
+  {
     key: "mistral-small",
     provider: "mistral",
     id: "mistral-small-2603",
@@ -88,8 +100,8 @@ export const MODELS: ModelConfig[] = [
 ];
 
 export const CHAINS: Record<PlanId, string[]> = {
-  free: ["muse-spark-contributor", "mistral-small", "gemini-flash", "openrouter-free"],
-  pro: ["muse-spark", "mistral-small", "gemini-flash", "openrouter-free"],
+  free: ["muse-spark-contributor", "mistral-small", "gemini-flash", "gemini-flash-lite", "openrouter-free"],
+  pro: ["muse-spark", "mistral-small", "gemini-flash", "gemini-flash-lite", "openrouter-free"],
 };
 
 export type TaskId = "mindmap" | "flashcards" | "transcribe";
@@ -102,3 +114,4 @@ export const TASKS: Record<TaskId, { promptVersion: string; maxTokens: number }>
 
 export const CHUNK_INPUT_TOKENS = 12_000;
 export const REQUEST_TIMEOUT_MS = 90_000;
+export const RETRY_DELAYS_MS = [2_000, 5_000];

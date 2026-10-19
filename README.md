@@ -130,10 +130,20 @@ Tasks (`src/core/ai/tasks.ts`) handle prompts, chunking and merging:
 - Add a provider: add it to `PROVIDERS`, add its models to `MODELS` and put their keys in `CHAINS`. Gemini, OpenAI and OpenRouter all expose OpenAI-compatible endpoints, so no code changes are needed.
 - Change a prompt: create `prompts/<task>.v2.md` and bump `TASKS.<task>.promptVersion`. The version is stored with each usage row.
 
-Current defaults run at zero cost: Mistral's free "Experiment" tier first, then OpenRouter's free router, which is used only for users who consented to their data being used for training. Before going to production:
+Current defaults (development, zero cost):
 
-- Turn off "Anonymous improvement data" in the Mistral console (Admin → Privacy).
-- Check that the free tiers' terms allow production use.
+- Google Gemini free tier: `gemini-flash-latest`, then `gemini-flash-lite-latest`. Get a key at aistudio.google.com and put it in `GEMINI_API_KEY`.
+- OpenRouter's free router as a last resort.
+- All of these may use data for training, so they only run for users who gave consent in Settings.
+
+Mistral no longer offers a free API tier, so `mistral-small` is configured with its paid prices and `enabled: false`.
+
+Busy errors (429 and 5xx) are retried on the same model after `RETRY_DELAYS_MS` (2 s, then 5 s) before falling back to the next model.
+
+**Before production.** Google's terms do not allow the unpaid Gemini tier for apps serving users in the EEA. To go live:
+
+1. Enable a paid, no-training model: for example `mistral-small` with pay-as-you-go and a monthly spending cap, or Gemini on a paid tier.
+2. Put that model first in `CHAINS`.
 
 Meta Model API (`muse-spark-1.3`, `muse-spark-1.3-contributor`) is configured but disabled. At the time of writing its availability in the EU is not confirmed.
 

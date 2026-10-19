@@ -24,7 +24,7 @@ flowchart LR
   B -- fetch /api/documents<br/>fetch /api/generate --> N[Next.js route handler<br/>server]
   N -- legge/scrive con RLS --> D[(Supabase Postgres)]
   N -- service role: usage + quote --> D
-  N -- chat.completions --> M[Mistral free<br/>poi OpenRouter :free]
+  N -- chat.completions --> M[Gemini free: flash, poi flash-lite<br/>poi OpenRouter :free]
   B -- salva mappa e flashcard<br/>direttamente con RLS --> D
 ```
 
@@ -33,7 +33,7 @@ flowchart LR
 | Linguaggio | TypeScript in modalità strict |
 | Framework | Next.js 16 (App Router), React 19, Tailwind 4 |
 | Database, login, file | Supabase: Postgres con RLS, Auth, Storage |
-| LLM | SDK `openai` puntato su endpoint compatibili con OpenAI (Mistral, OpenRouter; Meta configurato ma spento) |
+| LLM | SDK `openai` puntato su endpoint compatibili con OpenAI (oggi Google Gemini gratuito e OpenRouter; Mistral e Meta configurati ma spenti) |
 | Validazione dell'output | `zod` |
 | Mappe | `@xyflow/react` (React Flow) + `@dagrejs/dagre` per il layout automatico |
 | PDF | `unpdf` (estrazione del testo) + `@napi-rs/canvas` (pagina → immagine) |
@@ -156,7 +156,7 @@ sequenceDiagram
   participant Q as consume_quota (DB)
   participant T as generateMindMap
   participant C as complete()
-  participant LLM as Mistral / OpenRouter
+  participant LLM as Gemini / OpenRouter
   U->>API: POST {documentId, type}
   API->>Q: rate limit + generazione del mese
   Q-->>API: ok / limite raggiunto
@@ -195,8 +195,8 @@ La specifica proponeva un'interfaccia `AIProvider` con 6 metodi da implementare 
 [config/ai.ts:76](src/config/ai.ts:76):
 ```ts
 export const CHAINS = {
-  free: ["muse-spark-contributor", "mistral-small", "openrouter-free"],
-  pro:  ["muse-spark",             "mistral-small", "openrouter-free"],
+  free: ["muse-spark-contributor", "mistral-small", "gemini-flash", "gemini-flash-lite", "openrouter-free"],
+  pro:  ["muse-spark",             "mistral-small", "gemini-flash", "gemini-flash-lite", "openrouter-free"],
 };
 ```
 `modelChain()` ([entitlements.ts:9](src/core/entitlements.ts:9)) parte dalla catena del piano e **toglie**:
@@ -209,8 +209,10 @@ Risultato oggi:
 
 | Utente | Catena testo | Catena visione |
 |---|---|---|
-| senza consenso | Mistral Small | Mistral Small |
-| con consenso | Mistral Small → OpenRouter free | Mistral Small |
+| senza consenso | nessuno: l'app risponde "Nessun modello AI disponibile" | nessuno |
+| con consenso | Gemini Flash → Gemini Flash-Lite → OpenRouter free | Gemini Flash → Gemini Flash-Lite |
+
+*Perché così.* Mistral ha tolto il piano API gratuito, quindi `mistral-small` è spento (`enabled: false`) con i suoi prezzi reali. Il piano gratuito di Gemini può usare i dati per il training, quindi è marcato `usesDataForTraining: true` e funziona solo con il consenso. In più le condizioni di Google non permettono il piano gratuito per app usate da utenti in UE: va bene per sviluppare, non per la produzione. Per andare in produzione: attivi un modello a pagamento che non usa i dati (per esempio Mistral con un tetto di spesa), metti `enabled: true` e lo lasci primo nella catena.
 
 Il consenso è la colonna `profiles.ai_data_sharing_consent_at`, che l'utente attiva o revoca in `/settings` ([AccountActions.tsx](src/components/AccountActions.tsx)).
 
@@ -249,7 +251,7 @@ Sono in [client.ts:66-75](src/core/ai/client.ts:66).
 |---|---|---|
 | `temperature` | `0.3` | Compiti di estrazione: serve fedeltà al testo, non creatività. Valori più alti danno mappe più varie ma con più invenzioni. |
 | `max_tokens` | da `TASKS` in [ai.ts:83](src/config/ai.ts:83): 4000 per mappa e flashcard, 3000 per la trascrizione | Limita la lunghezza e il costo della risposta. Se è troppo basso il JSON viene troncato e la validazione fallisce. |
-| `response_format` | `json_schema` (Mistral) o `json_object` (OpenRouter), dal campo `structuredOutput` del modello | Obbliga il modello a rispondere in JSON. |
+| `response_format` | `json_schema` (Gemini, Mistral) o `json_object` (OpenRouter), dal campo `structuredOutput` del modello | Obbliga il modello a rispondere in JSON. |
 | `timeout` | 90 s (`REQUEST_TIMEOUT_MS`) | Oltre questo tempo la chiamata conta come fallita e si passa al modello successivo. |
 | `maxRetries` | `0` nell'SDK | I retry li gestisce `complete()` cambiando modello. |
 
@@ -269,6 +271,8 @@ Tutto avviene in `complete()` ([client.ts:102](src/core/ai/client.ts:102)):
 - **sì**: con 429 (rate limit), 5xx, timeout o errori di rete (status assente), 401/403 (chiave sbagliata) e output non valido dopo il retry;
 - **no**: con 400, 404 e 422. Indicano un errore nella richiesta: cambiare modello non aiuterebbe e nasconderebbe il bug.
 
+Prima di cambiare modello, se l'errore è 429 o 5xx (modello "occupato", tipico dei piani gratuiti), si riprova **sullo stesso modello** dopo 2 e poi 5 secondi (`RETRY_DELAYS_MS` in [config/ai.ts](src/config/ai.ts)). Ogni tentativo fallito resta registrato in `ai_usage`. Timeout ed errori di rete passano subito al modello successivo, senza attesa.
+
 Se tutta la catena fallisce, `complete()` lancia `AiUnavailableError` ("servizio momentaneamente occupato") e l'API risponde 503.
 
 Rate limit *dell'app*: al massimo `RATE_LIMITS.aiRequestsPerMinute` (5) richieste AI al minuto per utente, contate in `quota_counters` con `kind = "rl:ai"` ([lib/ai.ts:66](src/lib/ai.ts:66)).
@@ -282,7 +286,7 @@ Rate limit *dell'app*: al massimo `RATE_LIMITS.aiRequestsPerMinute` (5) richiest
 - le pagine vuote vengono saltate;
 - ogni pagina porta il marcatore `[Pagina N]`, che servirà in Fase 2 per citare le pagine nella chat.
 
-I chunk vengono elaborati **in sequenza**, non in parallelo, perché il piano gratuito di Mistral consente circa 1 richiesta al secondo.
+I chunk vengono elaborati **in sequenza**, non in parallelo, per non superare i limiti di richieste al minuto dei piani gratuiti.
 
 ### 3.8 Tracciamento dei costi
 
@@ -314,7 +318,7 @@ Non presenti in questo progetto: niente database vettoriale, niente tool o funct
 | `transcribeImage` | [tasks.ts:121](src/core/ai/tasks.ts:121) | trascrizione di immagini e scansioni | catena visione | no | sì (`TranscriptionSchema`) |
 
 ### 3.12 Mini-corso, con gli esempi di questo progetto
-- **Token e finestra di contesto.** Il modello legge e scrive "pezzi" di parola. Mistral Small accetta 256k token, ma noi mandiamo blocchi da circa 12k: risposte più focalizzate, meno costi e un rischio minore di dimenticare il centro del testo.
+- **Token e finestra di contesto.** Il modello legge e scrive "pezzi" di parola. Gemini Flash accetta circa 1 milione di token, ma noi mandiamo blocchi da circa 12k: risposte più focalizzate, meno costi e un rischio minore di dimenticare il centro del testo.
 - **System prompt.** È il messaggio con il ruolo e le regole (i file in `prompts/`). Il testo dello studente va nel messaggio *user*, così le regole restano separate dal contenuto.
 - **Temperature.** È la "casualità" della risposta. A 0.3 la stessa pagina produce mappe simili tra un tentativo e l'altro.
 - **Structured output.** Si chiede al modello di rispettare uno schema JSON (`response_format`). Non è garantito al 100%, per questo c'è anche la validazione Zod con retry.
@@ -568,10 +572,10 @@ Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/
 
 **Non verificato**
 - **Nessuna chiamata a un modello reale.** Restano da confermare:
-  - che Mistral accetti il nostro `json_schema` così com'è;
-  - che `mistral-small-2603` accetti immagini (le fonti erano in disaccordo);
+  - che Gemini accetti il nostro `json_schema` così com'è e che la mappa sia buona (prima prova reale in corso);
+  - verificato: `mistral-small-2603` accetta immagini (`vision: true`) e ha 262k token di contesto;
   - che l'ID `openrouter/free` funzioni.
-- Le condizioni del piano gratuito di Mistral per l'uso in produzione.
+- Il piano gratuito di Mistral non esiste più; quello di Gemini non è utilizzabile in produzione per utenti UE (condizioni di Google). Per la produzione serve un modello a pagamento.
 - L'export PDF: provato solo l'export PNG nel browser.
 
 **Punti deboli noti**
