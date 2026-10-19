@@ -90,6 +90,13 @@ describe("complete", () => {
     await expect(run(c)).rejects.toBeInstanceOf(AiUnavailableError);
   });
 
+  it("explains when no model is configured", async () => {
+    const { c } = ctx(async () => ok('{"answer":"x"}'));
+    c.chain = [];
+    await expect(run(c)).rejects.toThrow("Nessun modello AI configurato");
+    expect(c.chat).not.toHaveBeenCalled();
+  });
+
   it("uses the vision chain for image tasks", async () => {
     const { c } = ctx(async () => ok('{"answer":"x"}'));
     await complete(c, { task: "transcribe", schema, vision: true, messages: [] });

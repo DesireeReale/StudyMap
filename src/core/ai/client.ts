@@ -47,8 +47,8 @@ export class ProviderError extends Error {
 }
 
 export class AiUnavailableError extends Error {
-  constructor() {
-    super("Il servizio AI è momentaneamente occupato. Riprova tra qualche minuto.");
+  constructor(message = "Il servizio AI è momentaneamente occupato. Riprova tra qualche minuto.") {
+    super(message);
   }
 }
 
@@ -112,6 +112,11 @@ export async function complete<T>(
   const { promptVersion, maxTokens } = TASKS[opts.task];
   const jsonSchema = z.toJSONSchema(opts.schema) as Record<string, unknown>;
   const chain = opts.vision ? ctx.visionChain : ctx.chain;
+  if (!chain.length) {
+    throw new AiUnavailableError(
+      "Nessun modello AI configurato: imposta MISTRAL_API_KEY (o un altro provider) nelle variabili d'ambiente.",
+    );
+  }
   let totalInput = 0;
 
   for (const model of chain) {
