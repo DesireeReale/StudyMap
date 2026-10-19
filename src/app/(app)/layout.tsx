@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SignOutButton } from "@/components/SignOutButton";
+import { aiMockEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/supabase/server";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
@@ -24,6 +25,12 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           <SignOutButton />
         </nav>
       </header>
+      {aiMockEnabled && (
+        <div role="alert" className="bg-red-700 px-4 py-2 text-center text-sm font-bold text-white">
+          Modalità demo (AI_MOCK=1): nessun modello AI viene chiamato e ogni documento produce la stessa mappa e le
+          stesse flashcard di esempio.
+        </div>
+      )}
       <div role="note" className="bg-amber-50 px-4 py-2 text-center text-sm text-amber-950">
         Non caricare dati di pazienti reali (nomi, cartelle cliniche, referti): usa solo materiale di studio.
       </div>

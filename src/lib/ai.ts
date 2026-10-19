@@ -14,17 +14,17 @@ import {
 import { supabaseAdmin } from "./supabase/server";
 import type { Profile } from "./supabase/types";
 
-const useMock = process.env.AI_MOCK === "1" && process.env.NODE_ENV !== "production";
+export const aiMockEnabled = process.env.AI_MOCK === "1" && process.env.NODE_ENV !== "production";
 const hasKey = (m: ModelConfig) => !!process.env[PROVIDERS[m.provider].apiKeyEnv];
 
 export function aiContextFor(profile: Profile): AiContext {
   const admin = supabaseAdmin();
   const consent = !!profile.ai_data_sharing_consent_at;
-  const keyFilter = useMock ? undefined : hasKey;
+  const keyFilter = aiMockEnabled ? undefined : hasKey;
   return {
     chain: modelChain(profile.plan, { consent, hasKey: keyFilter }),
     visionChain: modelChain(profile.plan, { consent, vision: true, hasKey: keyFilter }),
-    chat: useMock ? mockChat : openaiChat,
+    chat: aiMockEnabled ? mockChat : openaiChat,
     record: async (u) => {
       const { error } = await admin.from("ai_usage").insert({
         user_id: profile.id,
