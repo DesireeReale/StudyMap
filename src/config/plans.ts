@@ -1,0 +1,44 @@
+export type PlanId = "free" | "pro";
+
+export type Plan = {
+  generationsPerMonth: number;
+  inputTokensPerMonth: number;
+  maxPdfPages: number;
+  maxDocuments: number;
+  maxUploadBytes: number;
+  export: { png: boolean; pdf: boolean; watermark: boolean };
+  quizzesPerWeek: number;
+  chat: boolean;
+  audio: boolean;
+};
+
+const MB = 1024 * 1024;
+
+export const PLANS: Record<PlanId, Plan> = {
+  free: {
+    generationsPerMonth: 5,
+    inputTokensPerMonth: 1_000_000,
+    maxPdfPages: 20,
+    maxDocuments: 10,
+    maxUploadBytes: 10 * MB,
+    export: { png: true, pdf: false, watermark: true },
+    quizzesPerWeek: 1,
+    chat: false,
+    audio: false,
+  },
+  pro: {
+    generationsPerMonth: 150,
+    inputTokensPerMonth: 5_000_000,
+    maxPdfPages: 200,
+    maxDocuments: Infinity,
+    maxUploadBytes: 25 * MB,
+    export: { png: true, pdf: true, watermark: false },
+    quizzesPerWeek: Infinity,
+    chat: true,
+    audio: true,
+  },
+};
+
+export const RATE_LIMITS = {
+  aiRequestsPerMinute: 5,
+};
