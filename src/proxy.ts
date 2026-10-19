@@ -4,6 +4,9 @@ import { NextResponse, type NextRequest } from "next/server";
 const PUBLIC_PATHS = ["/", "/login", "/privacy", "/auth/callback"];
 
 export async function proxy(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  if (PUBLIC_PATHS.includes(path)) return NextResponse.next();
+
   let response = NextResponse.next({ request });
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,8 +27,7 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const path = request.nextUrl.pathname;
-  if (!user && !PUBLIC_PATHS.includes(path) && !path.startsWith("/api/")) {
+  if (!user && !path.startsWith("/api/")) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
@@ -34,5 +36,13 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|icons/|.*\\.(?:svg|png|jpg|jpeg|webp)$).*)"],
+  matcher: [
+    {
+      source: "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|icons/|.*\\.(?:svg|png|jpg|jpeg|webp)$).*)",
+      missing: [
+        { type: "header", key: "next-router-prefetch" },
+        { type: "header", key: "purpose", value: "prefetch" },
+      ],
+    },
+  ],
 };

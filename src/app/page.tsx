@@ -114,7 +114,7 @@ export default async function Home() {
               <span className="mask-inner">Dagli appunti</span>
             </span>
             <span className="mask-line">
-              <span className="mask-inner" style={{ animationDelay: "110ms" }}>
+              <span className="mask-inner" style={{ animationDelay: "60ms" }}>
                 alla{" "}
                 <span className="sr-only">mappa</span>
                 <span
@@ -127,7 +127,7 @@ export default async function Home() {
                     fill
                     priority
                     sizes="(min-width: 768px) 360px, 25vw"
-                    className="hero-drift object-cover object-[50%_28%] mix-blend-multiply dark:mix-blend-normal"
+                    className="object-cover object-[50%_28%] mix-blend-multiply dark:mix-blend-normal"
                   />
                 </span>
                 .

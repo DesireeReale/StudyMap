@@ -323,13 +323,10 @@ h3,
 }
 .mask-inner {
   display: block;
-  animation: mask-rise 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: mask-rise 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .hero-after {
-  animation: fade-up 600ms cubic-bezier(0.16, 1, 0.3, 1) 450ms both;
-}
-.hero-drift {
-  animation: drift 14s ease-in-out infinite alternate;
+  animation: fade-up 300ms cubic-bezier(0.16, 1, 0.3, 1) 150ms both;
 }
 @keyframes mask-rise {
   from {
@@ -340,14 +337,6 @@ h3,
   from {
     opacity: 0;
     transform: translateY(16px);
-  }
-}
-@keyframes drift {
-  from {
-    transform: scale(1.05) translateX(-3%);
-  }
-  to {
-    transform: scale(1.18) translateX(3%);
   }
 }
 
@@ -379,8 +368,7 @@ h3,
 
 @media (prefers-reduced-motion: reduce) {
   .mask-inner,
-  .hero-after,
-  .hero-drift {
+  .hero-after {
     animation: none;
   }
 }

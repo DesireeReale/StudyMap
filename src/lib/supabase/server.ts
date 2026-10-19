@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import type { Database } from "./types";
 
 export async function supabaseServer() {
@@ -31,18 +32,18 @@ export function supabaseAdmin() {
   });
 }
 
-export async function getUser() {
+export const getUser = cache(async () => {
   const supabase = await supabaseServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   return { supabase, user };
-}
+});
 
-export async function requireUser() {
+export const requireUser = cache(async () => {
   const { supabase, user } = await getUser();
   if (!user) redirect("/login");
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
   if (!profile) redirect("/login");
   return { supabase, user, profile };
-}
+});
