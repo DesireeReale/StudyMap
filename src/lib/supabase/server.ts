@@ -34,9 +34,8 @@ export function supabaseAdmin() {
 
 export const getUser = cache(async () => {
   const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ? { id: data.claims.sub, email: data.claims.email } : null;
   return { supabase, user };
 });
 
