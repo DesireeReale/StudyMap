@@ -1,6 +1,6 @@
 # Manuale di StudyMap
 
-*Aggiornato al 19/10/2026, fine della Fase 1 (commit `69748ef`). I riferimenti `file:riga` valgono per quella versione.*
+*Aggiornato al 19/10/2026: fine della Fase 1, passata a Supabase cloud senza Docker. I riferimenti `file:riga` valgono per questa versione.*
 
 Questo manuale spiega come è fatto il progetto e soprattutto come usa l'LLM, così puoi modificarlo da sola. Il setup tecnico in inglese è nel [README.md](README.md); la specifica originale è in [docs/SPEC.md](docs/SPEC.md).
 
@@ -37,8 +37,8 @@ flowchart LR
 | Validazione dell'output | `zod` |
 | Mappe | `@xyflow/react` (React Flow) + `@dagrejs/dagre` per il layout automatico |
 | PDF | `unpdf` (estrazione del testo) + `@napi-rs/canvas` (pagina → immagine) |
-| Test | Vitest, pgTAP (`supabase test db`), Playwright |
-| Deploy previsto | Vercel + Supabase in regione UE (non ancora fatto) |
+| Test | Vitest (unitari e test RLS/quote su un progetto Supabase di test), Playwright |
+| Ambienti | Supabase **cloud** (niente Docker): un progetto di sviluppo e uno separato per i test, entrambi in UE. Deploy previsto su Vercel (non ancora fatto) |
 
 > **RLS (Row Level Security)**: regole scritte *dentro* Postgres che dicono "questo utente vede solo le sue righe". Anche se il codice sbaglia una query, il database non restituisce dati di altri utenti.
 
@@ -52,9 +52,8 @@ flowchart LR
 studymap/
 ├─ prompts/                    🟢 i prompt dell'LLM, uno per task e versione
 ├─ supabase/
-│  ├─ config.toml              🟡 configurazione di Supabase in locale (auth, Google, redirect)
+│  ├─ config.toml              🟢 serve solo alla CLI; le impostazioni vere si fanno dalla dashboard
 │  ├─ migrations/              🔴 schema del DB, RLS, bucket, funzione delle quote
-│  └─ tests/database/          🟢 test pgTAP su RLS e quote
 ├─ src/
 │  ├─ config/                  🟢 I DUE FILE DI CONFIGURAZIONE (piani e modelli AI)
 │  ├─ core/                    🟡 logica pura, senza Next né React: AI, limiti, ingestione, grafo
@@ -63,9 +62,11 @@ studymap/
 │  ├─ app/                     🟡 pagine e API (routing di Next)
 │  ├─ components/              🟢 componenti dell'interfaccia (editor mappa, flashcard, upload…)
 │  └─ proxy.ts                 🔴 rinnova la sessione e protegge le pagine riservate
+├─ tests/                      🟢 test su RLS e quote (tests/db) e helper per il progetto di test
 ├─ e2e/                        🟢 test end-to-end con Playwright
 ├─ public/icons/               🟢 icone della PWA
-├─ .env.example                🟢 elenco delle variabili d'ambiente
+├─ .env.example                🟢 variabili d'ambiente di sviluppo
+├─ .env.test.example           🟢 variabili del progetto Supabase di TEST
 └─ next.config.ts              🟡 pacchetti nativi e inclusione dei prompt nel bundle
 ```
 
@@ -336,30 +337,48 @@ L'elenco completo è in [.env.example](.env.example). Copialo in `.env.local`, c
 | `OPENROUTER_API_KEY` | no | come sopra | riserva |
 | `META_API_KEY` | no | come sopra | modelli Meta (spenti) |
 | `AI_MOCK` | no | [lib/ai.ts:17](src/lib/ai.ts:17) | `1` = risposte finte, ignorato in produzione |
-| `SUPABASE_AUTH_EXTERNAL_GOOGLE_*` | no | `supabase/config.toml` | login Google in locale |
 
-### Avvio in locale
-Serve Docker Desktop, che non è ancora installato su questo PC.
-```bash
-npm install
-npx supabase start
-npm run dev
-```
-Dopo `npx supabase start` copia le chiavi stampate in `.env.local`. Poi apri http://localhost:3000. Le email di conferma locali si leggono su http://127.0.0.1:54324.
+### Avvio (Supabase cloud, niente Docker)
+I passi completi, con i percorsi della dashboard, sono nel [README](README.md#setup). In breve:
+1. Su supabase.com crea un progetto in regione UE (per esempio Francoforte).
+2. Collega il repo al progetto e applica le migrazioni:
+   ```bash
+   npx supabase login
+   ```
+   ```bash
+   npx supabase link --project-ref <project-ref>
+   ```
+   ```bash
+   npm run db:push
+   ```
+3. Copia URL e chiavi da **Project Settings → API** in `.env.local`.
+4. In **Authentication → URL Configuration** aggiungi `http://localhost:3000/auth/callback` ai Redirect URLs.
+5. Configura Google in **Authentication → Sign In / Providers → Google**.
+6. Avvia l'app:
+   ```bash
+   npm run dev
+   ```
+
+**Email di conferma.** Sul cloud sono attive di default: dopo la registrazione l'utente deve cliccare il link nell'email (la UI mostra "Controlla la tua email"). Il servizio email incluso in Supabase serve solo per le prove: ha limiti molto bassi e può consegnare solo agli indirizzi del team del progetto. Prima di aprire l'app agli studenti configura un SMTP tuo in **Authentication → Emails → SMTP Settings**.
 
 ### Test
 ```bash
 npm test
 ```
-33 test unitari, senza modelli reali. Verificati: passano.
+33 test unitari, senza rete e senza modelli reali. Verificati: passano.
 ```bash
 npm run test:db
 ```
-pgTAP su RLS e quote. Richiede Supabase avviato: **non ancora eseguito**.
+Test Vitest su RLS, storage e quote, contro il progetto Supabase di **test**: [tests/db/rls-and-quota.test.ts](tests/db/rls-and-quota.test.ts). **Non ancora eseguito**: serve il progetto di test.
 ```bash
 npm run test:e2e
 ```
-Playwright con AI finta. Richiede Supabase avviato: **non ancora eseguito**.
+Playwright: login → PDF → mappa → rinomina → ricarica, con AI finta, contro il progetto di **test**. **Non ancora eseguito**.
+
+**Perché un secondo progetto Supabase.** Questi test creano e cancellano utenti veri. Farli girare sul progetto di sviluppo sporcherebbe i tuoi dati, quindi usano `.env.test` (copialo da [.env.test.example](.env.test.example)). [tests/test-env.ts](tests/test-env.ts) si rifiuta di partire se `.env.test` manca o punta allo stesso URL di `.env.local`, e forza sempre `AI_MOCK=1`. Gli utenti di test nascono già confermati tramite l'API admin e vengono cancellati alla fine.
+
+I vecchi test pgTAP (SQL) sono stati convertiti in Vitest: pgTAP sul cloud richiede di collegarsi direttamente al database, mentre il client Supabase con due utenti veri verifica la RLS come la vede l'app.
+
 ```bash
 npm run lint
 ```
@@ -437,7 +456,7 @@ Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/
 
 **9. Modificare lo schema del database**
 - **Come**: **non** modificare la migrazione esistente. Crea un nuovo file `supabase/migrations/AAAAMMGGhhmmss_descrizione.sql`, poi aggiorna `src/lib/supabase/types.ts`.
-- **Verifica**: `npm run db:reset` riapplica tutto da zero, poi `npm run test:db`. Ogni nuova tabella deve avere `enable row level security` e le sue policy.
+- **Verifica**: `npm run db:push` sul progetto di test (collegato con `npx supabase link`), poi `npm run test:db`; infine `db:push` sul progetto di sviluppo. Ogni nuova tabella deve avere `enable row level security` e le sue policy.
 
 **10. Cambiare il rate limit**
 - **Dove**: `RATE_LIMITS.aiRequestsPerMinute` in [plans.ts:42](src/config/plans.ts:42).
@@ -453,14 +472,14 @@ Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/
 
 ## 7. Debug
 
-- **Log**: gli errori delle API finiscono nella console del server (`npm run dev`), con `console.error("generation failed", e)` e `"ingest failed"`. I fallimenti delle chiamate LLM sono anche nella tabella `ai_usage` (`ok = false`, colonna `error`). Si vede da Supabase Studio su http://127.0.0.1:54323.
+- **Log**: gli errori delle API finiscono nella console del server (`npm run dev`), con `console.error("generation failed", e)` e `"ingest failed"`. I fallimenti delle chiamate LLM sono anche nella tabella `ai_usage` (`ok = false`, colonna `error`). Si vede dalla dashboard di Supabase (Table Editor), dove trovi anche i log di Auth e API (Logs).
 - **Vedere prompt e risposta grezza**: aggiungi temporaneamente un `console.log(messages, res.content)` in `complete()` dopo la chiamata ([client.ts:123](src/core/ai/client.ts:123)) e **ricordati di toglierlo**.
 - **Lavorare senza consumare quota**: `AI_MOCK=1` in `.env.local`.
 
 | Messaggio / sintomo | Significato | Rimedio |
 |---|---|---|
 | "Il servizio AI è momentaneamente occupato" (503) | tutta la catena ha fallito | guarda `ai_usage.error`: 429 = limite del provider; catena vuota = manca la chiave API |
-| "Hai usato tutte le N generazioni" (402) | quota mensile esaurita | aumenta il limite in `plans.ts`, oppure in locale svuota `quota_counters` |
+| "Hai usato tutte le N generazioni" (402) | quota mensile esaurita | aumenta il limite in `plans.ts`, oppure, nel progetto di sviluppo, svuota `quota_counters` dal Table Editor |
 | "Troppe richieste in poco tempo" (429) | rate limit dell'app | aspetta un minuto |
 | "Your project's URL and Key are required…" | mancano le variabili Supabase | completa `.env.local` |
 | La mappa non si salva ("Salvataggio non riuscito") | update rifiutato o Supabase non raggiungibile | console del browser e stato di Supabase |
@@ -474,8 +493,8 @@ Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/
 
 **Checklist "non parte"**
 1. `.env.local` è completo?
-2. Docker è avviato?
-3. `npx supabase start` è stato eseguito?
+2. Le migrazioni sono state applicate (`npm run db:push`)?
+3. Il progetto Supabase è attivo? I progetti gratuiti si mettono in pausa dopo circa una settimana senza attività: si riattivano dalla dashboard.
 4. La porta 3000 è libera?
 
 **Testare una funzione da sola**: crea un `*.test.ts` accanto al file (vedi [tasks.test.ts](src/core/ai/tasks.test.ts), che usa `mockChat`) e lancia `npx vitest run nomefile`.
@@ -511,7 +530,7 @@ Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/
    *Esercizio*: aggiungi un test in cui il primo modello restituisce 403 e verifica il fallback.
 3. **Gioca con i prompt in mock**, poi con il modello vero.
    *Esercizio*: crea `mindmap.v2.md` che limita a 25 nodi e confronta le mappe dello stesso PDF tra v1 e v2. Fai una o due chiamate, non decine.
-4. **Studia la RLS**: leggi la migrazione e [rls_and_quota.test.sql](supabase/tests/database/rls_and_quota.test.sql).
+4. **Studia la RLS**: leggi la migrazione e [tests/db/rls-and-quota.test.ts](tests/db/rls-and-quota.test.ts).
    *Esercizio*: aggiungi un test che verifica che un utente non può leggere le flashcard di un altro.
 5. **React Flow**: leggi [MapEditor.tsx](src/components/MapEditor.tsx) e la documentazione su reactflow.dev.
    *Esercizio*: aggiungi un pulsante che duplica il nodo selezionato.
@@ -532,7 +551,6 @@ Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/
 - **Magic bytes**: i primi byte di un file, che ne rivelano il tipo reale (es. `%PDF-`).
 - **Migrazione**: un file SQL versionato che modifica lo schema del database.
 - **Mock**: una risposta finta usata nei test al posto del modello vero.
-- **pgTAP**: un framework per scrivere test in SQL dentro Postgres.
 - **Proxy (Next 16)**: il codice che gira prima di ogni richiesta (ex "middleware").
 - **PWA**: un'app web installabile sul telefono o sul PC come un'app.
 - **Rate limit**: il numero massimo di richieste in un intervallo di tempo.
@@ -549,7 +567,7 @@ Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/
 ## 11. Da verificare e punti deboli
 
 **Non verificato**
-- Test pgTAP ed end-to-end: mai eseguiti, manca Docker.
+- Test sul database ed end-to-end: mai eseguiti, serve il progetto Supabase di test.
 - **Nessuna chiamata a un modello reale.** Restano da confermare:
   - che Mistral accetti il nostro `json_schema` così com'è;
   - che `mistral-small-2603` accetti immagini (le fonti erano in disaccordo);
@@ -558,7 +576,7 @@ Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/
 - L'export PDF: provato solo l'export PNG nel browser.
 
 **Punti deboli noti**
-- [types.ts](src/lib/supabase/types.ts) è scritto a mano: se cambi lo schema e dimentichi di aggiornarlo, TypeScript non se ne accorge. Con Supabase avviato si possono generare i tipi con `npx supabase gen types typescript --local`.
+- [types.ts](src/lib/supabase/types.ts) è scritto a mano: se cambi lo schema e dimentichi di aggiornarlo, TypeScript non se ne accorge. Con il progetto collegato si possono generare i tipi con `npx supabase gen types typescript --linked`.
 - I contatori `rl:ai` creano una riga per utente al minuto e non vengono mai cancellati. Serve una pulizia periodica.
 - Il tetto di token si controlla *prima* della chiamata, quindi una singola generazione lunga può superarlo un po'.
 - Il limite sul numero di documenti si basa su un conteggio, non su un'operazione atomica: due upload in parallelo potrebbero superarlo di uno.

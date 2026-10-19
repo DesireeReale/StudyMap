@@ -14,22 +14,66 @@ Phase 1 (MVP) features: email + Google auth, upload (PDF / PNG / JPEG / WebP / t
 | PDF | `unpdf` (text extraction, page rendering via `@napi-rs/canvas`) |
 | Export | `html-to-image` + `jspdf` (client side) |
 | AI | `openai` SDK against any OpenAI-compatible endpoint, `zod` for structured output |
-| Tests | Vitest (unit), pgTAP via `supabase test db` (RLS and quotas), Playwright (E2E) |
+| Tests | Vitest (unit, and RLS/quota tests against a Supabase test project), Playwright (E2E) |
 
 ## Setup
 
-Requirements: Node 22+, Docker Desktop (for the local Supabase stack).
+Requirements: Node 22+ and a supabase.com account. No Docker or local database: development uses a hosted Supabase project.
+
+### 1. Create the Supabase project
+
+On supabase.com create a project (**region: an EU one, e.g. Frankfurt**) and keep the database password.
+
+Then apply the schema from this repo. Log in to the Supabase CLI:
 
 ```bash
-npm install
-npx supabase start          # prints the local URL, anon key and service_role key
-cp .env.example .env.local  # fill in the values printed above
+npx supabase login
+```
+
+Link the repo to the project; `<project-ref>` is the id in the project URL:
+
+```bash
+npx supabase link --project-ref <project-ref>
+```
+
+Apply `supabase/migrations/` (tables, RLS, storage bucket, quota function):
+
+```bash
+npm run db:push
+```
+
+### 2. Environment
+
+Create your local env file from the template:
+
+```bash
+cp .env.example .env.local
+```
+
+Fill it from **Project Settings → API**:
+- URL → `NEXT_PUBLIC_SUPABASE_URL`;
+- the anon / publishable key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`;
+- the service_role / secret key → `SUPABASE_SERVICE_ROLE_KEY` (server only, never share it).
+
+Set `AI_MOCK=1` to develop without calling any model: every AI task returns fixed fake output. It is ignored when `NODE_ENV=production`.
+
+### 3. Auth settings (dashboard)
+
+- **Authentication → URL Configuration**: Site URL `http://localhost:3000`; add `http://localhost:3000/auth/callback` (and later the production URL + `/auth/callback`) to Redirect URLs.
+- **Email confirmation**: hosted projects require users to confirm their email by default (Authentication → Sign In / Providers → Email → "Confirm email"). Keep it on.
+  - The built-in email sender is meant for testing only: it is heavily rate limited and may only deliver to your project team's addresses.
+  - Before real users sign up, configure a custom SMTP provider under Authentication → Emails → SMTP Settings (any transactional email service, e.g. Resend, Brevo, Postmark). Email templates are customised in the same section.
+- **Google sign-in**: Authentication → Sign In / Providers → Google.
+  - Paste the OAuth client ID and secret created in Google Cloud Console.
+  - In Google Cloud, set the authorized redirect URI to the callback URL shown in that Supabase panel (`https://<project-ref>.supabase.co/auth/v1/callback`).
+
+### 4. Run
+
+```bash
 npm run dev
 ```
 
-Open http://localhost:3000. Local auth does not require email confirmation. Emails sent by Supabase are visible in Mailpit at http://127.0.0.1:54324.
-
-Set `AI_MOCK=1` in `.env.local` to develop without calling any model: every AI task returns fixed fake output. It is ignored when `NODE_ENV=production`.
+Open http://localhost:3000.
 
 ### Environment variables
 
@@ -42,7 +86,6 @@ Set `AI_MOCK=1` in `.env.local` to develop without calling any model: every AI t
 | `OPENROUTER_API_KEY` | server only | fallback provider (free models) |
 | `META_API_KEY` | server only | Meta Model API (models disabled by default) |
 | `AI_MOCK` | server only | `1` = fake AI responses outside production |
-| `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` / `_SECRET` | Supabase CLI | Google sign-in locally (also set `enabled = true` in `supabase/config.toml`) |
 
 No secret is exposed to the browser: only `NEXT_PUBLIC_*` values reach the client.
 
@@ -51,7 +94,8 @@ No secret is exposed to the browser: only `NEXT_PUBLIC_*` values reach the clien
 ```
 prompts/                 versioned prompts (mindmap.v1.md, flashcards.v1.md, transcribe.v1.md)
 supabase/migrations/     schema, RLS policies, storage bucket, consume_quota()
-supabase/tests/          pgTAP tests for RLS and quotas
+tests/db/                RLS and quota tests against the Supabase test project
+tests/                   test helpers (.env.test loading, test users)
 src/config/plans.ts      ALL plan limits (free / pro)
 src/config/ai.ts         providers, models, prices, fallback chains, max_tokens per task
 src/core/                framework-free business logic (AI layer, entitlements, ingestion, graph layout)
@@ -115,15 +159,43 @@ When a limit is hit, the API returns `{ error, upgrade }` and the UI shows an up
 
 ## Tests
 
-```bash
-npm run lint
-npm run typecheck
-npm test            # unit tests, never call a real model
-npm run test:db     # pgTAP: RLS isolation, plan not writable, quota atomicity (needs supabase start)
-npm run test:e2e    # sign up → upload PDF → generate map → rename node → persisted (needs supabase start)
-```
+| Command | What it checks | Needs |
+| --- | --- | --- |
+| `npm run lint`, `npm run typecheck` | static checks | nothing |
+| `npm test` | unit tests (AI layer with fake responses, quotas, chunking, ingestion, layout) | nothing |
+| `npm run test:db` | RLS isolation between two users, plan not writable by the client, storage folders, `consume_quota` never exceeding the limit under 10 concurrent calls | Supabase **test** project |
+| `npm run test:e2e` | log in → upload PDF → generate map → rename a node → still there after reload | Supabase **test** project |
 
-The E2E suite starts `next dev` with `AI_MOCK=1`.
+No test calls a real model: the test setup forces `AI_MOCK=1`.
+
+**Supabase test project.** `test:db` and `test:e2e` create and delete real users and rows, so they run against a second, separate Supabase project, never the development one. Setup:
+
+1. Create a second project on supabase.com, e.g. `studymap-test` (EU region).
+2. Apply the same migrations to it:
+
+   ```bash
+   npx supabase link --project-ref <test-ref>
+   ```
+
+   ```bash
+   npm run db:push
+   ```
+
+   Re-link to the development project afterwards:
+
+   ```bash
+   npx supabase link --project-ref <dev-ref>
+   ```
+
+3. Create the test env file and fill it with the **test** project's URL and keys:
+
+   ```bash
+   cp .env.test.example .env.test
+   ```
+
+`tests/test-env.ts` refuses to run if `.env.test` is missing or points to the same URL as `.env.local`. Test users are created already confirmed through the admin API and deleted at the end, so the test project's email settings don't matter. The E2E suite starts its own `next dev` on port 3100. Stop `npm run dev` first if Next refuses to start a second dev server in the same folder.
+
+Free Supabase projects are paused after about a week without activity; restore the test project from the dashboard if the tests can't connect.
 
 ## Privacy and security
 

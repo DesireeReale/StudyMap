@@ -2,22 +2,28 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
 import { jsPDF } from "jspdf";
+import { createTestUser, deleteTestUser } from "../tests/supabase";
 
 const pdfPath = path.join(import.meta.dirname, ".tmp", "scompenso.pdf");
+let user: Awaited<ReturnType<typeof createTestUser>>;
 
-test.beforeAll(() => {
+test.beforeAll(async () => {
   const doc = new jsPDF();
   doc.text("Lo scompenso cardiaco è una sindrome clinica caratterizzata da dispnea ed edemi declivi.", 10, 10);
   mkdirSync(path.dirname(pdfPath), { recursive: true });
   writeFileSync(pdfPath, Buffer.from(doc.output("arraybuffer")));
+  user = await createTestUser("e2e");
 });
 
-test("sign up, upload a PDF, generate and edit a concept map", async ({ page }) => {
+test.afterAll(async () => {
+  if (user) await deleteTestUser(user.id);
+});
+
+test("log in, upload a PDF, generate and edit a concept map", async ({ page }) => {
   await page.goto("/login");
-  await page.getByRole("button", { name: "Non hai un account? Registrati" }).click();
-  await page.getByLabel("Email").fill(`e2e-${Date.now()}@example.test`);
-  await page.getByLabel("Password").fill("password-e2e-123");
-  await page.getByRole("button", { name: "Crea account" }).click();
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByLabel("Password").fill(user.password);
+  await page.getByRole("button", { name: "Accedi", exact: true }).click();
   await expect(page).toHaveURL(/\/library/);
 
   await page.getByLabel("Titolo").fill("Scompenso cardiaco");

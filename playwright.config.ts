@@ -1,14 +1,17 @@
 import { defineConfig } from "@playwright/test";
+import { loadTestEnv } from "./tests/test-env";
+
+const port = 3100;
 
 export default defineConfig({
   testDir: "e2e",
   timeout: 90_000,
-  use: { baseURL: "http://localhost:3000", trace: "retain-on-failure" },
+  use: { baseURL: `http://localhost:${port}`, trace: "retain-on-failure" },
   webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
+    command: `npx next dev --port ${port}`,
+    url: `http://localhost:${port}`,
+    reuseExistingServer: false,
     timeout: 120_000,
-    env: { AI_MOCK: "1" },
+    env: loadTestEnv(),
   },
 });
