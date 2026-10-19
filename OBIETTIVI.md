@@ -83,9 +83,9 @@
 - [x] Stile salvato in un cookie, senza lampo al caricamento
 - [x] Rigenerare le schermate della landing
 - [x] Decidere: dock comune a Corsia ed Evidenziatore
-- [ ] Home con dock di studio, nei due stili (nuovo)
-- [ ] Data dell'esame per il conto alla rovescia (nuovo)
-- [ ] Timer di studio nel dock (nuovo)
+- [x] Home con dock di studio, nei due stili (nuovo)
+- [x] Data dell'esame per il conto alla rovescia (nuovo)
+- [x] Timer di studio nel dock (nuovo)
 
 ## Da fare tu
 - [ ] Creare il progetto Supabase di sviluppo (regione UE)

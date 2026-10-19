@@ -103,3 +103,38 @@ export function DeleteAccount() {
     </div>
   );
 }
+
+export function ExamDate({ userId, initial }: { userId: string; initial: string | null }) {
+  const router = useRouter();
+  const [value, setValue] = useState(initial ?? "");
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function save(next: string) {
+    setValue(next);
+    const { error } = await supabaseBrowser()
+      .from("profiles")
+      .update({ exam_date: next || null })
+      .eq("id", userId);
+    setMessage(error ? "Non è stato possibile salvare la data. Riprova." : next ? "Data salvata." : "Data rimossa.");
+    if (!error) router.refresh();
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <label className="flex flex-col gap-1.5">
+        <span className="label">Data del prossimo esame</span>
+        <span className="flex flex-wrap items-center gap-2">
+          <input type="date" value={value} onChange={(e) => save(e.target.value)} className="field w-auto" />
+          {value && (
+            <button type="button" className="btn-ghost" onClick={() => save("")}>
+              Rimuovi
+            </button>
+          )}
+        </span>
+      </label>
+      <p role="status" className="text-sm text-muted empty:hidden">
+        {message}
+      </p>
+    </div>
+  );
+}

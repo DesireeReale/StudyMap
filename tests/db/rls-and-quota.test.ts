@@ -37,7 +37,7 @@ describe("row level security", () => {
     expect(data?.title).toBe("Doc B");
   });
 
-  it("the plan is not writable by the client, the consent is", async () => {
+  it("the plan is not writable by the client, the consent and the exam date are", async () => {
     const plan = await a.client.from("profiles").update({ plan: "pro" }).eq("id", a.id);
     expect(plan.error?.code).toBe("42501");
     const consent = await a.client
@@ -45,6 +45,8 @@ describe("row level security", () => {
       .update({ ai_data_sharing_consent_at: new Date().toISOString() })
       .eq("id", a.id);
     expect(consent.error).toBeNull();
+    const exam = await a.client.from("profiles").update({ exam_date: "2026-12-15" }).eq("id", a.id);
+    expect(exam.error).toBeNull();
   });
 
   it("clients cannot write usage or call consume_quota", async () => {

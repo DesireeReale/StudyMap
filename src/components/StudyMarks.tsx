@@ -16,7 +16,7 @@ export function MapThumb({ graph, width = 72, height = 48 }: { graph: Graph; wid
   const root = nodes.find((n) => !graph.edges.some((e) => e.target === n.id));
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="shrink-0 rounded-lg bg-surface" aria-hidden="true">
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="h-auto max-w-full shrink-0 rounded-lg bg-surface" aria-hidden="true">
       {graph.edges.map((e) => {
         const a = at.get(e.source);
         const b = at.get(e.target);

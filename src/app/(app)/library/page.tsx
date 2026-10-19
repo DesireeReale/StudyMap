@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { PLANS } from "@/config/plans";
-import { greeting, longDate, monthName, nextMonthStart, shortDate } from "@/core/dates";
+import { daysUntil, longDate, shortDate } from "@/core/dates";
 import { monthPeriod } from "@/core/entitlements";
 import { Icon } from "@/components/icons";
+import { StudyDock } from "@/components/StudyDock";
 import { DeckStrip, MapThumb, UsageBar, type DeckCounts } from "@/components/StudyMarks";
 import { requireUser } from "@/lib/supabase/server";
 
@@ -27,7 +28,6 @@ export default async function LibraryPage() {
   const mapList = maps.data ?? [];
   const deckList = decks.data ?? [];
   const used = usage.data?.count ?? 0;
-  const left = Math.max(plan.generationsPerMonth - used, 0);
 
   const counts = new Map<string, DeckCounts>();
   for (const c of cards.data ?? []) {
@@ -38,36 +38,40 @@ export default async function LibraryPage() {
     counts.set(c.deck_id, k);
   }
   const toReview = [...counts.values()].reduce((sum, k) => sum + k.unknown + k.fresh, 0);
-  const totalCards = (cards.data ?? []).length;
+  const pending = (k: DeckCounts | undefined) => (k ? k.unknown + k.fresh : 0);
+  const focus = [...deckList].sort((a, b) => pending(counts.get(b.id)) - pending(counts.get(a.id)))[0];
+  const focusCounts = focus ? counts.get(focus.id) : undefined;
 
-  const finding = [
-    toReview > 0 ? `${toReview} flashcard da ripassare` : deckList.length ? "Tutte le flashcard sono sapute" : null,
-    `${left} ${left === 1 ? "generazione AI rimasta" : "generazioni AI rimaste"} a ${monthName()}`,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const [title, action] =
+    focus && toReview > 0
+      ? [`Oggi ripassi ${focus.title}.`, { href: `/decks/${focus.id}`, label: "Inizia il ripasso" }]
+      : focus
+        ? ["Oggi hai ripassato tutto.", { href: "/upload", label: "Carica materiale" }]
+        : ["Carica il materiale da studiare.", { href: "/upload", label: "Carica materiale" }];
 
   return (
     <div className="mx-auto flex max-w-[1100px] flex-col gap-4">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-[28px] leading-tight font-bold md:text-[32px]">{greeting()}.</h1>
-          <p className="mt-1 text-[15px] text-muted">
-            {longDate()} · {finding}
-          </p>
+      <header className="mb-4 flex flex-col gap-5">
+        <p className="text-[15px] text-muted">{longDate()}</p>
+        <div className="flex flex-wrap items-end justify-between gap-5">
+          <h1 className="max-w-[18ch] text-[36px] leading-[1.02] font-bold tracking-[-0.03em] md:text-[52px]">{title}</h1>
+          <Link href={action.href} className="btn-primary h-12 px-6 text-[17px]">
+            {action.label}
+          </Link>
         </div>
-        <Link href="/upload" className="btn-primary">
-          <Icon name="upload" />
-          Carica materiale
-        </Link>
       </header>
 
-      <section aria-label="In sintesi" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Tile label="Documenti" value={documents.length} caption={Number.isFinite(plan.maxDocuments) ? `su ${plan.maxDocuments} del piano` : "illimitati"} />
-        <Tile label="Mappe" value={mapList.length} caption={mapList.length ? `aggiornata ${shortDate(mapList[0]!.updated_at)}` : "nessuna ancora"} />
-        <Tile label="Da ripassare" value={toReview} caption={totalCards ? `flashcard su ${totalCards}` : "nessun mazzo ancora"} />
-        <Tile label="Generazioni AI" value={used} caption={`su ${plan.generationsPerMonth} · ripartono il ${nextMonthStart()}`} />
-      </section>
+      <StudyDock
+        data={{
+          deck: focus && focusCounts
+            ? { title: focus.title, known: focusCounts.known, total: focusCounts.known + pending(focusCounts) }
+            : null,
+          toReview,
+          examDays: profile.exam_date ? daysUntil(profile.exam_date) : null,
+          lastMap: mapList[0] ? { id: mapList[0].id, title: mapList[0].title } : null,
+          generations: { used, limit: plan.generationsPerMonth },
+        }}
+      />
 
       <div className="grid gap-4 lg:grid-cols-12">
         <Panel title="Mappe" count={mapList.length} className="lg:col-span-9">
@@ -169,16 +173,6 @@ export default async function LibraryPage() {
           )}
         </Panel>
       </div>
-    </div>
-  );
-}
-
-function Tile({ label, value, caption }: { label: string; value: number; caption: string }) {
-  return (
-    <div className="panel flex min-h-[128px] flex-col justify-between p-4">
-      <p className="text-sm text-muted">{label}</p>
-      <p className="num font-mono text-[32px] leading-none">{value}</p>
-      <p className="text-[13px] text-muted">{caption}</p>
     </div>
   );
 }

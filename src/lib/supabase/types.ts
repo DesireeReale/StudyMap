@@ -11,6 +11,7 @@ export type Profile = {
   id: string;
   plan: "free" | "pro";
   ai_data_sharing_consent_at: string | null;
+  exam_date: string | null;
   created_at: string;
 };
 

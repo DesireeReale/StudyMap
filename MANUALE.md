@@ -482,6 +482,12 @@ Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/
 - **Verifica**: `npm test` esegue `tokens.test.ts`, che controlla il contrasto WCAG AA (almeno 4,5:1) di testo, pulsanti e nodi in tutti gli stili, chiari e scuri.
 - **Cosa può rompersi**: un token mancante in un blocco (il test lo segnala) o un colore con contrasto troppo basso.
 
+**13b. Cambiare il dock della home**
+- **Dove**: i riquadri sono in [StudyDock.tsx](src/components/StudyDock.tsx), il timer in [StudyTimer.tsx](src/components/StudyTimer.tsx) (durata in `SESSION_SECONDS`), i dati si calcolano in [library/page.tsx](src/app/(app)/library/page.tsx). I colori sono i token `--dock-*` di [globals.css](src/app/globals.css), uno per stile.
+- **Carte da ripassare**: oggi sono le carte segnate "non so" più quelle mai ripassate. Con la ripetizione dilazionata (Fase 2) diventeranno le carte in scadenza oggi.
+- **Data dell'esame**: colonna `profiles.exam_date`, scrivibile dal client (migrazione `20261019000200_exam_date.sql`); si imposta in Impostazioni → Esame.
+- **Verifica**: `tokens.test.ts` controlla il contrasto del testo sui riquadri; `dates.test.ts` il conto dei giorni.
+
 **14. Aggiornare gli screenshot della landing**
 - **Come**: lancia `npm run shots`. Crea un utente temporaneo sul progetto di test, usa l'AI finta, salva le immagini in `public/landing/` e poi cancella l'utente.
 - **Prima**: ferma `npm run dev`.

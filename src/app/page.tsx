@@ -46,9 +46,9 @@ const STEPS: { line: string; text: string; proof?: ReactNode; accent?: boolean }
     proof: (
       <Image
         src="/landing/library.png"
-        alt="Libreria di StudyMap con mappe, flashcard da ripassare, documenti e generazioni AI del mese"
+        alt="Home di StudyMap con il mazzo da ripassare oggi, il conto alla rovescia dell'esame, il timer di studio, le mappe e i documenti"
         width={1208}
-        height={840}
+        height={905}
         sizes="(min-width: 1024px) 40vw, 100vw"
         className="w-full rounded-row bg-surface p-2"
       />

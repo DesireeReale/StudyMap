@@ -24,3 +24,11 @@ export function nextMonthStart(d = new Date()): string {
   const next = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1));
   return new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", timeZone: "UTC" }).format(next);
 }
+
+export function todayIso(d = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(d);
+}
+
+export function daysUntil(isoDate: string, d = new Date()): number {
+  return Math.round((Date.parse(isoDate) - Date.parse(todayIso(d))) / 86_400_000);
+}

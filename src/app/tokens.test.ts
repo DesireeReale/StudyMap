@@ -38,6 +38,10 @@ const PAIRS: [string, string][] = [
   ["text", "accent-soft"],
   ["text", "secondary"],
   ...NODE_ROLES.map((r): [string, string] => [`node-${r}-ink`, `node-${r}`]),
+  ...[1, 2, 3, 4].flatMap((i): [string, string][] => [
+    ["dock-ink", `dock-tile-${i}`],
+    ["dock-muted", `dock-tile-${i}`],
+  ]),
 ];
 
 describe.each(["corsia", "evidenziatore"])("%s tokens", (style) => {

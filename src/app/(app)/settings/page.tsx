@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { PLANS } from "@/config/plans";
-import { ConsentToggle, DeleteAccount } from "@/components/AccountActions";
+import { ConsentToggle, DeleteAccount, ExamDate } from "@/components/AccountActions";
 import { StylePicker } from "@/components/StyleSwitch";
 import { getAppStyle } from "@/lib/app-style";
 import { requireUser } from "@/lib/supabase/server";
@@ -57,6 +57,10 @@ export default async function SettingsPage() {
           </tbody>
         </table>
         {profile.plan === "free" && <p className="mt-4 text-sm text-muted">L&apos;abbonamento Pro sarà disponibile a breve.</p>}
+      </Section>
+
+      <Section id="esame" title="Esame" description="Nella home compare il conto alla rovescia dei giorni che mancano.">
+        <ExamDate userId={user.id} initial={profile.exam_date} />
       </Section>
 
       <Section id="stile" title="Stile" description="Come appaiono l'app e le mappe su questo dispositivo. Ogni stile ha una versione chiara e una scura, che segue il sistema.">
