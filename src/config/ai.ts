@@ -24,6 +24,7 @@ export const PROVIDERS = {
 
 // Prices are what this app actually pays: 0 on free tiers (Gemini free tier, OpenRouter :free).
 // The Gemini free tier is for development only: Google's terms require paid services for apps serving EEA users.
+// Gemini's OpenAI-compatible endpoint rejects our JSON schemas in json_schema mode, so it uses json_object + Zod.
 export const MODELS: ModelConfig[] = [
   {
     key: "gemini-flash",
@@ -33,7 +34,7 @@ export const MODELS: ModelConfig[] = [
     outputUsdPerMTok: 0,
     contextTokens: 1_000_000,
     vision: true,
-    structuredOutput: "json_schema",
+    structuredOutput: "json_object",
     usesDataForTraining: true,
     enabled: true,
   },
@@ -45,7 +46,7 @@ export const MODELS: ModelConfig[] = [
     outputUsdPerMTok: 0,
     contextTokens: 1_000_000,
     vision: true,
-    structuredOutput: "json_schema",
+    structuredOutput: "json_object",
     usesDataForTraining: true,
     enabled: true,
   },

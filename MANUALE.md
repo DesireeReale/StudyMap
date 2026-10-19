@@ -251,7 +251,7 @@ Sono in [client.ts:66-75](src/core/ai/client.ts:66).
 |---|---|---|
 | `temperature` | `0.3` | Compiti di estrazione: serve fedeltà al testo, non creatività. Valori più alti danno mappe più varie ma con più invenzioni. |
 | `max_tokens` | da `TASKS` in [ai.ts:83](src/config/ai.ts:83): 4000 per mappa e flashcard, 3000 per la trascrizione | Limita la lunghezza e il costo della risposta. Se è troppo basso il JSON viene troncato e la validazione fallisce. |
-| `response_format` | `json_schema` (Gemini, Mistral) o `json_object` (OpenRouter), dal campo `structuredOutput` del modello | Obbliga il modello a rispondere in JSON. |
+| `response_format` | `json_schema` (Mistral) o `json_object` (Gemini, OpenRouter: l'endpoint di Gemini rifiuta i nostri schemi in modalità `json_schema`, verificato il 19/10/2026), dal campo `structuredOutput` del modello | Obbliga il modello a rispondere in JSON. |
 | `timeout` | 90 s (`REQUEST_TIMEOUT_MS`) | Oltre questo tempo la chiamata conta come fallita e si passa al modello successivo. |
 | `maxRetries` | `0` nell'SDK | I retry li gestisce `complete()` cambiando modello. |
 
