@@ -1,40 +1,33 @@
-import Link from "next/link";
-import { SignOutButton } from "@/components/SignOutButton";
+import { AppNav } from "@/components/AppNav";
 import { aiMockEnabled } from "@/lib/ai";
 import { requireUser } from "@/lib/supabase/server";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
-  const { profile } = await requireUser();
+  const { user, profile } = await requireUser();
 
   return (
-    <>
-      <header className="border-b border-line bg-white">
-        <nav aria-label="Principale" className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-3">
-          <Link href="/library" className="text-lg font-bold text-brand">
-            StudyMap
-          </Link>
-          <Link href="/library" className="hover:underline">
-            Libreria
-          </Link>
-          <Link href="/settings" className="hover:underline">
-            Impostazioni
-          </Link>
-          <span className="ml-auto rounded-full bg-stone-100 px-3 py-1 text-sm font-bold uppercase">
-            {profile.plan}
-          </span>
-          <SignOutButton />
-        </nav>
-      </header>
-      {aiMockEnabled && (
-        <div role="alert" className="bg-red-700 px-4 py-2 text-center text-sm font-bold text-white">
-          Modalità demo (AI_MOCK=1): nessun modello AI viene chiamato e ogni documento produce la stessa mappa e le
-          stesse flashcard di esempio.
-        </div>
-      )}
-      <div role="note" className="bg-amber-50 px-4 py-2 text-center text-sm text-amber-950">
-        Non caricare dati di pazienti reali (nomi, cartelle cliniche, referti): usa solo materiale di studio.
+    <div className="flex min-h-dvh flex-col md:flex-row">
+      <a
+        href="#contenuto"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-sheet focus:px-4 focus:py-2"
+      >
+        Vai al contenuto
+      </a>
+      <AppNav email={user.email ?? ""} plan={profile.plan} />
+      <div className="flex min-w-0 flex-1 flex-col md:py-2 md:pr-2">
+        {aiMockEnabled && (
+          <p role="alert" className="mb-2 rounded-lg bg-pill-negative px-4 py-2 text-sm font-bold text-pill-negative-ink">
+            Modalità demo (AI_MOCK=1): nessun modello AI viene chiamato e ogni documento produce la stessa mappa e
+            le stesse flashcard di esempio.
+          </p>
+        )}
+        <main
+          id="contenuto"
+          className="flex-1 bg-sheet px-4 py-6 md:rounded-2xl md:border md:border-border md:px-8 md:py-9"
+        >
+          {children}
+        </main>
       </div>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
-    </>
+    </div>
   );
 }

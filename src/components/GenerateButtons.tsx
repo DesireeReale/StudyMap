@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Icon } from "./icons";
 import { UpgradeNotice } from "./UpgradeNotice";
 
 type Kind = "mindmap" | "flashcards";
@@ -31,16 +32,18 @@ export function GenerateButtons({ documentId }: { documentId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-3">
-        <button type="button" className="btn-primary" disabled={!!busy} onClick={() => generate("mindmap")}>
-          {busy === "mindmap" ? "Creo la mappa…" : "Genera mappa concettuale"}
-        </button>
+    <div className="flex max-w-md flex-col items-start gap-2 sm:items-end">
+      <div className="flex flex-wrap gap-2">
         <button type="button" className="btn-secondary" disabled={!!busy} onClick={() => generate("flashcards")}>
+          <Icon name="cards" />
           {busy === "flashcards" ? "Creo le flashcard…" : "Genera flashcard"}
         </button>
+        <button type="button" className="btn-primary" disabled={!!busy} onClick={() => generate("mindmap")}>
+          <Icon name="map" />
+          {busy === "mindmap" ? "Creo la mappa…" : "Genera mappa concettuale"}
+        </button>
       </div>
-      <p aria-live="polite" className="text-sm text-muted">
+      <p aria-live="polite" className="text-sm text-muted empty:hidden">
         {busy ? "Può richiedere fino a un minuto per i documenti lunghi." : ""}
       </p>
       {problem && <UpgradeNotice message={problem.message} upgrade={problem.upgrade} />}

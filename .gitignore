@@ -49,3 +49,8 @@ next-env.d.ts
 
 # local Claude settings
 .claude/settings.local.json
+
+# design skill (restore with: npx skills experimental_install) and its working files
+/.claude/skills/
+/.agents/
+/.taste-skill/

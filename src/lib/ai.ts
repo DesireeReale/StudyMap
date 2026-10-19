@@ -19,7 +19,7 @@ const hasKey = (m: ModelConfig) => !!process.env[PROVIDERS[m.provider].apiKeyEnv
 
 export function aiContextFor(profile: Profile): AiContext {
   const admin = supabaseAdmin();
-  const consent = !!profile.ai_data_sharing_consent_at;
+  const consent = aiMockEnabled || !!profile.ai_data_sharing_consent_at;
   const keyFilter = aiMockEnabled ? undefined : hasKey;
   return {
     chain: modelChain(profile.plan, { consent, hasKey: keyFilter }),

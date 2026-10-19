@@ -43,39 +43,44 @@ export function LoginForm() {
   }
 
   return (
-    <div className="card flex flex-col gap-5">
+    <div className="panel flex flex-col gap-5">
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 font-bold">
-          Email
-          <input name="email" type="email" required autoComplete="email" className="field font-normal" />
-        </label>
-        <label className="flex flex-col gap-1 font-bold">
-          Password
+        <div className="flex flex-col gap-2">
+          <label htmlFor="login-email" className="label">
+            Email
+          </label>
+          <input id="login-email" name="email" type="email" required autoComplete="email" className="field h-11" />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="login-password" className="label">
+            Password
+          </label>
           <input
+            id="login-password"
             name="password"
             type="password"
             required
             minLength={8}
             autoComplete={mode === "signin" ? "current-password" : "new-password"}
-            className="field font-normal"
+            className="field h-11"
           />
-        </label>
+        </div>
         {error && (
-          <p role="alert" className="text-danger">
+          <p role="alert" className="text-sm text-negative">
             {error}
           </p>
         )}
-        {info && <p role="status">{info}</p>}
-        <button type="submit" className="btn-primary" disabled={busy}>
+        {info && <p role="status" className="text-sm">{info}</p>}
+        <button type="submit" className="btn-primary h-11" disabled={busy}>
           {mode === "signin" ? "Accedi" : "Crea account"}
         </button>
       </form>
-      <button type="button" className="btn-secondary" onClick={google}>
+      <button type="button" className="btn-secondary h-11" onClick={google}>
         Continua con Google
       </button>
       <button
         type="button"
-        className="text-brand underline"
+        className="cursor-pointer text-sm font-bold text-accent hover:underline"
         onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
       >
         {mode === "signin" ? "Non hai un account? Registrati" : "Hai già un account? Accedi"}

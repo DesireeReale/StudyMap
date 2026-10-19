@@ -66,13 +66,15 @@ export function UploadForm({ userId, maxUploadBytes }: { userId: string; maxUplo
   }
 
   return (
-    <form onSubmit={onSubmit} className="card flex flex-col gap-4" aria-busy={busy}>
-      <fieldset className="flex gap-2">
+    <form onSubmit={onSubmit} className="panel flex flex-col gap-4" aria-busy={busy}>
+      <fieldset className="flex w-fit gap-1 rounded-full bg-sheet p-1">
         <legend className="sr-only">Tipo di materiale</legend>
         {(["file", "text"] as const).map((m) => (
           <label
             key={m}
-            className={`btn cursor-pointer has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-accent ${mode === m ? "bg-brand text-white" : "border border-line"}`}
+            className={`flex h-9 cursor-pointer items-center rounded-full px-4 text-[15px] transition-colors duration-150 has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--focus)] ${
+              mode === m ? "bg-primary font-bold text-on-primary" : "text-muted hover:text-ink"
+            }`}
           >
             <input
               type="radio"
@@ -87,28 +89,39 @@ export function UploadForm({ userId, maxUploadBytes }: { userId: string; maxUplo
         ))}
       </fieldset>
 
-      <label className="flex flex-col gap-1 font-bold">
-        Titolo{mode === "file" && <span className="font-normal text-muted"> (facoltativo)</span>}
-        <input name="title" required={mode === "text"} maxLength={200} className="field font-normal" />
-      </label>
+      <div className="flex flex-col gap-2">
+        <label htmlFor="upload-title" className="label">
+          Titolo{mode === "file" && <span className="font-normal text-muted"> (facoltativo)</span>}
+        </label>
+        <input id="upload-title" name="title" required={mode === "text"} maxLength={200} className="field" />
+      </div>
 
       {mode === "file" ? (
-        <label className="flex flex-col gap-1 font-bold">
-          File (PDF, PNG, JPEG, WebP)
+        <div className="flex flex-col gap-2">
+          <label htmlFor="upload-file" className="label">
+            File
+          </label>
           <input
+            id="upload-file"
             name="file"
             type="file"
             required
             accept={Object.keys(ACCEPT).join(",")}
-            className="field font-normal"
+            aria-describedby="upload-file-help"
+            className="field h-auto py-2 file:mr-3 file:h-8 file:cursor-pointer file:rounded-full file:border-0 file:bg-secondary file:px-4 file:font-bold file:text-ink"
             data-testid="file-input"
           />
-        </label>
+          <p id="upload-file-help" className="text-[13px] text-muted">
+            PDF, PNG, JPEG o WebP, fino a {Math.round(maxUploadBytes / 1024 / 1024)} MB.
+          </p>
+        </div>
       ) : (
-        <label className="flex flex-col gap-1 font-bold">
-          Testo
-          <textarea name="text" required minLength={20} rows={8} className="field font-normal" />
-        </label>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="upload-text" className="label">
+            Testo
+          </label>
+          <textarea id="upload-text" name="text" required minLength={20} rows={10} className="field h-auto py-2 leading-relaxed" />
+        </div>
       )}
 
       {problem && <UpgradeNotice message={problem.message} upgrade={problem.upgrade} />}

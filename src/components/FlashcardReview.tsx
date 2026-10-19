@@ -42,13 +42,15 @@ export function FlashcardReview({ cards: initial }: { cards: Card[] }) {
 
   if (done) {
     const unknown = queue.filter((c) => results[c.id] === "unknown");
+    const knownCount = queue.length - unknown.length;
     return (
-      <div className="card flex flex-col items-start gap-4" role="status">
-        <p className="text-xl font-bold">Ripasso completato</p>
-        <p>
-          Sapevi {queue.length - unknown.length} flashcard su {queue.length}.
+      <div className="panel flex flex-col items-start gap-4" role="status">
+        <p className="text-[20px] font-bold">Ripasso finito</p>
+        <p className="num text-[15px]">
+          Sapevi <span className="font-bold text-accent">{knownCount}</span> flashcard su {queue.length}
+          {unknown.length > 0 ? `; ${unknown.length} da rivedere.` : "."}
         </p>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
           {unknown.length > 0 && (
             <button
               type="button"
@@ -80,29 +82,37 @@ export function FlashcardReview({ cards: initial }: { cards: Card[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-muted" aria-live="polite">
-        Flashcard {index + 1} di {queue.length}
-      </p>
+      <div className="flex flex-col gap-2">
+        <p className="num text-sm text-muted" aria-live="polite">
+          Flashcard <span className="text-ink">{index + 1}</span> di {queue.length}
+        </p>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-rule" aria-hidden="true">
+          <span className="block h-full rounded-full bg-accent transition-[width] duration-200" style={{ width: `${(index / queue.length) * 100}%` }} />
+        </div>
+      </div>
       <button
         type="button"
         onClick={() => setFlipped((f) => !f)}
         aria-label={flipped ? "Mostra la domanda" : "Mostra la risposta"}
-        className="card flex min-h-56 flex-col items-center justify-center gap-3 text-center text-xl hover:border-brand"
+        className={`flex min-h-64 cursor-pointer flex-col justify-between gap-6 rounded-card border p-6 text-left transition-colors duration-150 md:p-8 ${
+          flipped ? "border-accent bg-accent-soft" : "border-border bg-surface hover:border-control"
+        }`}
       >
-        <span className="text-sm font-bold uppercase text-muted">{flipped ? "Risposta" : "Domanda"}</span>
-        <span aria-live="polite">{flipped ? card!.back : card!.front}</span>
+        <span className="text-sm text-muted">{flipped ? "Risposta" : "Domanda"}</span>
+        <span aria-live="polite" className="text-[22px] leading-snug md:text-[24px]">
+          {flipped ? card!.back : card!.front}
+        </span>
+        <span className="text-sm text-muted">{flipped ? "Tocca per rivedere la domanda" : "Tocca o premi Spazio per la risposta"}</span>
       </button>
-      {flipped ? (
-        <div className="flex gap-3">
-          <button type="button" className="btn-danger flex-1" onClick={() => answer("unknown")} aria-keyshortcuts="1">
-            Non lo so
+      {flipped && (
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" className="btn-secondary h-12" onClick={() => answer("unknown")} aria-keyshortcuts="1">
+            Non lo so <span className="text-sm font-normal text-muted">1</span>
           </button>
-          <button type="button" className="btn-primary flex-1" onClick={() => answer("known")} aria-keyshortcuts="2">
-            Lo so
+          <button type="button" className="btn-primary h-12" onClick={() => answer("known")} aria-keyshortcuts="2">
+            Lo so <span className="text-sm font-normal opacity-70">2</span>
           </button>
         </div>
-      ) : (
-        <p className="text-sm text-muted">Premi Spazio o tocca la carta per vedere la risposta.</p>
       )}
     </div>
   );

@@ -207,6 +207,31 @@ No test calls a real model: the test setup forces `AI_MOCK=1`.
 
 Free Supabase projects are paused after about a week without activity; restore the test project from the dashboard if the tests can't connect.
 
+## Design
+
+The UI follows the "tasteskill" app-screen and page rules (style `editorial-greeting` for the app, `sentence-as-layout` for the landing page).
+
+- **Colour and type tokens.** They live in `src/app/globals.css`: light and dark values, plus the shared `btn-*`, `panel`, `row-card` and `field` utilities. Components use the tokens, never raw hex values.
+- **Concept-map node colours.** They are in `NODE_COLORS` in `src/core/graph.ts`. Label colour is chosen automatically for contrast.
+- **Font.** Atkinson Hyperlegible, kept for readability (dyslexia-friendly).
+- **Landing-page screenshots.** The screenshots in `public/landing/` are real app screens with sample content. Regenerate them after UI changes; this uses the Supabase test project and fake AI:
+
+  ```bash
+  npm run shots
+  ```
+
+- **Design skill (optional).** It is restored with:
+
+  ```bash
+  npx skills experimental_install
+  ```
+
+  To check the landing page, run its inspector:
+
+  ```bash
+  node .claude/skills/design-taste-frontend/scripts/inspect.mjs http://localhost:3000/
+  ```
+
 ## Privacy and security
 
 - RLS on every table and on storage. Users can only read and write their own rows and their own `{uid}/` storage folder.

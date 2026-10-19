@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import { Icon } from "./icons";
 
 export function DeleteButton({
   table,
@@ -33,10 +34,11 @@ export function DeleteButton({
   return (
     <div>
       <button type="button" className="btn-danger" onClick={onClick}>
+        <Icon name="trash" />
         {label}
       </button>
       {error && (
-        <p role="alert" className="mt-2 text-danger">
+        <p role="alert" className="mt-2 text-sm text-negative">
           {error}
         </p>
       )}

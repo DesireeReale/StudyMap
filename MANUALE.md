@@ -474,6 +474,15 @@ Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/
 
 ---
 
+**13. Cambiare colori, caratteri o stile dei componenti**
+- **Dove**: i token (colori chiari e scuri, raggi) e le classi comuni (`btn-primary`, `btn-secondary`, `panel`, `row-card`, `field`) sono in [src/app/globals.css](src/app/globals.css). I colori dei nodi della mappa sono in `NODE_COLORS` in [src/core/graph.ts](src/core/graph.ts).
+- **Verifica**: controlla il contrasto in modalità chiara e scura.
+- **Cosa può rompersi**: un colore di nodo troppo chiaro o troppo scuro. Il colore del testo dei nodi viene scelto in automatico da `textColorFor`.
+
+**14. Aggiornare gli screenshot della landing**
+- **Come**: lancia `npm run shots`. Crea un utente temporaneo sul progetto di test, usa l'AI finta, salva le immagini in `public/landing/` e poi cancella l'utente.
+- **Prima**: ferma `npm run dev`.
+
 ## 7. Debug
 
 - **Log**: gli errori delle API finiscono nella console del server (`npm run dev`), con `console.error("generation failed", e)` e `"ingest failed"`. I fallimenti delle chiamate LLM sono anche nella tabella `ai_usage` (`ok = false`, colonna `error`). Si vede dalla dashboard di Supabase (Table Editor), dove trovi anche i log di Auth e API (Logs).

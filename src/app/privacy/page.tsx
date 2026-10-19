@@ -5,11 +5,11 @@ export const metadata: Metadata = { title: "Informativa privacy" };
 
 export default function PrivacyPage() {
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12 [&_h2]:mt-8 [&_h2]:mb-2 [&_h2]:text-xl [&_h2]:font-bold [&_li]:ml-5 [&_li]:list-disc">
-      <Link href="/" className="text-brand underline">
+    <main className="mx-auto max-w-2xl px-4 py-12 text-[17px] leading-relaxed md:py-20 [&_h2]:mt-10 [&_h2]:mb-2 [&_h2]:text-[20px] [&_h2]:font-bold [&_li]:ml-5 [&_li]:list-disc">
+      <Link href="/" className="text-sm font-bold text-accent hover:underline">
         ← StudyMap
       </Link>
-      <h1 className="mt-4 text-3xl font-bold">Informativa privacy</h1>
+      <h1 className="mt-6 text-[32px] leading-tight font-bold">Informativa privacy</h1>
       <p className="mt-2 text-muted">Bozza da completare con i dati del titolare prima della pubblicazione.</p>
 
       <h2>Quali dati trattiamo</h2>

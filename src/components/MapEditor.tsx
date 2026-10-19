@@ -21,7 +21,8 @@ import {
 import "@xyflow/react/dist/style.css";
 import { toPng } from "html-to-image";
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { NODE_COLORS, layoutGraph, type Graph } from "@/core/graph";
+import { NODE_COLORS, NODE_COLOR_NAMES, layoutGraph, textColorFor, type Graph } from "@/core/graph";
+import { Icon } from "./icons";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
 type ConceptNode = Node<{ label: string; color: string }, "concept">;
@@ -38,9 +39,9 @@ function ConceptNodeView({ id, data, selected }: NodeProps<ConceptNode>) {
   return (
     <div
       onDoubleClick={() => startEditing(id)}
-      style={{ background: data.color }}
-      className={`min-w-[120px] max-w-[260px] rounded-lg px-4 py-2 text-center font-bold text-white shadow ${
-        selected ? "ring-3 ring-accent ring-offset-2" : ""
+      style={{ background: data.color, color: textColorFor(data.color) }}
+      className={`max-w-[260px] min-w-[120px] rounded-xl border border-black/10 px-4 py-2.5 text-center text-[15px] leading-snug font-bold ${
+        selected ? "outline-3 outline-offset-3 outline-[var(--focus)]" : ""
       }`}
     >
       <Handle type="target" position={Position.Top} />
@@ -49,7 +50,7 @@ function ConceptNodeView({ id, data, selected }: NodeProps<ConceptNode>) {
           ref={focusWhenVisible}
           defaultValue={data.label}
           aria-label="Nome del concetto"
-          className="nodrag w-full rounded bg-white px-1 text-ink"
+          className="nodrag w-full rounded-md bg-sheet px-1.5 py-0.5 text-ink"
           onKeyDown={(e) => {
             e.stopPropagation();
             if (e.key === "Enter") rename(id, e.currentTarget.value);
@@ -174,12 +175,12 @@ function Editor({
     const parent = selected[0] ?? nodes[0];
     const id = crypto.randomUUID().slice(0, 8);
     const siblings = parent ? edges.filter((e) => e.source === parent.id).length : 0;
-    const colorIndex = parent ? Math.min(NODE_COLORS.indexOf(parent.data.color) + 1, NODE_COLORS.length - 1) : 0;
+    const childColor: Record<string, string> = { "#1f201d": "#1b6e66", "#1b6e66": "#d4e9e5" };
     const node: ConceptNode = {
       id,
       type: "concept",
       position: parent ? { x: parent.position.x + siblings * 40, y: parent.position.y + 120 } : { x: 0, y: 0 },
-      data: { label: "Nuovo concetto", color: NODE_COLORS[Math.max(colorIndex, 0)]! },
+      data: { label: "Nuovo concetto", color: parent ? (childColor[parent.data.color] ?? "#e6e8e7") : "#1f201d" },
       selected: true,
     };
     setNodes((ns) => [...ns.map((n) => ({ ...n, selected: false })), node]);
@@ -205,7 +206,7 @@ function Editor({
     const vp = getViewportForBounds(bounds, width, height, 0.2, 2, 0.08);
     const viewport = document.querySelector<HTMLElement>(".react-flow__viewport")!;
     const dataUrl = await toPng(viewport, {
-      backgroundColor: "#ffffff",
+      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--sheet").trim() || "#ffffff",
       width,
       height,
       skipFonts: true,
@@ -244,27 +245,29 @@ function Editor({
     <EditingContext value={{ editingId, rename, startEditing: setEditingId }}>
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex-1">
+          <h1 className="sr-only">Mappa: {mapTitle}</h1>
+          <label className="min-w-0 flex-1">
             <span className="sr-only">Titolo della mappa</span>
             <input
               value={mapTitle}
               onChange={(e) => setMapTitle(e.target.value)}
               maxLength={200}
-              className="field text-xl font-bold"
+              className="h-11 w-full rounded-field border border-transparent bg-transparent px-2 text-[24px] font-bold text-ink hover:border-border focus:border-control"
             />
           </label>
-          <span role="status" className={status === "error" ? "text-danger" : "text-muted"}>
+          <span role="status" className={`text-sm ${status === "error" ? "text-negative" : "text-muted"}`}>
             {statusText}
           </span>
         </div>
 
         <div role="toolbar" aria-label="Strumenti della mappa" className="flex flex-wrap items-center gap-2">
           <button type="button" className="btn-secondary" onClick={addChild}>
-            + Concetto
+            <Icon name="plus" />
+            Concetto
           </button>
           <button
             type="button"
-            className="btn-secondary"
+            className="btn-ghost"
             disabled={selected.length !== 1}
             aria-keyshortcuts="F2"
             onClick={() => setEditingId(selected[0]!.id)}
@@ -273,42 +276,47 @@ function Editor({
           </button>
           <button
             type="button"
-            className="btn-secondary"
+            className="btn-ghost"
             disabled={!selected.length}
             aria-keyshortcuts="Delete"
             onClick={() => deleteElements({ nodes: selected })}
           >
+            <Icon name="trash" />
             Elimina
           </button>
-          <span className="flex items-center gap-1" role="group" aria-label="Colore del concetto selezionato">
+          <span className="flex items-center gap-1.5 px-1" role="group" aria-label="Colore del concetto selezionato">
             {NODE_COLORS.map((c) => (
               <button
                 key={c}
                 type="button"
                 disabled={!selected.length}
                 onClick={() => setColor(c)}
-                aria-label={`Colore ${c}`}
-                className="size-7 rounded-full border-2 border-white shadow disabled:opacity-40"
+                aria-label={`Colore ${NODE_COLOR_NAMES[c] ?? c}`}
+                title={NODE_COLOR_NAMES[c]}
+                className="size-8 cursor-pointer rounded-full border border-black/15 transition-transform duration-150 hover:scale-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
                 style={{ background: c }}
               />
             ))}
           </span>
-          <button type="button" className="btn-secondary" onClick={relayout}>
+          <button type="button" className="btn-ghost" onClick={relayout}>
+            <Icon name="layout" />
             Riordina
           </button>
           <span className="ml-auto flex gap-2">
             <button type="button" className="btn-secondary" onClick={exportPng}>
-              Esporta PNG
+              <Icon name="download" />
+              PNG
             </button>
             {exportOptions.pdf && (
               <button type="button" className="btn-secondary" onClick={exportPdf}>
-                Esporta PDF
+                <Icon name="download" />
+                PDF
               </button>
             )}
           </span>
         </div>
 
-        <div className="h-[70vh] rounded-xl border border-line bg-white" onKeyDown={onKeyDown}>
+        <div className="h-[calc(100dvh-260px)] min-h-[420px] overflow-hidden rounded-row border border-border bg-sheet" onKeyDown={onKeyDown}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -317,23 +325,25 @@ function Editor({
             onEdgesChange={onEdgesChange}
             onConnect={(c: Connection) => setEdges((es) => addEdge(c, es))}
             deleteKeyCode={editingId ? null : ["Delete", "Backspace"]}
+            colorMode="system"
+            style={{ backgroundColor: "transparent" }}
             defaultEdgeOptions={{
-              style: { stroke: "#64748b", strokeWidth: 1.5 },
-              labelStyle: { fontSize: 13, fill: "#1c2430" },
-              labelBgStyle: { fill: "#ffffff" },
+              style: { stroke: "var(--control)", strokeWidth: 1.5 },
+              labelStyle: { fontSize: 13, fill: "var(--text)" },
+              labelBgStyle: { fill: "var(--sheet)" },
               labelBgPadding: [4, 2],
             }}
             fitView
             minZoom={0.1}
             ariaLabelConfig={{ "node.a11yDescription.default": "Premi Invio o F2 per rinominare, Canc per eliminare, frecce per spostare." }}
           >
-            <Background />
+            <Background color="var(--control)" />
             <Controls showInteractive={false} />
           </ReactFlow>
         </div>
         <p className="text-sm text-muted">
-          Doppio clic o F2 per rinominare · trascina dal pallino inferiore per collegare due concetti · Canc per
-          eliminare.
+          Doppio clic o F2 per rinominare · trascina dal pallino inferiore di un concetto per collegarlo a un altro · Canc
+          per eliminare.
         </p>
       </div>
     </EditingContext>

@@ -1,66 +1,104 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { PLANS } from "@/config/plans";
-import { AccountActions } from "@/components/AccountActions";
+import { ConsentToggle, DeleteAccount } from "@/components/AccountActions";
 import { requireUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Impostazioni" };
+
+const fmt = (n: number) => (Number.isFinite(n) ? String(n) : "illimitati");
 
 export default async function SettingsPage() {
   const { profile, user } = await requireUser();
   const free = PLANS.free;
   const pro = PLANS.pro;
+  const rows: [string, string, string][] = [
+    ["Generazioni AI al mese", fmt(free.generationsPerMonth), fmt(pro.generationsPerMonth)],
+    ["Pagine per PDF", fmt(free.maxPdfPages), fmt(pro.maxPdfPages)],
+    ["Documenti salvati", fmt(free.maxDocuments), fmt(pro.maxDocuments)],
+    ["Esportazione", "PNG con marchio", "PNG e PDF"],
+  ];
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8">
-      <h1 className="text-3xl font-bold">Impostazioni</h1>
-      <p>Account: {user.email}</p>
+    <div className="mx-auto flex max-w-[1100px] flex-col">
+      <header className="mb-8">
+        <h1 className="text-[24px] leading-tight font-bold">Impostazioni</h1>
+        <p className="mt-1 text-[15px] text-muted">{user.email}</p>
+      </header>
 
-      <section id="piano" className="card" aria-labelledby="plan">
-        <h2 id="plan" className="mb-2 text-xl font-bold">
-          Il tuo piano: {profile.plan === "pro" ? "Pro" : "Free"}
-        </h2>
-        <table className="w-full text-left">
+      <Section id="piano" title="Piano" description={`Sei sul piano ${profile.plan === "pro" ? "Pro" : "Free"}.`}>
+        <table className="num w-full text-left text-sm">
           <thead>
-            <tr>
-              <th scope="col"></th>
-              <th scope="col">Free</th>
-              <th scope="col">Pro</th>
+            <tr className="text-muted">
+              <th scope="col" className="pb-2 font-normal">
+                <span className="sr-only">Funzione</span>
+              </th>
+              <th scope="col" className={`pb-2 text-right font-normal ${profile.plan === "free" ? "font-bold text-ink" : ""}`}>
+                Free
+              </th>
+              <th scope="col" className={`pb-2 text-right font-normal ${profile.plan === "pro" ? "font-bold text-ink" : ""}`}>
+                Pro
+              </th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <th scope="row">Generazioni AI al mese</th>
-              <td>{free.generationsPerMonth}</td>
-              <td>{pro.generationsPerMonth}</td>
-            </tr>
-            <tr>
-              <th scope="row">Pagine per PDF</th>
-              <td>{free.maxPdfPages}</td>
-              <td>{pro.maxPdfPages}</td>
-            </tr>
-            <tr>
-              <th scope="row">Documenti salvati</th>
-              <td>{free.maxDocuments}</td>
-              <td>illimitati</td>
-            </tr>
-            <tr>
-              <th scope="row">Esportazione</th>
-              <td>PNG con marchio</td>
-              <td>PNG e PDF</td>
-            </tr>
+            {rows.map(([label, f, p]) => (
+              <tr key={label} className="border-t border-rule">
+                <th scope="row" className="py-2.5 font-normal">
+                  {label}
+                </th>
+                <td className="py-2.5 text-right">{f}</td>
+                <td className="py-2.5 text-right">{p}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
-        {profile.plan === "free" && <p className="mt-3 text-muted">L&apos;abbonamento Pro sarà disponibile a breve.</p>}
-      </section>
+        {profile.plan === "free" && <p className="mt-4 text-sm text-muted">L&apos;abbonamento Pro sarà disponibile a breve.</p>}
+      </Section>
 
-      <AccountActions consentAt={profile.ai_data_sharing_consent_at} />
+      <Section
+        title="Dati e AI"
+        description={
+          <>
+            Cosa può succedere ai materiali che carichi.{" "}
+            <Link href="/privacy" className="font-bold text-accent hover:underline">
+              Informativa privacy
+            </Link>
+          </>
+        }
+      >
+        <ConsentToggle consentAt={profile.ai_data_sharing_consent_at} />
+      </Section>
 
-      <p>
-        <Link href="/privacy" className="text-brand underline">
-          Informativa privacy
-        </Link>
-      </p>
+      <Section
+        title="Elimina account"
+        description="Cancella in modo permanente account, documenti, file caricati, mappe e flashcard. Non si può annullare."
+      >
+        <DeleteAccount />
+      </Section>
     </div>
+  );
+}
+
+function Section({
+  id,
+  title,
+  description,
+  children,
+}: {
+  id?: string;
+  title: string;
+  description: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section id={id} aria-label={title} className="grid gap-4 border-t border-border py-8 first-of-type:border-t-0 first-of-type:pt-0 lg:grid-cols-12">
+      <div className="lg:col-span-4 lg:pt-1.5">
+        <h2 className="text-base font-bold">{title}</h2>
+        <p className="mt-1 text-sm text-muted">{description}</p>
+      </div>
+      <div className="panel p-5 lg:col-span-8">{children}</div>
+    </section>
   );
 }

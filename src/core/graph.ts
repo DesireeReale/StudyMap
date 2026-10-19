@@ -9,7 +9,37 @@ export type GraphNode = {
 export type GraphEdge = { id: string; source: string; target: string; label?: string };
 export type Graph = { nodes: GraphNode[]; edges: GraphEdge[] };
 
-export const NODE_COLORS = ["#1d4ed8", "#047857", "#b45309", "#7e22ce", "#be123c", "#334155"];
+export const NODE_COLORS = ["#1f201d", "#1b6e66", "#d4e9e5", "#2f4f6f", "#f3dcdc", "#e6e8e7"];
+
+export const NODE_COLOR_NAMES: Record<string, string> = {
+  "#1f201d": "inchiostro",
+  "#1b6e66": "verde acqua",
+  "#d4e9e5": "verde acqua chiaro",
+  "#2f4f6f": "blu ardesia",
+  "#f3dcdc": "rosa chiaro",
+  "#e6e8e7": "grigio chiaro",
+};
+
+const DEPTH_COLORS = ["#1f201d", "#1b6e66", "#d4e9e5", "#e6e8e7"];
+
+function luminance(hex: string): number {
+  const v = hex.replace("#", "");
+  const [r, g, b] = [0, 2, 4].map((i) => {
+    const c = parseInt(v.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+}
+
+const INK = "#1f201d";
+
+export function textColorFor(fill: string): string {
+  if (!/^#[0-9a-f]{6}$/i.test(fill)) return "#ffffff";
+  const l = luminance(fill);
+  const onWhite = 1.05 / (l + 0.05);
+  const onInk = (l + 0.05) / (luminance(INK) + 0.05);
+  return onInk > onWhite ? INK : "#ffffff";
+}
 
 export function nodeSize(label: string) {
   return { width: Math.min(260, Math.max(120, label.length * 8 + 32)), height: 48 };
@@ -47,7 +77,7 @@ export function mindMapToGraph(map: MindMap): Graph {
     nodes: map.nodes.map((n) => ({
       id: n.id,
       position: { x: 0, y: 0 },
-      data: { label: n.label, color: NODE_COLORS[Math.min(depthOf(n.id), NODE_COLORS.length - 1)]! },
+      data: { label: n.label, color: DEPTH_COLORS[Math.min(depthOf(n.id), DEPTH_COLORS.length - 1)]! },
     })),
     edges: map.nodes
       .filter((n) => n.parentId !== null)

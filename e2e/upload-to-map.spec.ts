@@ -26,6 +26,8 @@ test("log in, upload a PDF, generate and edit a concept map", async ({ page }) =
   await page.getByRole("button", { name: "Accedi", exact: true }).click();
   await expect(page).toHaveURL(/\/library/);
 
+  await page.getByRole("link", { name: "Carica materiale" }).first().click();
+  await expect(page).toHaveURL(/\/upload/);
   await page.getByLabel("Titolo").fill("Scompenso cardiaco");
   await page.getByTestId("file-input").setInputFiles(pdfPath);
   await page.getByRole("button", { name: "Carica" }).click();
