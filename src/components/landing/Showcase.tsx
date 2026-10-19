@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { MapArt } from "./MapArt";
 
 const STAGES = [
   { scale: 1, origin: "50% 50%" },
-  { scale: 1.9, origin: "52% 45%" },
-  { scale: 3.1, origin: "62% 72%" },
+  { scale: 1.6, origin: "50% 50%" },
+  { scale: 2.6, origin: "78% 76%" },
 ];
 
 export function Showcase() {
@@ -42,15 +42,12 @@ export function Showcase() {
         </h2>
         <div className="grid w-full max-w-[1100px] items-start gap-6 md:grid-cols-[minmax(0,1fr)_auto]">
           <div className="mx-auto aspect-[16/9] w-full max-w-[760px] overflow-hidden rounded-row bg-surface md:w-[54vw]">
-            <Image
-              src="/landing/map.png"
-              alt="Mappa concettuale sullo scompenso cardiaco generata da StudyMap, con cause, segni e sintomi e interventi infermieristici"
-              width={1140}
-              height={638}
-              sizes="(min-width: 768px) 54vw, 100vw"
-              className="size-full object-cover transition-transform duration-700 ease-out motion-reduce:transition-none"
+            <div
+              className="size-full transition-transform duration-700 ease-out motion-reduce:transition-none"
               style={{ transform: `scale(${s.scale})`, transformOrigin: s.origin }}
-            />
+            >
+              <MapArt label="Mappa concettuale sullo scompenso cardiaco: cause, segni e sintomi, interventi infermieristici ed educazione del paziente" />
+            </div>
           </div>
           <p
             className={`max-w-[28ch] text-[17px] leading-relaxed transition-opacity duration-500 ${

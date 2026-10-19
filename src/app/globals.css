@@ -303,6 +303,18 @@ h3,
   border-radius: 6px;
   box-shadow: 3px 3px 0 var(--node-line);
 }
+.map-art {
+  background-image: radial-gradient(var(--border) 1.5px, transparent 2px);
+  background-size: 24px 24px;
+}
+.map-art .edge-elbow,
+[data-style="evidenziatore"] .map-art .edge-curve {
+  display: none;
+}
+[data-style="evidenziatore"] .map-art .edge-elbow {
+  display: inline;
+}
+
 .react-flow {
   --xy-controls-button-background-color: var(--sheet);
   --xy-controls-button-background-color-hover: var(--active);

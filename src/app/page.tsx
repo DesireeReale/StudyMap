@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { PLANS } from "@/config/plans";
 import { BrandMark } from "@/components/icons";
 import { LiveCard } from "@/components/landing/LiveCard";
+import { MapArt } from "@/components/landing/MapArt";
 import { RevealOnScroll } from "@/components/landing/Motion";
 import { Showcase } from "@/components/landing/Showcase";
 import { getUser } from "@/lib/supabase/server";
@@ -30,13 +31,9 @@ const STEPS: { line: string; text: string; proof?: ReactNode; accent?: boolean }
     line: "Poi l'AI lo scompone in concetti.",
     text: "Ne esce una mappa in italiano, con la terminologia infermieristica e le relazioni scritte tra i concetti.",
     proof: (
-      <Image
-        src="/landing/map.png"
-        alt="Mappa concettuale con il nodo Scompenso cardiaco collegato a cause, segni e sintomi e interventi"
-        width={1140}
-        height={638}
-        sizes="(min-width: 1024px) 40vw, 100vw"
-        className="w-full rounded-row bg-surface p-2"
+      <MapArt
+        label="Mappa concettuale sullo scompenso cardiaco: cause, segni e sintomi, interventi infermieristici ed educazione del paziente"
+        className="rounded-row border-8 border-surface"
       />
     ),
   },
@@ -121,14 +118,7 @@ export default async function Home() {
                   aria-hidden="true"
                   className="relative inline-block h-[0.8em] w-[2.4em] translate-y-[0.06em] overflow-hidden rounded-[0.14em] bg-accent-soft align-baseline"
                 >
-                  <Image
-                    src="/landing/map.png"
-                    alt=""
-                    fill
-                    priority
-                    sizes="(min-width: 768px) 360px, 25vw"
-                    className="object-cover object-[50%_28%] mix-blend-multiply dark:mix-blend-normal"
-                  />
+                  <MapArt className="absolute top-1/2 left-1/2 w-[280%]! -translate-x-1/2 -translate-y-1/2" />
                 </span>
                 .
               </span>
