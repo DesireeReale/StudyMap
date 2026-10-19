@@ -114,7 +114,7 @@ export async function complete<T>(
   const chain = opts.vision ? ctx.visionChain : ctx.chain;
   if (!chain.length) {
     throw new AiUnavailableError(
-      "Nessun modello AI configurato: imposta MISTRAL_API_KEY (o un altro provider) nelle variabili d'ambiente.",
+      "Nessun modello AI disponibile: manca la chiave API del provider oppure, con i provider gratuiti, il consenso all'uso dei dati (Impostazioni).",
     );
   }
   let totalInput = 0;

@@ -19,21 +19,35 @@ export const PROVIDERS = {
   mistral: { baseURL: "https://api.mistral.ai/v1", apiKeyEnv: "MISTRAL_API_KEY" },
   openrouter: { baseURL: "https://openrouter.ai/api/v1", apiKeyEnv: "OPENROUTER_API_KEY" },
   meta: { baseURL: "https://api.meta.ai/v1", apiKeyEnv: "META_API_KEY" },
+  gemini: { baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/", apiKeyEnv: "GEMINI_API_KEY" },
 } as const;
 
-// Prices are what this app actually pays: 0 on free tiers (Mistral Experiment, OpenRouter :free).
+// Prices are what this app actually pays: 0 on free tiers (Gemini free tier, OpenRouter :free).
+// The Gemini free tier is for development only: Google's terms require paid services for apps serving EEA users.
 export const MODELS: ModelConfig[] = [
+  {
+    key: "gemini-flash",
+    provider: "gemini",
+    id: "gemini-flash-latest",
+    inputUsdPerMTok: 0,
+    outputUsdPerMTok: 0,
+    contextTokens: 1_000_000,
+    vision: true,
+    structuredOutput: "json_schema",
+    usesDataForTraining: true,
+    enabled: true,
+  },
   {
     key: "mistral-small",
     provider: "mistral",
     id: "mistral-small-2603",
-    inputUsdPerMTok: 0,
-    outputUsdPerMTok: 0,
+    inputUsdPerMTok: 0.15,
+    outputUsdPerMTok: 0.6,
     contextTokens: 256_000,
     vision: true,
     structuredOutput: "json_schema",
     usesDataForTraining: false,
-    enabled: true,
+    enabled: false,
   },
   {
     key: "openrouter-free",
@@ -74,8 +88,8 @@ export const MODELS: ModelConfig[] = [
 ];
 
 export const CHAINS: Record<PlanId, string[]> = {
-  free: ["muse-spark-contributor", "mistral-small", "openrouter-free"],
-  pro: ["muse-spark", "mistral-small", "openrouter-free"],
+  free: ["muse-spark-contributor", "mistral-small", "gemini-flash", "openrouter-free"],
+  pro: ["muse-spark", "mistral-small", "gemini-flash", "openrouter-free"],
 };
 
 export type TaskId = "mindmap" | "flashcards" | "transcribe";

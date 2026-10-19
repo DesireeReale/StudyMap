@@ -29,7 +29,7 @@ export function aiContextFor(profile: Profile): AiContext {
       const { error } = await admin.from("ai_usage").insert({
         user_id: profile.id,
         task: u.task,
-        provider: u.provider,
+        provider: aiMockEnabled ? "mock" : u.provider,
         model: u.model,
         prompt_version: u.promptVersion,
         input_tokens: u.inputTokens,

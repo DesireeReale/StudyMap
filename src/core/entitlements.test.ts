@@ -16,20 +16,20 @@ describe("modelChain", () => {
     modelChain(plan, { consent, vision }).map((m) => m.key);
 
   it("excludes models that train on data without consent", () => {
-    expect(keys("free", false)).toEqual(["mistral-small"]);
+    expect(keys("free", false)).toEqual([]);
   });
 
   it("includes them with consent", () => {
-    expect(keys("free", true)).toEqual(["mistral-small", "openrouter-free"]);
+    expect(keys("free", true)).toEqual(["gemini-flash", "openrouter-free"]);
   });
 
   it("filters vision-capable models", () => {
-    expect(keys("free", true, true)).toEqual(["mistral-small"]);
+    expect(keys("free", true, true)).toEqual(["gemini-flash"]);
   });
 
   it("skips disabled models and models without an API key", () => {
     expect(MODELS.find((m) => m.key === "muse-spark")?.enabled).toBe(false);
-    expect(modelChain("pro", { consent: true, hasKey: (m) => m.provider !== "mistral" }).map((m) => m.key)).toEqual([
+    expect(modelChain("pro", { consent: true, hasKey: (m) => m.provider !== "gemini" }).map((m) => m.key)).toEqual([
       "openrouter-free",
     ]);
   });

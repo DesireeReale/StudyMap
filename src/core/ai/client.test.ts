@@ -93,7 +93,7 @@ describe("complete", () => {
   it("explains when no model is configured", async () => {
     const { c } = ctx(async () => ok('{"answer":"x"}'));
     c.chain = [];
-    await expect(run(c)).rejects.toThrow("Nessun modello AI configurato");
+    await expect(run(c)).rejects.toThrow("Nessun modello AI disponibile");
     expect(c.chat).not.toHaveBeenCalled();
   });
 
