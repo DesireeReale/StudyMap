@@ -3,6 +3,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { DeleteButton } from "@/components/DeleteButton";
 import { MapEditor } from "@/components/MapEditor";
 import { exportOptions } from "@/core/entitlements";
+import { getAppStyle } from "@/lib/app-style";
 import { requireUser } from "@/lib/supabase/server";
 
 export default async function MapPage({ params }: PageProps<"/maps/[id]">) {
@@ -17,7 +18,9 @@ export default async function MapPage({ params }: PageProps<"/maps/[id]">) {
   return (
     <div className="flex flex-col gap-3">
       <Breadcrumb current={map.title} parent={doc ? { href: `/documents/${doc.id}`, label: doc.title } : undefined} />
-      <MapEditor mapId={map.id} title={map.title} graph={map.graph} exportOptions={exportOptions(profile.plan)} />
+      <MapEditor mapId={map.id} title={map.title} graph={map.graph} exportOptions={exportOptions(profile.plan)}
+        appStyle={await getAppStyle()}
+      />
       <div className="mt-6 flex justify-end border-t border-border pt-6">
         <DeleteButton table="maps" id={map.id} label="Elimina mappa" confirm={`Eliminare la mappa "${map.title}"?`} />
       </div>

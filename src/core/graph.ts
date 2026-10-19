@@ -1,5 +1,6 @@
 import dagre from "@dagrejs/dagre";
 import type { MindMap } from "./ai/schemas";
+import { NODE_ROLES, type NodeRole } from "./roles";
 
 export type GraphNode = {
   id: string;
@@ -9,36 +10,27 @@ export type GraphNode = {
 export type GraphEdge = { id: string; source: string; target: string; label?: string };
 export type Graph = { nodes: GraphNode[]; edges: GraphEdge[] };
 
-export const NODE_COLORS = ["#1f201d", "#1b6e66", "#d4e9e5", "#2f4f6f", "#f3dcdc", "#e6e8e7"];
+export { NODE_ROLES, type NodeRole };
 
-export const NODE_COLOR_NAMES: Record<string, string> = {
-  "#1f201d": "inchiostro",
-  "#1b6e66": "verde acqua",
-  "#d4e9e5": "verde acqua chiaro",
-  "#2f4f6f": "blu ardesia",
-  "#f3dcdc": "rosa chiaro",
-  "#e6e8e7": "grigio chiaro",
+const AREAS = ["area-1", "area-2", "area-3"] as const;
+
+const LEGACY_HEX: Record<string, NodeRole> = {
+  "#1f201d": "radice",
+  "#1d4ed8": "radice",
+  "#1b6e66": "area-2",
+  "#2f4f6f": "area-2",
+  "#d4e9e5": "area-3",
+  "#f3dcdc": "area-1",
+  "#e6e8e7": "neutro",
 };
 
-const DEPTH_COLORS = ["#1f201d", "#1b6e66", "#d4e9e5", "#e6e8e7"];
-
-function luminance(hex: string): number {
-  const v = hex.replace("#", "");
-  const [r, g, b] = [0, 2, 4].map((i) => {
-    const c = parseInt(v.slice(i, i + 2), 16) / 255;
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+export function nodeRole(color: string): NodeRole {
+  return (NODE_ROLES as readonly string[]).includes(color) ? (color as NodeRole) : (LEGACY_HEX[color.toLowerCase()] ?? "neutro");
 }
 
-const INK = "#1f201d";
-
-export function textColorFor(fill: string): string {
-  if (!/^#[0-9a-f]{6}$/i.test(fill)) return "#ffffff";
-  const l = luminance(fill);
-  const onWhite = 1.05 / (l + 0.05);
-  const onInk = (l + 0.05) / (luminance(INK) + 0.05);
-  return onInk > onWhite ? INK : "#ffffff";
+export function childRole(parent: NodeRole | undefined, siblings: number): NodeRole {
+  if (!parent) return "radice";
+  return parent === "radice" ? AREAS[siblings % AREAS.length]! : parent;
 }
 
 export function nodeSize(label: string) {
@@ -62,22 +54,28 @@ export function layoutGraph(graph: Graph): Graph {
 }
 
 export function mindMapToGraph(map: MindMap): Graph {
-  const depth = new Map<string, number>();
+  const role = new Map<string, NodeRole>();
   const byId = new Map(map.nodes.map((n) => [n.id, n]));
-  const depthOf = (id: string): number => {
-    const cached = depth.get(id);
-    if (cached !== undefined) return cached;
+  const siblings = new Map<string, number>();
+  const roleOf = (id: string): NodeRole => {
+    const cached = role.get(id);
+    if (cached) return cached;
     const parent = byId.get(id)?.parentId;
-    const d = parent ? depthOf(parent) + 1 : 0;
-    depth.set(id, d);
-    return d;
+    let r: NodeRole = "radice";
+    if (parent) {
+      const i = siblings.get(parent) ?? 0;
+      siblings.set(parent, i + 1);
+      r = childRole(roleOf(parent), i);
+    }
+    role.set(id, r);
+    return r;
   };
 
   return layoutGraph({
     nodes: map.nodes.map((n) => ({
       id: n.id,
       position: { x: 0, y: 0 },
-      data: { label: n.label, color: DEPTH_COLORS[Math.min(depthOf(n.id), DEPTH_COLORS.length - 1)]! },
+      data: { label: n.label, color: roleOf(n.id) },
     })),
     edges: map.nodes
       .filter((n) => n.parentId !== null)

@@ -180,7 +180,7 @@ export default async function Home() {
               className="reveal section-display"
             >
               Cinque generazioni al mese, per{" "}
-              <span className="inline-block rounded-[0.08em] bg-accent px-[0.15em] text-white">0&nbsp;€</span>.
+              <span className="inline-block rounded-[0.08em] bg-accent px-[0.15em] text-on-accent">0&nbsp;€</span>.
             </h2>
             <div data-reveal className="reveal mt-16 grid gap-8 lg:grid-cols-12 lg:items-end">
               <p className="text-[17px] leading-relaxed lg:col-span-6 lg:text-[20px]">
@@ -214,11 +214,11 @@ export default async function Home() {
         </section>
       </main>
 
-      <footer className="flex flex-col gap-32 bg-accent px-4 py-10 text-white md:gap-40 md:px-8">
+      <footer className="flex flex-col gap-32 bg-accent px-4 py-10 text-on-accent md:gap-40 md:px-8">
         <div className="mx-auto flex w-full max-w-[1376px] flex-wrap items-start justify-between gap-6 text-[17px]">
           <div className="flex flex-col gap-1">
             <p className="flex items-center gap-2 font-bold">StudyMap</p>
-            <p className="max-w-[40ch] text-white/90">Mappe concettuali e flashcard dai tuoi appunti, per chi studia Infermieristica.</p>
+            <p className="max-w-[40ch] text-on-accent/90">Mappe concettuali e flashcard dai tuoi appunti, per chi studia Infermieristica.</p>
           </div>
           <a href="#" className="font-bold underline-offset-4 hover:underline">
             Torna su
@@ -231,7 +231,7 @@ export default async function Home() {
           >
             Inizia a studiare.
           </Link>
-          <div className="mt-10 flex flex-col gap-2 text-[14px] text-white/90 md:flex-row md:justify-between">
+          <div className="mt-10 flex flex-col gap-2 text-[14px] text-on-accent/90 md:flex-row md:justify-between">
             <p className="flex gap-4">
               <Link href="/privacy" className="hover:underline">
                 Privacy

@@ -177,7 +177,7 @@ function Tile({ label, value, caption }: { label: string; value: number; caption
   return (
     <div className="panel flex min-h-[128px] flex-col justify-between p-4">
       <p className="text-sm text-muted">{label}</p>
-      <p className="num text-[32px] leading-none">{value}</p>
+      <p className="num font-mono text-[32px] leading-none">{value}</p>
       <p className="text-[13px] text-muted">{caption}</p>
     </div>
   );

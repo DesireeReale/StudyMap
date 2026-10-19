@@ -3,6 +3,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { PLANS } from "@/config/plans";
 import { ConsentToggle, DeleteAccount } from "@/components/AccountActions";
+import { StylePicker } from "@/components/StyleSwitch";
+import { getAppStyle } from "@/lib/app-style";
 import { requireUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Impostazioni" };
@@ -55,6 +57,10 @@ export default async function SettingsPage() {
           </tbody>
         </table>
         {profile.plan === "free" && <p className="mt-4 text-sm text-muted">L&apos;abbonamento Pro sarà disponibile a breve.</p>}
+      </Section>
+
+      <Section id="stile" title="Stile" description="Come appaiono l'app e le mappe su questo dispositivo. Ogni stile ha una versione chiara e una scura, che segue il sistema.">
+        <StylePicker initial={await getAppStyle()} />
       </Section>
 
       <Section

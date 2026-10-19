@@ -1,21 +1,6 @@
 @import "tailwindcss";
 
 :root {
-  --chrome: #f2f6f5;
-  --sheet: #ffffff;
-  --surface: #f2f6f5;
-  --raised: #ffffff;
-  --active: #e3eae8;
-  --border: #e3e8e6;
-  --rule: #edf1f0;
-  --control: #cfd6d3;
-  --text: #1f201d;
-  --muted: #5b5f5d;
-  --accent: #1b6e66;
-  --accent-soft: #d9ebe8;
-  --primary: #1f201d;
-  --on-primary: #ffffff;
-  --secondary: #e3e8e6;
   --positive: #247b50;
   --negative: #b42318;
   --pill-positive-bg: #dcfae5;
@@ -25,27 +10,85 @@
   --notice-bg: #fffbeb;
   --notice-border: #fde68a;
   --notice-ink: #92400e;
-  --focus: #1b6e66;
+  --mono-font: var(--font-plex-mono), ui-monospace, monospace;
   color-scheme: light;
+}
+
+[data-style="corsia"] {
+  --chrome: #f4f7fb;
+  --sheet: #ffffff;
+  --surface: #eaf0f8;
+  --raised: #ffffff;
+  --active: #dce5f2;
+  --border: #d9e2ee;
+  --rule: #e6edf6;
+  --control: #b3c2d6;
+  --text: #0f1b2d;
+  --muted: #4a5a70;
+  --accent: #1d5fd1;
+  --on-accent: #ffffff;
+  --accent-soft: #dbe7fb;
+  --primary: #1d5fd1;
+  --on-primary: #ffffff;
+  --secondary: #e1e9f4;
+  --focus: #1d5fd1;
+  --edge: #9aabc2;
+  --edge-width: 1.5px;
+  --node-radice: #1d5fd1;
+  --node-radice-ink: #ffffff;
+  --node-area-1: #fde7d6;
+  --node-area-1-ink: #0f1b2d;
+  --node-area-2: #dbe7fb;
+  --node-area-2-ink: #0f1b2d;
+  --node-area-3: #d5f0ea;
+  --node-area-3-ink: #0f1b2d;
+  --node-neutro: #eef1f5;
+  --node-neutro-ink: #0f1b2d;
+  --display-font: var(--font-lexend), system-ui, sans-serif;
+  --body-font: var(--font-lexend), system-ui, sans-serif;
+  --display-weight: 700;
+  --display-tracking: -0.04em;
+}
+
+[data-style="evidenziatore"] {
+  --chrome: #f6f5f0;
+  --sheet: #ffffff;
+  --surface: #f6f5f0;
+  --raised: #ffffff;
+  --active: #ebe9e1;
+  --border: #e2e0d8;
+  --rule: #eeece5;
+  --control: #c9c6bb;
+  --text: #121212;
+  --muted: #55534d;
+  --accent: #5b3fd6;
+  --on-accent: #ffffff;
+  --accent-soft: #fff3b0;
+  --primary: #121212;
+  --on-primary: #ffffff;
+  --secondary: #ebe9e1;
+  --focus: #5b3fd6;
+  --edge: #121212;
+  --edge-width: 2px;
+  --node-line: #121212;
+  --node-radice: #ffe45c;
+  --node-radice-ink: #121212;
+  --node-area-1: #8ef0c4;
+  --node-area-1-ink: #121212;
+  --node-area-2: #c9b6ff;
+  --node-area-2-ink: #121212;
+  --node-area-3: #ff9e8a;
+  --node-area-3-ink: #121212;
+  --node-neutro: #f4f2ea;
+  --node-neutro-ink: #121212;
+  --display-font: var(--font-bricolage), system-ui, sans-serif;
+  --body-font: var(--font-atkinson-next), system-ui, sans-serif;
+  --display-weight: 800;
+  --display-tracking: -0.045em;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --chrome: #0e1110;
-    --sheet: #151918;
-    --surface: #1d2221;
-    --raised: #151918;
-    --active: #262c2a;
-    --border: #2b3230;
-    --rule: #222826;
-    --control: #46504d;
-    --text: #f1f3f2;
-    --muted: #aeb5b2;
-    --accent: #6cc3b8;
-    --accent-soft: #1f3a36;
-    --primary: #f1f3f2;
-    --on-primary: #111312;
-    --secondary: #2b3230;
     --positive: #3fc07a;
     --negative: #f0877c;
     --pill-positive-bg: #172a1d;
@@ -55,13 +98,67 @@
     --notice-bg: #2a2212;
     --notice-border: #5c4614;
     --notice-ink: #f3c56b;
-    --focus: #6cc3b8;
     color-scheme: dark;
+  }
+
+  [data-style="corsia"] {
+    --chrome: #0d1520;
+    --sheet: #121c2a;
+    --surface: #172233;
+    --raised: #121c2a;
+    --active: #1f2c40;
+    --border: #24324a;
+    --rule: #1a2638;
+    --control: #3a4d6a;
+    --text: #e6edf7;
+    --muted: #a3b3c8;
+    --accent: #7fb0ff;
+    --on-accent: #0d1520;
+    --accent-soft: #1a2e4f;
+    --primary: #7fb0ff;
+    --on-primary: #0d1520;
+    --secondary: #24324a;
+    --focus: #7fb0ff;
+    --edge: #4f6584;
+    --node-radice: #7fb0ff;
+    --node-radice-ink: #0d1520;
+    --node-area-1: #4a2f1c;
+    --node-area-1-ink: #fde7d6;
+    --node-area-2: #1f3557;
+    --node-area-2-ink: #dbe7fb;
+    --node-area-3: #17403a;
+    --node-area-3-ink: #d5f0ea;
+    --node-neutro: #243147;
+    --node-neutro-ink: #e6edf7;
+  }
+
+  [data-style="evidenziatore"] {
+    --chrome: #17161c;
+    --sheet: #1e1d24;
+    --surface: #24232b;
+    --raised: #1e1d24;
+    --active: #2e2d36;
+    --border: #34333d;
+    --rule: #2a2931;
+    --control: #4f4d5a;
+    --text: #f4f2ea;
+    --muted: #b3b0a6;
+    --accent: #c9b6ff;
+    --on-accent: #121212;
+    --accent-soft: #3a3418;
+    --primary: #ffe45c;
+    --on-primary: #121212;
+    --secondary: #34333d;
+    --focus: #ffe45c;
+    --edge: #f4f2ea;
+    --node-line: #f4f2ea;
   }
 }
 
 @theme inline {
-  --font-sans: var(--font-atkinson), system-ui, sans-serif;
+  --font-sans: var(--body-font);
+  --font-display: var(--display-font);
+  --font-mono: var(--mono-font);
   --color-chrome: var(--chrome);
   --color-sheet: var(--sheet);
   --color-surface: var(--surface);
@@ -74,6 +171,7 @@
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
   --color-primary: var(--primary);
   --color-on-primary: var(--on-primary);
   --color-secondary: var(--secondary);
@@ -153,6 +251,44 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+h1,
+h2,
+h3,
+.section-display {
+  font-family: var(--display-font);
+}
+[data-style="evidenziatore"] :is(h1, .section-display, .step-line, .faq-q) {
+  font-weight: var(--display-weight);
+}
+
+.concept-node {
+  background: var(--node-bg);
+  color: var(--node-ink);
+}
+[data-style="corsia"] .concept-node {
+  border-radius: 14px;
+}
+[data-style="corsia"] .concept-node[data-role="radice"] {
+  border-radius: 999px;
+}
+[data-style="evidenziatore"] .concept-node {
+  border: 2px solid var(--node-line);
+  border-radius: 6px;
+  box-shadow: 3px 3px 0 var(--node-line);
+}
+.react-flow {
+  --xy-controls-button-background-color: var(--sheet);
+  --xy-controls-button-background-color-hover: var(--active);
+  --xy-controls-button-color: var(--text);
+  --xy-controls-button-color-hover: var(--text);
+  --xy-controls-button-border-color: var(--border);
+  --xy-attribution-background-color: transparent;
+}
+.react-flow .react-flow__edge-path {
+  stroke: var(--edge);
+  stroke-width: var(--edge-width);
+}
+
 .mask-line {
   display: block;
   overflow: hidden;
@@ -211,7 +347,7 @@ body {
   font-size: clamp(30px, 7.4vw, 104px);
   line-height: 0.96;
   font-weight: 700;
-  letter-spacing: -0.04em;
+  letter-spacing: var(--display-tracking);
 }
 
 @media (prefers-reduced-motion: reduce) {

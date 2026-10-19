@@ -1,0 +1,104 @@
+# Obiettivi di studymap
+
+## Fase 1 — MVP
+- [x] Registrazione e login con email
+- [x] Login con Google (codice pronto)
+- [x] Caricamento di PDF, immagini e testo incollato
+- [x] Validazione dei file: tipo, dimensione, pagine
+- [x] Trascrizione di immagini e PDF scansionati
+- [x] Mappa concettuale generata dall'AI
+- [x] Editor mappa: aggiungi, sposta, rinomina, elimina, colori
+- [x] Layout automatico della mappa
+- [x] Flashcard generate con ripasso so / non so
+- [x] Libreria di documenti, mappe e mazzi
+- [x] Export PNG (con marchio nel Free) e PDF (Pro)
+- [x] Piani e quote lato server, configurabili in un file
+- [x] Rate limit delle richieste AI
+- [x] Tracciamento costi e token per utente
+- [x] Prompt versionati in file separati
+- [x] Fallback automatico tra modelli AI
+- [x] RLS su tutte le tabelle e sullo storage
+- [x] Consenso separato per modelli che usano i dati
+- [x] Cancellazione account e documenti
+- [x] Avviso: niente dati di pazienti reali
+- [x] Manifest PWA installabile
+- [x] Test unitari (AI, quote, chunking, layout)
+- [ ] Eseguire test RLS e E2E sul progetto Supabase di test
+- [ ] Provare una generazione reale con un modello vero
+- [ ] Completare l'informativa privacy (titolare del trattamento)
+
+## Fase 2
+- [ ] Quiz a scelta multipla con spiegazioni
+- [ ] Simulazione d'esame a tempo
+- [ ] Ripetizione dilazionata delle flashcard (SM-2 o FSRS)
+- [ ] Chat con il documento, con riferimenti alle pagine
+- [ ] Abbonamento Stripe e pagina di gestione del piano
+- [ ] Disdetta in un clic e fatture automatiche (nuovo)
+- [ ] Riassunto del documento (nuovo)
+- [ ] Modifica a mano delle flashcard (nuovo)
+- [ ] Pagina di provenienza su nodi e flashcard (nuovo)
+- [ ] Risposte giuste dei quiz distribuite tra le opzioni (nuovo)
+- [ ] Prima rigenerazione di una mappa gratuita (nuovo)
+
+## Fase 3
+- [ ] Diagrammi di flusso
+- [ ] Lavagna libera
+- [ ] Lettura ad alta voce di mappe e riassunti
+- [ ] Mappe collegate tra loro
+- [ ] Modalità esame: domande stile concorso
+- [ ] Casi clinici simulati
+- [ ] Condivisione mappe in sola lettura
+- [ ] Collaborazione in tempo reale
+- [ ] Offline per mappe e flashcard scaricate
+- [ ] App mobile con Capacitor
+- [ ] App desktop con Tauri
+
+## Dalla ricerca sui concorrenti
+- [ ] Pannello lettura DSA: dimensione, spaziatura, sfondo (nuovo)
+- [ ] Mappa tutta in maiuscolo come opzione (nuovo)
+- [ ] Mappa mentale radiale oltre a quella gerarchica (nuovo)
+- [ ] Note e immagini dentro i nodi (nuovo)
+- [ ] Modifica della mappa con un comando AI (nuovo)
+- [ ] Spiegazione semplificata di un passaggio (nuovo)
+- [ ] Registro del testo: semplice o tecnico (nuovo)
+- [ ] Input da Word e PowerPoint (nuovo)
+- [ ] Input da link web e YouTube (nuovo)
+- [ ] Input da registrazione audio della lezione (nuovo)
+- [ ] Altri tipi di domanda: vero/falso, completamento, aperta (nuovo)
+- [ ] Progressi per argomento e data dell'esame (nuovo)
+- [ ] Export flashcard in CSV / Anki (nuovo)
+- [ ] Export mappa in Markdown e OPML (nuovo)
+- [ ] Calcolo dosaggi e scale cliniche (Braden, Glasgow, NEWS) (nuovo)
+- [ ] Cartelle e ricerca nella libreria (nuovo)
+- [ ] Pagina prezzi che promette: i contenuti restano tuoi (nuovo)
+
+## Direzione grafica
+- [x] Ricerca dei riferimenti (docs/direzione-grafica.md)
+- [x] Scegliere la direzione: Corsia ed Evidenziatore
+- [x] Token CSS per Corsia ed Evidenziatore, chiaro e scuro
+- [x] Caratteri Lexend, Bricolage Grotesque, Atkinson Next
+- [x] Colori dei nodi per ruolo, non esadecimali fissi
+- [x] Stile dei nodi diverso per ciascuno stile
+- [x] Selettore dello stile in Impostazioni e nella barra
+- [x] Stile salvato in un cookie, senza lampo al caricamento
+- [x] Rigenerare le schermate della landing
+- [x] Decidere: dock comune a Corsia ed Evidenziatore
+- [ ] Home con dock di studio, nei due stili (nuovo)
+- [ ] Data dell'esame per il conto alla rovescia (nuovo)
+- [ ] Timer di studio nel dock (nuovo)
+
+## Da fare tu
+- [ ] Creare il progetto Supabase di sviluppo (regione UE)
+- [ ] Creare il progetto Supabase di test (regione UE)
+- [ ] Applicare le migrazioni a entrambi (npm run db:push)
+- [ ] Compilare .env.local e .env.test con URL e chiavi
+- [ ] Prendere la chiave Gemini su aistudio.google.com
+- [ ] Prendere la chiave OpenRouter
+- [ ] Configurare Google OAuth (Google Cloud + Supabase)
+- [ ] Impostare Site URL e Redirect URL in Supabase
+- [ ] Configurare un SMTP per le email di conferma
+- [ ] Scegliere un modello a pagamento UE per la produzione
+- [ ] Creare l'account Stripe e i prodotti Pro
+- [ ] Deploy su Vercel in regione UE
+- [ ] Aggiungere l'URL di produzione ai redirect di Supabase e Google
+- [ ] Fissare il prezzo Pro (7-10 €/mese, sconto annuale)

@@ -209,11 +209,12 @@ Free Supabase projects are paused after about a week without activity; restore t
 
 ## Design
 
-The UI follows the "tasteskill" app-screen and page rules (style `editorial-greeting` for the app, `sentence-as-layout` for the landing page).
+The UI follows the "tasteskill" app-screen and page rules (style `editorial-greeting` for the app, `sentence-as-layout` for the landing page). Research and palettes: `docs/direzione-grafica.md`.
 
-- **Colour and type tokens.** They live in `src/app/globals.css`: light and dark values, plus the shared `btn-*`, `panel`, `row-card` and `field` utilities. Components use the tokens, never raw hex values.
-- **Concept-map node colours.** They are in `NODE_COLORS` in `src/core/graph.ts`. Label colour is chosen automatically for contrast.
-- **Font.** Atkinson Hyperlegible, kept for readability (dyslexia-friendly).
+- **Two user-selectable styles.** Corsia (default: hospital blue, Lexend, soft capsule nodes, straight edges) and Evidenziatore (highlighter colours, Bricolage Grotesque headings with Atkinson Hyperlegible Next body text, ink outlines, offset shadows, elbow edges). Each has a light and a dark variant that follows the system setting. Users pick one in Settings or in the sidebar.
+- **How it works.** The choice is stored in the `studymap-style` cookie. The root layout reads it and renders `<html data-style="…">`, so the first paint already uses the right style. Styles are listed in `src/config/styles.ts`.
+- **Colour and type tokens.** They live in `src/app/globals.css`, in one `[data-style="…"]` block per style plus its dark variant. The same file holds the shared `btn-*`, `panel`, `row-card` and `field` utilities. Components use the tokens, never raw hex values. `src/app/tokens.test.ts` checks WCAG AA contrast for every style and theme.
+- **Concept-map node colours.** Nodes store a role (`radice`, `area-1`, `area-2`, `area-3`, `neutro`), not a hex value, and each style maps roles to `--node-*` tokens. Maps saved with hex colours are converted when opened (`nodeRole` in `src/core/graph.ts`).
 - **Landing-page screenshots.** The screenshots in `public/landing/` are real app screens with sample content. Regenerate them after UI changes; this uses the Supabase test project and fake AI:
 
   ```bash

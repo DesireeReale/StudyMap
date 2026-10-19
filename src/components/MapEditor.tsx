@@ -21,11 +21,12 @@ import {
 import "@xyflow/react/dist/style.css";
 import { toPng } from "html-to-image";
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { NODE_COLORS, NODE_COLOR_NAMES, layoutGraph, textColorFor, type Graph } from "@/core/graph";
+import { APP_STYLES, type AppStyle } from "@/config/styles";
+import { NODE_ROLES, childRole, layoutGraph, nodeRole, type Graph, type NodeRole } from "@/core/graph";
 import { Icon } from "./icons";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
-type ConceptNode = Node<{ label: string; color: string }, "concept">;
+type ConceptNode = Node<{ label: string; color: NodeRole }, "concept">;
 type ExportOptions = { png: boolean; pdf: boolean; watermark: boolean };
 
 const EditingContext = createContext<{
@@ -39,8 +40,9 @@ function ConceptNodeView({ id, data, selected }: NodeProps<ConceptNode>) {
   return (
     <div
       onDoubleClick={() => startEditing(id)}
-      style={{ background: data.color, color: textColorFor(data.color) }}
-      className={`max-w-[260px] min-w-[120px] rounded-xl border border-black/10 px-4 py-2.5 text-center text-[15px] leading-snug font-bold ${
+      data-role={data.color}
+      style={roleStyle(data.color)}
+      className={`concept-node max-w-[260px] min-w-[120px] px-4 py-2.5 text-center text-[15px] leading-snug font-bold ${
         selected ? "outline-3 outline-offset-3 outline-[var(--focus)]" : ""
       }`}
     >
@@ -64,6 +66,10 @@ function ConceptNodeView({ id, data, selected }: NodeProps<ConceptNode>) {
       <Handle type="source" position={Position.Bottom} />
     </div>
   );
+}
+
+function roleStyle(role: NodeRole) {
+  return { "--node-bg": `var(--node-${role})`, "--node-ink": `var(--node-${role}-ink)` } as React.CSSProperties;
 }
 
 function focusWhenVisible(el: HTMLInputElement | null) {
@@ -114,7 +120,13 @@ async function addWatermark(dataUrl: string): Promise<string> {
   return canvas.toDataURL("image/png");
 }
 
-export function MapEditor(props: { mapId: string; title: string; graph: Graph; exportOptions: ExportOptions }) {
+export function MapEditor(props: {
+  mapId: string;
+  title: string;
+  graph: Graph;
+  exportOptions: ExportOptions;
+  appStyle: AppStyle;
+}) {
   return (
     <ReactFlowProvider>
       <Editor {...props} />
@@ -127,14 +139,16 @@ function Editor({
   title,
   graph,
   exportOptions,
+  appStyle,
 }: {
   mapId: string;
   title: string;
   graph: Graph;
   exportOptions: ExportOptions;
+  appStyle: AppStyle;
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<ConceptNode>(
-    graph.nodes.map((n) => ({ ...n, type: "concept" as const })),
+    graph.nodes.map((n) => ({ ...n, type: "concept" as const, data: { ...n.data, color: nodeRole(n.data.color) } })),
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(graph.edges);
   const [mapTitle, setMapTitle] = useState(title);
@@ -161,6 +175,9 @@ function Editor({
   }, [snapshot, mapId]);
 
   const selected = nodes.filter((n) => n.selected);
+  const colorNames = APP_STYLES.find((s) => s.id === appStyle)!.colors;
+  const edgeType = appStyle === "evidenziatore" ? "smoothstep" : "straight";
+  const styledEdges = useMemo(() => edges.map((e) => ({ ...e, type: edgeType })), [edges, edgeType]);
 
   const rename = useCallback(
     (id: string, label: string | null) => {
@@ -175,12 +192,11 @@ function Editor({
     const parent = selected[0] ?? nodes[0];
     const id = crypto.randomUUID().slice(0, 8);
     const siblings = parent ? edges.filter((e) => e.source === parent.id).length : 0;
-    const childColor: Record<string, string> = { "#1f201d": "#1b6e66", "#1b6e66": "#d4e9e5" };
     const node: ConceptNode = {
       id,
       type: "concept",
       position: parent ? { x: parent.position.x + siblings * 40, y: parent.position.y + 120 } : { x: 0, y: 0 },
-      data: { label: "Nuovo concetto", color: parent ? (childColor[parent.data.color] ?? "#e6e8e7") : "#1f201d" },
+      data: { label: "Nuovo concetto", color: childRole(parent?.data.color, siblings) },
       selected: true,
     };
     setNodes((ns) => [...ns.map((n) => ({ ...n, selected: false })), node]);
@@ -188,7 +204,7 @@ function Editor({
     setEditingId(id);
   }
 
-  function setColor(color: string) {
+  function setColor(color: NodeRole) {
     setNodes((ns) => ns.map((n) => (n.selected ? { ...n, data: { ...n.data, color } } : n)));
   }
 
@@ -285,16 +301,16 @@ function Editor({
             Elimina
           </button>
           <span className="flex items-center gap-1.5 px-1" role="group" aria-label="Colore del concetto selezionato">
-            {NODE_COLORS.map((c) => (
+            {NODE_ROLES.map((r, i) => (
               <button
-                key={c}
+                key={r}
                 type="button"
                 disabled={!selected.length}
-                onClick={() => setColor(c)}
-                aria-label={`Colore ${NODE_COLOR_NAMES[c] ?? c}`}
-                title={NODE_COLOR_NAMES[c]}
-                className="size-8 cursor-pointer rounded-full border border-black/15 transition-transform duration-150 hover:scale-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
-                style={{ background: c }}
+                onClick={() => setColor(r)}
+                aria-label={`Colore ${colorNames[i]}`}
+                title={colorNames[i]}
+                className="size-8 cursor-pointer rounded-full border border-control transition-transform duration-150 hover:scale-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+                style={{ background: `var(--node-${r})` }}
               />
             ))}
           </span>
@@ -319,16 +335,14 @@ function Editor({
         <div className="h-[calc(100dvh-260px)] min-h-[420px] overflow-hidden rounded-row border border-border bg-sheet" onKeyDown={onKeyDown}>
           <ReactFlow
             nodes={nodes}
-            edges={edges}
+            edges={styledEdges}
             nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={(c: Connection) => setEdges((es) => addEdge(c, es))}
             deleteKeyCode={editingId ? null : ["Delete", "Backspace"]}
-            colorMode="system"
             style={{ backgroundColor: "transparent" }}
             defaultEdgeOptions={{
-              style: { stroke: "var(--control)", strokeWidth: 1.5 },
               labelStyle: { fontSize: 13, fill: "var(--text)" },
               labelBgStyle: { fill: "var(--sheet)" },
               labelBgPadding: [4, 2],

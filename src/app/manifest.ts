@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Mappe concettuali e flashcard dai tuoi materiali di studio.",
     start_url: "/library",
     display: "standalone",
-    background_color: "#fbfaf7",
-    theme_color: "#0f5f5c",
+    background_color: "#f4f7fb",
+    theme_color: "#1d5fd1",
     lang: "it",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },

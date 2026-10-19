@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MOCK_OUTPUTS } from "./ai/mock";
 import { MindMapSchema } from "./ai/schemas";
-import { NODE_COLORS, mindMapToGraph, textColorFor } from "./graph";
+import { childRole, mindMapToGraph, nodeRole } from "./graph";
 
 describe("mindMapToGraph", () => {
   it("creates one edge per non-root node and lays out ranks top-down", () => {
@@ -16,11 +16,22 @@ describe("mindMapToGraph", () => {
   });
 });
 
-describe("textColorFor", () => {
-  it("keeps node labels readable on every palette colour and on legacy colours", () => {
-    expect(textColorFor("#1f201d")).toBe("#ffffff");
-    expect(textColorFor("#d4e9e5")).toBe("#1f201d");
-    expect(textColorFor("#1d4ed8")).toBe("#ffffff"); // taste-skill-ignore: colour of maps saved before the palette change
-    expect(NODE_COLORS.every((c) => ["#ffffff", "#1f201d"].includes(textColorFor(c)))).toBe(true);
+describe("node roles", () => {
+  it("gives each top-level branch its own area and keeps it down the branch", () => {
+    const graph = mindMapToGraph(MindMapSchema.parse(MOCK_OUTPUTS.mindmap));
+    const role = (id: string) => graph.nodes.find((n) => n.id === id)!.data.color;
+    expect(role("n1")).toBe("radice");
+    const top = graph.edges.filter((e) => e.source === "n1").map((e) => role(e.target));
+    expect(new Set(top).size).toBe(Math.min(top.length, 3));
+    for (const e of graph.edges.filter((e) => e.source !== "n1")) expect(role(e.target)).toBe(role(e.source));
+  });
+
+  it("converts colours of maps saved before roles", () => {
+    expect(nodeRole("#1F201D")).toBe("radice");
+    expect(nodeRole("#d4e9e5")).toBe("area-3");
+    expect(nodeRole("area-2")).toBe("area-2");
+    expect(nodeRole("#123456")).toBe("neutro");
+    expect(childRole(undefined, 0)).toBe("radice");
+    expect(childRole("radice", 4)).toBe("area-2");
   });
 });

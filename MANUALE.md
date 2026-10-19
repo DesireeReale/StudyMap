@@ -466,7 +466,8 @@ Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/
 - **Dove**: `RATE_LIMITS.aiRequestsPerMinute` in [plans.ts:42](src/config/plans.ts:42).
 
 **11. Cambiare i colori o il layout della mappa**
-- **Dove**: `NODE_COLORS` e i parametri di dagre (`rankdir: "TB"` dall'alto in basso, `"LR"` da sinistra a destra) in [graph.ts](src/core/graph.ts).
+- **Colori**: nella mappa ogni nodo salva un ruolo (`radice`, `area-1`, `area-2`, `area-3`, `neutro`), non un colore. Il colore di ogni ruolo è nei token `--node-<ruolo>` e `--node-<ruolo>-ink` di [globals.css](src/app/globals.css), uno per stile e per tema. Le mappe salvate prima con colori esadecimali si convertono con `LEGACY_HEX` in [graph.ts](src/core/graph.ts).
+- **Layout**: i parametri di dagre (`rankdir: "TB"` dall'alto in basso, `"LR"` da sinistra a destra) in [graph.ts](src/core/graph.ts).
 - **Verifica**: `graph.test.ts` controlla che i livelli vadano dall'alto in basso. Se passi a `"LR"`, aggiornalo.
 
 **12. Registrare altro nei log dei costi**
@@ -475,9 +476,11 @@ Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/
 ---
 
 **13. Cambiare colori, caratteri o stile dei componenti**
-- **Dove**: i token (colori chiari e scuri, raggi) e le classi comuni (`btn-primary`, `btn-secondary`, `panel`, `row-card`, `field`) sono in [src/app/globals.css](src/app/globals.css). I colori dei nodi della mappa sono in `NODE_COLORS` in [src/core/graph.ts](src/core/graph.ts).
-- **Verifica**: controlla il contrasto in modalità chiara e scura.
-- **Cosa può rompersi**: un colore di nodo troppo chiaro o troppo scuro. Il colore del testo dei nodi viene scelto in automatico da `textColorFor`.
+- **Gli stili**: l'app ha due stili, Corsia (predefinito) ed Evidenziatore, ognuno con versione chiara e scura. Lo stile scelto sta nel cookie `studymap-style`; il server lo scrive in `<html data-style="…">`, così la pagina si apre già nello stile giusto.
+- **Dove**: i token di ogni stile (colori, colori dei nodi, caratteri) sono nei blocchi `[data-style="corsia"]` e `[data-style="evidenziatore"]` di [src/app/globals.css](src/app/globals.css), con le varianti scure nel blocco `prefers-color-scheme: dark`. Forma dei nodi e archi: le regole `.concept-node` nello stesso file e `edgeType` in [MapEditor.tsx](src/components/MapEditor.tsx). Nomi e descrizioni degli stili: [src/config/styles.ts](src/config/styles.ts). Caratteri: [src/app/layout.tsx](src/app/layout.tsx).
+- **Aggiungere uno stile**: una voce in `APP_STYLES`, un blocco `[data-style="…"]` chiaro e uno scuro con tutti i token.
+- **Verifica**: `npm test` esegue `tokens.test.ts`, che controlla il contrasto WCAG AA (almeno 4,5:1) di testo, pulsanti e nodi in tutti gli stili, chiari e scuri.
+- **Cosa può rompersi**: un token mancante in un blocco (il test lo segnala) o un colore con contrasto troppo basso.
 
 **14. Aggiornare gli screenshot della landing**
 - **Come**: lancia `npm run shots`. Crea un utente temporaneo sul progetto di test, usa l'AI finta, salva le immagini in `public/landing/` e poi cancella l'utente.
