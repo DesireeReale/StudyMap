@@ -369,11 +369,11 @@ npm test
 ```bash
 npm run test:db
 ```
-Test Vitest su RLS, storage e quote, contro il progetto Supabase di **test**: [tests/db/rls-and-quota.test.ts](tests/db/rls-and-quota.test.ts). **Non ancora eseguito**: serve il progetto di test.
+Test Vitest su RLS, storage e quote, contro il progetto Supabase di **test**: [tests/db/rls-and-quota.test.ts](tests/db/rls-and-quota.test.ts). Verificato il 19/10/2026: 7 test passano.
 ```bash
 npm run test:e2e
 ```
-Playwright: login → PDF → mappa → rinomina → ricarica, con AI finta, contro il progetto di **test**. **Non ancora eseguito**.
+Playwright: login → PDF → mappa → rinomina → ricarica, con AI finta, contro il progetto di **test**. Verificato il 19/10/2026: passa in circa 25 secondi e alla fine il progetto di test resta vuoto.
 
 **Perché un secondo progetto Supabase.** Questi test creano e cancellano utenti veri. Farli girare sul progetto di sviluppo sporcherebbe i tuoi dati, quindi usano `.env.test` (copialo da [.env.test.example](.env.test.example)). [tests/test-env.ts](tests/test-env.ts) si rifiuta di partire se `.env.test` manca o punta allo stesso URL di `.env.local`, e forza sempre `AI_MOCK=1`. Gli utenti di test nascono già confermati tramite l'API admin e vengono cancellati alla fine.
 
@@ -567,7 +567,6 @@ Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/
 ## 11. Da verificare e punti deboli
 
 **Non verificato**
-- Test sul database ed end-to-end: mai eseguiti, serve il progetto Supabase di test.
 - **Nessuna chiamata a un modello reale.** Restano da confermare:
   - che Mistral accetti il nostro `json_schema` così com'è;
   - che `mistral-small-2603` accetti immagini (le fonti erano in disaccordo);

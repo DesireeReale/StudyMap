@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { parseEnv } from "node:util";
 
-const root = path.resolve(import.meta.dirname, "..");
+const root = process.cwd();
 
 function readEnv(file: string): Record<string, string> {
   const full = path.join(root, file);

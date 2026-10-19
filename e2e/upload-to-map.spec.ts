@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 import { jsPDF } from "jspdf";
 import { createTestUser, deleteTestUser } from "../tests/supabase";
 
-const pdfPath = path.join(import.meta.dirname, ".tmp", "scompenso.pdf");
+const pdfPath = path.join(process.cwd(), "e2e", ".tmp", "scompenso.pdf");
 let user: Awaited<ReturnType<typeof createTestUser>>;
 
 test.beforeAll(async () => {
