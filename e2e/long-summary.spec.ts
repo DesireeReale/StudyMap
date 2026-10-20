@@ -9,7 +9,7 @@ test("long summary stays inside its sheet", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/login");
   await page.getByLabel("Email").fill(user.email);
-  await page.getByLabel("Password").fill(user.password);
+  await page.getByLabel("Password", { exact: true }).fill(user.password);
   await page.getByRole("button", { name: "Accedi", exact: true }).click();
   await expect(page).toHaveURL(/\/library/);
   const sections = Array.from({ length: 12 }, (_, i) => `## Sezione ${i + 1}\n- ${"Un punto abbastanza lungo da andare a capo più volte nel foglio di lettura. ".repeat(3)}\n- Secondo punto della sezione.`).join("\n\n");

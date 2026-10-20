@@ -26,7 +26,7 @@ test("upload a long PDF, browse elsewhere and follow the progress until the map 
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("/login");
   await page.getByLabel("Email").fill(user.email);
-  await page.getByLabel("Password").fill(user.password);
+  await page.getByLabel("Password", { exact: true }).fill(user.password);
   await page.getByRole("button", { name: "Accedi", exact: true }).click();
   await expect(page).toHaveURL(/\/library/);
 

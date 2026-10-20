@@ -22,7 +22,7 @@ test.afterAll(async () => {
 test("log in, upload a PDF, generate and edit a concept map", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill(user.email);
-  await page.getByLabel("Password").fill(user.password);
+  await page.getByLabel("Password", { exact: true }).fill(user.password);
   await page.getByRole("button", { name: "Accedi", exact: true }).click();
   await expect(page).toHaveURL(/\/library/);
 

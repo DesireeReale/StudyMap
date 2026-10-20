@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import { Icon } from "./icons";
+import { LoginMascot, type MascotPose } from "./LoginMascot";
 
 export function LoginForm() {
   const router = useRouter();
@@ -10,6 +12,8 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pose, setPose] = useState<MascotPose>("idle");
+  const [showPassword, setShowPassword] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -43,48 +47,72 @@ export function LoginForm() {
   }
 
   return (
-    <div className="panel flex flex-col gap-5">
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="login-email" className="label">
-            Email
-          </label>
-          <input id="login-email" name="email" type="email" required autoComplete="email" className="field h-11" />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="login-password" className="label">
-            Password
-          </label>
-          <input
-            id="login-password"
-            name="password"
-            type="password"
-            required
-            minLength={8}
-            autoComplete={mode === "signin" ? "current-password" : "new-password"}
-            className="field h-11"
-          />
-        </div>
-        {error && (
-          <p role="alert" className="text-sm text-negative">
-            {error}
-          </p>
-        )}
-        {info && <p role="status" className="text-sm">{info}</p>}
-        <button type="submit" className="btn-primary h-11" disabled={busy}>
-          {mode === "signin" ? "Accedi" : "Crea account"}
+    <div className="flex flex-col">
+      <LoginMascot pose={pose === "password" && showPassword ? "peek" : pose} />
+      <div className="panel relative flex flex-col gap-5">
+        <form onSubmit={onSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="login-email" className="label">
+              Email
+            </label>
+            <input
+              id="login-email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              className="field h-11"
+              onFocus={() => setPose("email")}
+              onBlur={() => setPose("idle")}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="login-password" className="label">
+              Password
+            </label>
+            <div className="relative" onFocus={() => setPose("password")} onBlur={() => setPose("idle")}>
+              <input
+                id="login-password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required
+                minLength={8}
+                autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                className="field h-11 w-full pr-11"
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 flex w-11 cursor-pointer items-center justify-center text-muted hover:text-ink"
+                aria-label={showPassword ? "Nascondi password" : "Mostra password"}
+                aria-pressed={showPassword}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                <Icon name={showPassword ? "eyeOff" : "eye"} />
+              </button>
+            </div>
+          </div>
+          {error && (
+            <p role="alert" className="text-sm text-negative">
+              {error}
+            </p>
+          )}
+          {info && <p role="status" className="text-sm">{info}</p>}
+          <button type="submit" className="btn-primary h-11" disabled={busy}>
+            {mode === "signin" ? "Accedi" : "Crea account"}
+          </button>
+        </form>
+        <button type="button" className="btn-secondary h-11" onClick={google}>
+          Continua con Google
         </button>
-      </form>
-      <button type="button" className="btn-secondary h-11" onClick={google}>
-        Continua con Google
-      </button>
-      <button
-        type="button"
-        className="cursor-pointer text-sm font-bold text-accent hover:underline"
-        onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-      >
-        {mode === "signin" ? "Non hai un account? Registrati" : "Hai già un account? Accedi"}
-      </button>
+        <button
+          type="button"
+          className="cursor-pointer text-sm font-bold text-accent hover:underline"
+          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+        >
+          {mode === "signin" ? "Non hai un account? Registrati" : "Hai già un account? Accedi"}
+        </button>
+      </div>
     </div>
   );
 }
