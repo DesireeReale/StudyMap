@@ -80,6 +80,10 @@ export type FlashcardRow = {
   position: number;
   last_result: "known" | "unknown" | null;
   reviewed_at: string | null;
+  ease: number;
+  interval_days: number;
+  repetitions: number;
+  due_at: string;
 };
 
 export type AiUsageRow = {

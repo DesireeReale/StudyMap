@@ -1,5 +1,6 @@
 import "server-only";
 import { daysUntil } from "@/core/dates";
+import { isDue } from "@/core/srs";
 import { monthPeriod } from "@/core/entitlements";
 import { pathTo } from "@/core/folders";
 import type { DockData } from "@/components/StudyDock";
@@ -56,7 +57,7 @@ export function folderStats(folders: FolderItem[], lists: { folder_id: string }[
 export async function loadStudy(supabase: Supabase, profile: Profile, scope?: Promise<string[]>) {
   const [decks, cards, usage, folderIds] = await Promise.all([
     supabase.from("decks").select("id, title, folder_id, created_at").order("created_at", { ascending: false }),
-    supabase.from("flashcards").select("deck_id, last_result"),
+    supabase.from("flashcards").select("deck_id, last_result, due_at"),
     supabase.from("quota_counters").select("count").eq("period", monthPeriod()).eq("kind", "generation").maybeSingle(),
     scope,
   ]);
@@ -64,16 +65,18 @@ export async function loadStudy(supabase: Supabase, profile: Profile, scope?: Pr
   const deckList = (decks.data ?? []).filter(inScope);
   const deckIds = new Set(deckList.map((d) => d.id));
 
-  const counts = new Map<string, DeckCounts>();
+  const now = new Date();
+  const counts = new Map<string, DeckCounts & { due: number }>();
   for (const c of cards.data ?? []) {
     if (!deckIds.has(c.deck_id)) continue;
-    const k = counts.get(c.deck_id) ?? { known: 0, unknown: 0, fresh: 0 };
+    const k = counts.get(c.deck_id) ?? { known: 0, unknown: 0, fresh: 0, due: 0 };
+    if (isDue(c, now)) k.due++;
     if (c.last_result === "known") k.known++;
     else if (c.last_result === "unknown") k.unknown++;
     else k.fresh++;
     counts.set(c.deck_id, k);
   }
-  const pending = (k: DeckCounts | undefined) => (k ? k.unknown + k.fresh : 0);
+  const pending = (k: { due: number } | undefined) => k?.due ?? 0;
   const toReview = [...counts.values()].reduce((sum, k) => sum + pending(k), 0);
   const focus = [...deckList].sort((a, b) => pending(counts.get(b.id)) - pending(counts.get(a.id)))[0];
   const focusCounts = focus ? counts.get(focus.id) : undefined;
@@ -82,7 +85,7 @@ export async function loadStudy(supabase: Supabase, profile: Profile, scope?: Pr
   const dock: DockData = {
     deck:
       focus && focusCounts
-        ? { id: focus.id, title: focus.title, known: focusCounts.known, total: focusCounts.known + pending(focusCounts) }
+        ? { id: focus.id, title: focus.title, known: focusCounts.known, total: focusCounts.known + focusCounts.unknown + focusCounts.fresh }
         : null,
     toReview,
     examDays: profile.exam_date ? daysUntil(profile.exam_date) : null,
@@ -134,12 +137,12 @@ export function toMaterials(
     decks?: { id: string; title: string; created_at: string; folder_id: string }[];
   },
   folders: FolderItem[] = [],
-  counts?: Map<string, { unknown: number; fresh: number }>,
+  counts?: Map<string, { due: number }>,
 ): Material[] {
   const place = (id: string) => folders.find((f) => f.id === id)?.name;
   const pending = (id: string) => {
     const k = counts?.get(id);
-    return k ? `${k.unknown + k.fresh} da ripassare` : "";
+    return k ? `${k.due} da ripassare oggi` : "";
   };
   return [
     ...(rows.documents ?? []).map((d) => ({

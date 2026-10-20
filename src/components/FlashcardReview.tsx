@@ -1,13 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { isDue, schedule } from "@/core/srs";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
-type Card = { id: string; front: string; back: string; last_result: "known" | "unknown" | null };
+type Card = {
+  id: string;
+  front: string;
+  back: string;
+  last_result: "known" | "unknown" | null;
+  ease: number;
+  interval_days: number;
+  repetitions: number;
+  due_at: string;
+};
+
+const byDue = (a: Card, b: Card) => a.due_at.localeCompare(b.due_at);
+const nextDate = (cards: Card[]) =>
+  cards.length
+    ? new Date([...cards].sort(byDue)[0]!.due_at).toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" })
+    : null;
 
 export function FlashcardReview({ cards: initial }: { cards: Card[] }) {
-  const order = (cs: Card[]) => [...cs].sort((a, b) => rank(a) - rank(b));
-  const [queue, setQueue] = useState(() => order(initial));
+  const [cards, setCards] = useState(initial);
+  const [queue, setQueue] = useState(() => initial.filter((c) => isDue(c)).sort(byDue));
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [results, setResults] = useState<Record<string, "known" | "unknown">>({});
@@ -17,12 +33,22 @@ export function FlashcardReview({ cards: initial }: { cards: Card[] }) {
 
   async function answer(result: "known" | "unknown") {
     if (!card) return;
-    setResults((r) => ({ ...r, [card.id]: result }));
+    const next = { ...card, ...schedule(card, result), last_result: result };
+    setResults((r) => ({ ...r, [card.id]: r[card.id] === "unknown" ? "unknown" : result }));
+    setCards((cs) => cs.map((c) => (c.id === card.id ? next : c)));
+    if (result === "unknown") setQueue((q) => [...q, next]);
     setFlipped(false);
     setIndex((i) => i + 1);
     await supabaseBrowser()
       .from("flashcards")
-      .update({ last_result: result, reviewed_at: new Date().toISOString() })
+      .update({
+        last_result: result,
+        reviewed_at: new Date().toISOString(),
+        ease: next.ease,
+        interval_days: next.interval_days,
+        repetitions: next.repetitions,
+        due_at: next.due_at,
+      })
       .eq("id", card.id);
   }
 
@@ -40,42 +66,29 @@ export function FlashcardReview({ cards: initial }: { cards: Card[] }) {
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  function restart(list: Card[]) {
+    setQueue(list);
+    setIndex(0);
+    setResults({});
+    setFlipped(false);
+  }
+
   if (done) {
-    const unknown = queue.filter((c) => results[c.id] === "unknown");
-    const knownCount = queue.length - unknown.length;
+    const reviewed = Object.keys(results).length;
+    const forgot = Object.values(results).filter((r) => r === "unknown").length;
+    const upcoming = nextDate(cards.filter((c) => !isDue(c)));
     return (
       <div className="panel flex flex-col items-start gap-4" role="status">
-        <p className="text-[20px] font-bold">Ripasso finito</p>
+        <p className="text-[20px] font-bold">{reviewed ? "Ripasso di oggi finito" : "Niente da ripassare oggi"}</p>
         <p className="num text-[15px]">
-          Sapevi <span className="font-bold text-accent">{knownCount}</span> flashcard su {queue.length}
-          {unknown.length > 0 ? `; ${unknown.length} da rivedere.` : "."}
+          {reviewed
+            ? `Hai ripassato ${reviewed} ${reviewed === 1 ? "carta" : "carte"}${forgot ? `, ${forgot} da consolidare: torneranno presto` : ""}.`
+            : "Le carte di questo mazzo tornano quando stai per dimenticarle."}
+          {upcoming && ` Prossimo ripasso: ${upcoming}.`}
         </p>
-        <div className="flex flex-wrap gap-2">
-          {unknown.length > 0 && (
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => {
-                setQueue(unknown);
-                setIndex(0);
-                setResults({});
-              }}
-            >
-              Ripassa le {unknown.length} che non sapevi
-            </button>
-          )}
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => {
-              setQueue(order(initial));
-              setIndex(0);
-              setResults({});
-            }}
-          >
-            Ricomincia da capo
-          </button>
-        </div>
+        <button type="button" className="btn-secondary" onClick={() => restart([...cards].sort(byDue))}>
+          Ripassa tutto comunque
+        </button>
       </div>
     );
   }
@@ -116,8 +129,4 @@ export function FlashcardReview({ cards: initial }: { cards: Card[] }) {
       )}
     </div>
   );
-}
-
-function rank(c: Card) {
-  return c.last_result === "unknown" ? 0 : c.last_result === null ? 1 : 2;
 }

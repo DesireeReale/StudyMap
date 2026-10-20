@@ -20,7 +20,7 @@ export default async function DeckPage({ params }: PageProps<"/decks/[id]">) {
   const { data: deck } = await supabase.from("decks").select("id, title, document_id, folder_id").eq("id", id).maybeSingle();
   if (!deck) notFound();
   const [{ data: cards }, { data: doc }, folders] = await Promise.all([
-    supabase.from("flashcards").select("id, front, back, last_result, position").eq("deck_id", id).order("position"),
+    supabase.from("flashcards").select("id, front, back, last_result, position, ease, interval_days, repetitions, due_at").eq("deck_id", id).order("position"),
     deck.document_id
       ? supabase.from("documents").select("id, title").eq("id", deck.document_id).maybeSingle()
       : Promise.resolve({ data: null }),
