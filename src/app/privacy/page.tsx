@@ -17,6 +17,10 @@ export default function PrivacyPage() {
         <li>Email e dati di accesso (anche tramite Google).</li>
         <li>I materiali di studio che carichi (PDF, immagini, testo) e ciò che generi (mappe, flashcard).</li>
         <li>Dati di utilizzo del servizio AI (numero di richieste e token) per gestire i limiti del piano.</li>
+        <li>
+          I suggerimenti e le segnalazioni che invii dalle Impostazioni, salvati insieme al tuo account per poterli
+          leggere e risponderti. Si cancellano con l&apos;account.
+        </li>
       </ul>
 
       <h2>Non caricare dati di altre persone</h2>

@@ -86,6 +86,11 @@ Open http://localhost:3000.
 | `OPENROUTER_API_KEY` | server only | fallback provider (free models) |
 | `META_API_KEY` | server only | Meta Model API (models disabled by default) |
 | `AI_MOCK` | server only | `1` = fake AI responses outside production |
+| `FEEDBACK_EMAIL_TO` | server only | optional: address that receives new "Suggerisci un'idea" messages |
+| `RESEND_API_KEY` | server only | optional: Resend key used for that email |
+| `FEEDBACK_EMAIL_FROM` | server only | optional: sender, default `StudyMap <onboarding@resend.dev>` |
+
+Feedback from Settings is stored in `feature_requests` (insert-only for users, read it in the Supabase dashboard or with the service role). Limit: `FEEDBACK_PER_DAY` in `src/core/feedback.ts`. The email is sent by `notifyNewRequest` (`src/lib/notify.ts`) only when both `FEEDBACK_EMAIL_TO` and `RESEND_API_KEY` are set; otherwise nothing happens.
 
 No secret is exposed to the browser: only `NEXT_PUBLIC_*` values reach the client.
 

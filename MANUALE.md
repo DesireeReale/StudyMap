@@ -380,6 +380,15 @@ L'elenco completo è in [.env.example](.env.example). Copialo in `.env.local`, c
 | `OPENROUTER_API_KEY` | no | come sopra | riserva |
 | `META_API_KEY` | no | come sopra | modelli Meta (spenti) |
 | `AI_MOCK` | no | [lib/ai.ts:17](src/lib/ai.ts:17) | `1` = risposte finte, ignorato in produzione |
+| `FEEDBACK_EMAIL_TO` | no | [lib/notify.ts](src/lib/notify.ts) | indirizzo che riceve i messaggi di "Suggerisci un'idea" |
+| `RESEND_API_KEY` | no | come sopra | chiave di Resend per inviare quell'email |
+| `FEEDBACK_EMAIL_FROM` | no | come sopra | mittente; senza, `StudyMap <onboarding@resend.dev>` |
+
+**Suggerimenti dalle Impostazioni.** I messaggi finiscono nella tabella `feature_requests` di Supabase: l'utente può solo inserirli, tu li leggi dal pannello di Supabase (Table Editor). Il limite giornaliero è `FEEDBACK_PER_DAY` in [core/feedback.ts](src/core/feedback.ts). Per ricevere anche un'email:
+1. crea un account su [Resend](https://resend.com), che ha un piano gratuito (NON VERIFICATO: controlla limiti e condizioni);
+2. crea una chiave API e mettila in `RESEND_API_KEY`, poi scrivi il tuo indirizzo in `FEEDBACK_EMAIL_TO` (in `.env.local` e nelle variabili d'ambiente dell'hosting);
+3. senza un dominio verificato, il mittente di prova `onboarding@resend.dev` dovrebbe poter scrivere solo all'indirizzo dell'account Resend (NON VERIFICATO); con un dominio tuo imposta `FEEDBACK_EMAIL_FROM`.
+Se una delle due variabili manca, `notifyNewRequest` non fa nulla e il messaggio resta comunque salvato.
 
 ### Avvio (Supabase cloud, niente Docker)
 I passi completi, con i percorsi della dashboard, sono nel [README](README.md#setup). In breve:

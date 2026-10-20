@@ -39,6 +39,8 @@
 - [ ] Pagina di provenienza su nodi e flashcard (nuovo)
 - [x] Risposte giuste dei quiz distribuite tra le opzioni (nuovo)
 - [ ] Prima rigenerazione di una mappa gratuita (nuovo)
+- [x] Impostazioni: "Suggerisci un'idea" per idee e segnalazioni, salvate su Supabase (nuovo)
+- [ ] Email di avviso per i nuovi suggerimenti: impostare FEEDBACK_EMAIL_TO e RESEND_API_KEY
 
 ## Fase 3
 - [ ] Diagrammi di flusso

@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { PLANS } from "@/config/plans";
 import { ConsentToggle, DeleteAccount, ExamDate } from "@/components/AccountActions";
+import { FeedbackForm } from "@/components/FeedbackForm";
 import { WorkspacePicker } from "@/components/StyleSwitch";
 import { getWorkspace } from "@/lib/app-style";
 import { requireUser } from "@/lib/supabase/server";
@@ -80,6 +81,14 @@ export default async function SettingsPage() {
         }
       >
         <ConsentToggle consentAt={profile.ai_data_sharing_consent_at} />
+      </Section>
+
+      <Section
+        id="suggerimenti"
+        title="Suggerisci un'idea"
+        description="Proponi una funzione nuova o segnala qualcosa che non va. Il messaggio viene salvato insieme al tuo account."
+      >
+        <FeedbackForm />
       </Section>
 
       <Section

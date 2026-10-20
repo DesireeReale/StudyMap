@@ -128,6 +128,15 @@ export type ChatMessageRow = {
   created_at: string;
 };
 
+export type FeatureRequestRow = {
+  id: number;
+  user_id: string;
+  kind: "idea" | "problema" | "altro";
+  message: string;
+  page: string | null;
+  created_at: string;
+};
+
 export type QuotaCounterRow = { user_id: string; period: string; kind: string; count: number };
 
 export type Database = {
@@ -146,6 +155,7 @@ export type Database = {
       quizzes: Table<QuizRow, "title" | "questions">;
       quiz_attempts: Table<QuizAttemptRow, "quiz_id" | "score" | "total">;
       chat_messages: Table<ChatMessageRow, "role" | "content">;
+      feature_requests: Table<FeatureRequestRow, "kind" | "message">;
     };
     Views: { [_ in never]: never };
     Functions: {
