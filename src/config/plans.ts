@@ -5,6 +5,7 @@ export type Plan = {
   inputTokensPerMonth: number;
   maxPdfPages: number;
   maxDocuments: number;
+  maxSubjects: number;
   maxUploadBytes: number;
   export: { png: boolean; pdf: boolean; watermark: boolean };
   quizzesPerWeek: number;
@@ -20,6 +21,7 @@ export const PLANS: Record<PlanId, Plan> = {
     inputTokensPerMonth: 1_000_000,
     maxPdfPages: 20,
     maxDocuments: 10,
+    maxSubjects: 3,
     maxUploadBytes: 10 * MB,
     export: { png: true, pdf: false, watermark: true },
     quizzesPerWeek: 1,
@@ -31,6 +33,7 @@ export const PLANS: Record<PlanId, Plan> = {
     inputTokensPerMonth: 5_000_000,
     maxPdfPages: 200,
     maxDocuments: Infinity,
+    maxSubjects: Infinity,
     maxUploadBytes: 25 * MB,
     export: { png: true, pdf: true, watermark: false },
     quizzesPerWeek: Infinity,

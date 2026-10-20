@@ -396,7 +396,9 @@ npm run typecheck
 
 | Dove | Cosa | Se lo cancelli |
 |---|---|---|
-| `profiles` | piano (`free`/`pro`), consenso AI | si ricrea solo con un nuovo login |
+| `profiles` | piano (`free`/`pro`), consenso AI, data dell'esame, `preferences` (stile, carattere, dimensione, spaziatura) | si ricrea solo con un nuovo login |
+| `folders` | materie (cartelle senza `parent_id`) e sottocartelle, con colore, icona, ordine | si elimina solo se vuota |
+| `notes` | appunti dell'utente (testo semplice, max 100.000 caratteri) dentro una cartella | perdi l'appunto |
 | `documents` | titolo, tipo, `pages` (testo estratto), percorso del file | perdi il documento; mappe e flashcard restano (`document_id` diventa null) |
 | Storage `documents/{uid}/` | il file originale | il documento resta, il file no |
 | `maps.graph` | nodi e archi della mappa (JSON) | perdi la mappa |
@@ -404,7 +406,14 @@ npm run typecheck
 | `ai_usage` | log di ogni chiamata LLM e del suo costo | perdi lo storico dei costi |
 | `quota_counters` | contatori per periodo: `generation` (mese), `input_tokens` (mese), `rl:ai` (minuto) | si azzerano i limiti |
 
-Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/migrations/20261019000000_init.sql). Punti chiave:
+Ogni documento, mappa, mazzo e appunto ha un `folder_id` obbligatorio. Cartelle e contenuti sono descritti in [supabase/migrations/20261020000000_folders.sql](supabase/migrations/20261020000000_folders.sql):
+- la chiave esterna è composta, `(folder_id, user_id) → folders(id, user_id)`: il database rifiuta un contenuto nella cartella di un altro utente e l'eliminazione di una cartella che contiene qualcosa;
+- il trigger `check_folder_tree` rifiuta oltre 3 livelli e le cartelle dentro sé stesse;
+- `default_folder_id()` è il valore predefinito di `folder_id` (la prima materia dell'utente), così gli insert che non lo indicano finiscono lì;
+- ogni nuovo utente riceve la materia "Generale" (in `handle_new_user`); i dati presenti prima della migrazione sono finiti nella "Generale" di ciascuno;
+- `move_document(documento, cartella)` sposta il documento insieme alle mappe e ai mazzi generati da lui.
+
+Lo schema iniziale è in [supabase/migrations/20261019000000_init.sql](supabase/migrations/20261019000000_init.sql). Punti chiave:
 - `plan` non è modificabile dal browser: [righe 100-101](supabase/migrations/20261019000000_init.sql:100) concedono all'utente solo la colonna del consenso;
 - `ai_usage` e `quota_counters` sono in sola lettura per l'utente ([:118](supabase/migrations/20261019000000_init.sql:118));
 - `consume_quota` ([:120](supabase/migrations/20261019000000_init.sql:120)) incrementa il contatore solo se resta entro il limite, in un'unica istruzione, così due richieste simultanee non lo superano. Può chiamarla solo il server (`service_role`).
@@ -483,10 +492,24 @@ Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/
 - **Cosa può rompersi**: un token mancante in un blocco (il test lo segnala) o un colore con contrasto troppo basso.
 
 **13b. Cambiare il dock della home**
-- **Dove**: i riquadri sono in [StudyDock.tsx](src/components/StudyDock.tsx), il timer in [StudyTimer.tsx](src/components/StudyTimer.tsx) (durata in `SESSION_SECONDS`), i dati si calcolano in [library/page.tsx](src/app/(app)/library/page.tsx). I colori sono i token `--dock-*` di [globals.css](src/app/globals.css), uno per stile.
+- **Dove**: i riquadri sono in [StudyDock.tsx](src/components/StudyDock.tsx), il timer in [StudyTimer.tsx](src/components/StudyTimer.tsx) (durata in `SESSION_SECONDS`), i dati si calcolano in `loadStudy` di [src/lib/workspace.ts](src/lib/workspace.ts) (per tutta la libreria o per una materia). I colori sono i token `--dock-*` di [globals.css](src/app/globals.css), uno per stile.
 - **Carte da ripassare**: oggi sono le carte segnate "non so" più quelle mai ripassate. Con la ripetizione dilazionata (Fase 2) diventeranno le carte in scadenza oggi.
 - **Data dell'esame**: colonna `profiles.exam_date`, scrivibile dal client (migrazione `20261019000200_exam_date.sql`); si imposta in Impostazioni → Esame.
 - **Verifica**: `tokens.test.ts` controlla il contrasto del testo sui riquadri; `dates.test.ts` il conto dei giorni.
+
+**13c. Materie, cartelle e appunti**
+- **Pagine**: la libreria ([library/page.tsx](src/app/(app)/library/page.tsx)) mostra le materie; [folders/[id]/page.tsx](src/app/(app)/folders/[id]/page.tsx) è la stessa pagina per materie e sottocartelle (il dock compare solo nella materia e conta tutto l'albero); [notes/[id]/page.tsx](src/app/(app)/notes/[id]/page.tsx) è l'editor degli appunti.
+- **Logica dell'albero** (pura, testata in `folders.test.ts`): [src/core/folders.ts](src/core/folders.ts), con `MAX_FOLDER_DEPTH`. Se cambi la profondità, cambia anche il `3` nel trigger della migrazione.
+- **Letture dal database**: [src/lib/workspace.ts](src/lib/workspace.ts) (cartelle, dati del dock, ricerca con `ilike`).
+- **Pulsanti e moduli**: [FolderControls.tsx](src/components/FolderControls.tsx) (nuova cartella, riordino con trascinamento o frecce, colore, icona, sposta, elimina, "Sposta in…"); [NoteEditor.tsx](src/components/NoteEditor.tsx) salva da solo dopo 800 ms, come l'editor della mappa.
+- **Limite delle materie**: `maxSubjects` in [plans.ts](src/config/plans.ts), controllato in [api/folders/route.ts](src/app/api/folders/route.ts). Le sottocartelle non contano.
+- **Colori e icone delle cartelle**: `FOLDER_COLORS` e `FOLDER_ICONS` in [styles.ts](src/config/styles.ts); i colori `--folder-1…6` in [globals.css](src/app/globals.css) riusano i token dei nodi, quindi seguono lo stile e il tema scuro. Un'icona nuova va aggiunta anche in [icons.tsx](src/components/icons.tsx) e nel `check` della migrazione.
+- **Verifica**: `npm test`, `npm run test:db` (`tests/db/folders.test.ts`), `npm run test:e2e` (`e2e/folders.spec.ts`).
+
+**13d. Preferenze del workspace (stile, carattere, dimensione, spaziatura)**
+- **Dove**: le opzioni sono in [styles.ts](src/config/styles.ts), la lettura con valori di riserva in [src/core/preferences.ts](src/core/preferences.ts), il pannello in [StyleSwitch.tsx](src/components/StyleSwitch.tsx).
+- **Come funziona**: la fonte vera è `profiles.preferences`. Il cookie `studymap-style` ne tiene una copia, così [layout.tsx](src/app/layout.tsx) mette subito `data-style`, `data-font`, `data-size` e `data-spacing` su `<html>`, senza lampo. Se apri l'app su un altro dispositivo, `PreferencesSync` riallinea il cookie al profilo.
+- **CSS**: `[data-font]` cambia `--body-font`; `[data-size]` ingrandisce i testi in `rem` e la classe `.reading` (appunti, testo dei documenti, flashcard); `[data-spacing="ampia"]` aumenta interlinea e spaziatura su `.reading`.
 
 **14. Aggiornare gli screenshot della landing**
 - **Come**: lancia `npm run shots`. Crea un utente temporaneo sul progetto di test, usa l'AI finta, salva le immagini in `public/landing/` e poi cancella l'utente.
@@ -605,3 +628,7 @@ Lo schema completo è in [supabase/migrations/20261019000000_init.sql](supabase/
 - Cancellando un documento, se la rimozione del file da Storage fallisce resta un file orfano.
 - La pagina [/privacy](src/app/privacy/page.tsx) è una bozza: mancano i dati del titolare.
 - In `public/` restano 5 SVG del template di Next, non usati e non committati: si possono cancellare.
+- Il limite delle materie, come quello dei documenti, si controlla nell'API: chi scrive direttamente su Supabase dal browser potrebbe superarlo.
+- La ricerca usa `ilike` su titoli e testo degli appunti: va bene per qualche centinaio di elementi per utente, poi serve la ricerca full-text di Postgres. Il testo dentro i PDF non è cercato.
+- Il trascinamento delle cartelle usa il drag and drop nativo: funziona col mouse, non col dito. Su telefono si usano le frecce.
+- La dimensione del testo ingrandisce solo i testi in `rem` e quelli con la classe `.reading`; i testi con misure in `px` restano uguali.

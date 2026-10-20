@@ -1,10 +1,12 @@
 import { AppNav } from "@/components/AppNav";
+import { PreferencesSync } from "@/components/StyleSwitch";
 import { aiMockEnabled } from "@/lib/ai";
-import { getAppStyle } from "@/lib/app-style";
+import { getWorkspace } from "@/lib/app-style";
 import { requireUser } from "@/lib/supabase/server";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const { user, profile } = await requireUser();
+  const { prefs, stale } = await getWorkspace(profile.preferences);
 
   return (
     <div className="flex min-h-dvh flex-col md:flex-row">
@@ -14,7 +16,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       >
         Vai al contenuto
       </a>
-      <AppNav email={user.email ?? ""} plan={profile.plan} appStyle={await getAppStyle()} />
+      {stale && <PreferencesSync prefs={prefs} />}
+      <AppNav email={user.email ?? ""} plan={profile.plan} prefs={prefs} />
       <div className="flex min-w-0 flex-1 flex-col md:py-2 md:pr-2">
         {aiMockEnabled && (
           <p role="alert" className="mb-2 rounded-lg bg-pill-negative px-4 py-2 text-sm font-bold text-pill-negative-ink">

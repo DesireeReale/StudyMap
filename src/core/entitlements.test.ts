@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MODELS } from "@/config/ai";
 import { PLANS } from "@/config/plans";
 import {
+  canCreateSubject,
   canSaveDocument,
   checkPdfPages,
   checkUploadSize,
@@ -58,5 +59,16 @@ describe("limits", () => {
     const d = new Date("2026-10-19T13:45:12Z");
     expect(monthPeriod(d)).toBe("2026-10");
     expect(minutePeriod(d)).toBe("2026-10-19T13:45");
+  });
+});
+
+describe("canCreateSubject", () => {
+  it("stops the free plan at its subject limit", () => {
+    expect(canCreateSubject("free", PLANS.free.maxSubjects - 1).ok).toBe(true);
+    expect(canCreateSubject("free", PLANS.free.maxSubjects)).toMatchObject({ ok: false, upgrade: true });
+  });
+
+  it("never stops pro", () => {
+    expect(canCreateSubject("pro", 500).ok).toBe(true);
   });
 });

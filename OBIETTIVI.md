@@ -54,7 +54,7 @@
 - [ ] App desktop con Tauri
 
 ## Dalla ricerca sui concorrenti
-- [ ] Pannello lettura DSA: dimensione, spaziatura, sfondo (nuovo)
+- [ ] Pannello lettura DSA: dimensione, spaziatura, sfondo (nuovo) — fatti carattere, dimensione e spaziatura in Impostazioni → Il tuo spazio; manca lo sfondo
 - [ ] Mappa tutta in maiuscolo come opzione (nuovo)
 - [ ] Mappa mentale radiale oltre a quella gerarchica (nuovo)
 - [ ] Note e immagini dentro i nodi (nuovo)
@@ -69,9 +69,14 @@
 - [ ] Export flashcard in CSV / Anki (nuovo)
 - [ ] Export mappa in Markdown e OPML (nuovo)
 - [ ] Calcolo dosaggi e scale cliniche (Braden, Glasgow, NEWS) (nuovo)
-- [ ] Materie come cartelle: dentro documenti, mappe, flashcard, appunti e strumenti di studio (nuovo)
-- [ ] Appunti propri nella materia, scritti a mano o incollati (nuovo)
-- [ ] Ricerca nella libreria e dentro le materie (nuovo)
+- [x] Materie come cartelle: dentro documenti, mappe, flashcard, appunti e strumenti di studio (nuovo)
+- [x] Sottocartelle nelle materie, fino a 3 livelli (nuovo)
+- [x] Colore, icona e ordine delle cartelle (nuovo)
+- [x] Preferenze del workspace salvate sul profilo, su ogni dispositivo (nuovo)
+- [ ] Data dell'esame per materia (nuovo)
+- [ ] Trascinamento delle cartelle con il dito su telefono (nuovo)
+- [x] Appunti propri nella materia, scritti a mano o incollati (nuovo)
+- [x] Ricerca nella libreria e dentro le materie (nuovo) — titoli e testo degli appunti; il testo dei PDF non ancora
 - [ ] Pagina prezzi che promette: i contenuti restano tuoi (nuovo)
 
 ## Direzione grafica
@@ -92,7 +97,7 @@
 ## Da fare tu
 - [x] Creare il progetto Supabase di sviluppo (regione UE)
 - [x] Creare il progetto Supabase di test (regione UE)
-- [ ] Applicare le migrazioni a entrambi (npm run db:push)
+- [x] Applicare le migrazioni a entrambi (npm run db:push)
 - [x] Compilare .env.local e .env.test con URL e chiavi
 - [x] Prendere la chiave Gemini su aistudio.google.com
 - [ ] Prendere la chiave OpenRouter

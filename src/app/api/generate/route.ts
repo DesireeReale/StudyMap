@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return fail("Richiesta non valida", 400);
   const { documentId, type } = parsed.data;
 
-  const { data: doc } = await supabase.from("documents").select("id, title, pages").eq("id", documentId).single();
+  const { data: doc } = await supabase.from("documents").select("id, title, pages, folder_id").eq("id", documentId).single();
   if (!doc) return fail("Documento non trovato", 404);
 
   const guard = await guardAi(profile);
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       const graph = mindMapToGraph(await generateMindMap(ctx, input));
       const { data, error } = await supabase
         .from("maps")
-        .insert({ title: doc.title, document_id: doc.id, graph })
+        .insert({ title: doc.title, document_id: doc.id, folder_id: doc.folder_id, graph })
         .select("id")
         .single();
       if (error) throw error;
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     const cards = await generateFlashcards(ctx, input);
     const { data: deck, error } = await supabase
       .from("decks")
-      .insert({ title: doc.title, document_id: doc.id })
+      .insert({ title: doc.title, document_id: doc.id, folder_id: doc.folder_id })
       .select("id")
       .single();
     if (error) throw error;

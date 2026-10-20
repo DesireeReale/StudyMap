@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Atkinson_Hyperlegible_Next, Bricolage_Grotesque, IBM_Plex_Mono, Lexend } from "next/font/google";
-import { getAppStyle } from "@/lib/app-style";
+import { getPreferences } from "@/lib/app-style";
 import "./globals.css";
 
 const lexend = Lexend({ variable: "--font-lexend", subsets: ["latin"] });
@@ -28,8 +28,15 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const fonts = [lexend, bricolage, atkinsonNext, plexMono].map((f) => f.variable).join(" ");
+  const prefs = await getPreferences();
   return (
-    <html lang="it" data-style={await getAppStyle()} className={`${fonts} h-full antialiased`}>
+    <html
+      lang="it"
+      data-style={prefs.style}
+      data-font={prefs.font}
+      data-size={prefs.size}
+      data-spacing={prefs.spacing}
+      className={`${fonts} h-full antialiased`}>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import type { AppStyle } from "@/config/styles";
+import type { Preferences } from "@/core/preferences";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { BrandMark, Icon, type IconName } from "./icons";
 import { StyleToggle } from "./StyleSwitch";
@@ -13,7 +13,7 @@ const LINKS: { href: string; label: string; icon: IconName; match: (p: string) =
     href: "/library",
     label: "Libreria",
     icon: "library",
-    match: (p) => ["/library", "/documents", "/maps", "/decks"].some((s) => p.startsWith(s)),
+    match: (p) => ["/library", "/folders", "/notes", "/documents", "/maps", "/decks"].some((s) => p.startsWith(s)),
   },
   { href: "/upload", label: "Carica materiale", icon: "upload", match: (p) => p.startsWith("/upload") },
   { href: "/settings", label: "Impostazioni", icon: "settings", match: (p) => p.startsWith("/settings") },
@@ -52,11 +52,11 @@ function Links({ pathname }: { pathname: string }) {
   );
 }
 
-function Account({ email, plan, appStyle }: { email: string; plan: "free" | "pro"; appStyle: AppStyle }) {
+function Account({ email, plan, prefs }: { email: string; plan: "free" | "pro"; prefs: Preferences }) {
   const router = useRouter();
   return (
     <div className="flex flex-col gap-2 border-t border-border pt-4">
-      <StyleToggle initial={appStyle} />
+      <StyleToggle initial={prefs} />
       <p className="px-3 text-sm text-muted">
         Piano <span className="font-bold text-ink">{plan === "pro" ? "Pro" : "Free"}</span>
       </p>
@@ -79,7 +79,7 @@ function Account({ email, plan, appStyle }: { email: string; plan: "free" | "pro
   );
 }
 
-export function AppNav({ email, plan, appStyle }: { email: string; plan: "free" | "pro"; appStyle: AppStyle }) {
+export function AppNav({ email, plan, prefs }: { email: string; plan: "free" | "pro"; prefs: Preferences }) {
   const pathname = usePathname();
   const [openOn, setOpenOn] = useState<string | null>(null);
   const open = openOn === pathname;
@@ -93,7 +93,7 @@ export function AppNav({ email, plan, appStyle }: { email: string; plan: "free" 
         <Brand />
         <Links pathname={pathname} />
         <div className="mt-auto">
-          <Account email={email} plan={plan} appStyle={appStyle} />
+          <Account email={email} plan={plan} prefs={prefs} />
         </div>
       </nav>
 
@@ -117,7 +117,7 @@ export function AppNav({ email, plan, appStyle }: { email: string; plan: "free" 
           className="fixed inset-x-0 top-14 bottom-0 z-20 flex flex-col gap-6 overflow-y-auto bg-chrome px-3 pb-6 md:hidden"
         >
           <Links pathname={pathname} />
-          <Account email={email} plan={plan} appStyle={appStyle} />
+          <Account email={email} plan={plan} prefs={prefs} />
         </nav>
       )}
     </>

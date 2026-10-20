@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { shortDate } from "@/core/dates";
+import { treeOptions } from "@/core/folders";
+import { MoveToFolder } from "@/components/FolderControls";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { DeleteButton } from "@/components/DeleteButton";
 import { GenerateButtons } from "@/components/GenerateButtons";
 import { Icon } from "@/components/icons";
 import { MapThumb } from "@/components/StudyMarks";
 import { requireUser } from "@/lib/supabase/server";
+import { folderTrail, loadFolders } from "@/lib/workspace";
 
 const KIND_LABEL = { pdf: "PDF", image: "Immagine", text: "Testo incollato" } as const;
 
@@ -15,21 +18,25 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
   const { supabase } = await requireUser();
   const { data: doc } = await supabase
     .from("documents")
-    .select("id, title, kind, page_count, storage_path, pages, created_at")
+    .select("id, title, kind, page_count, storage_path, pages, created_at, folder_id")
     .eq("id", id)
     .maybeSingle();
   if (!doc) notFound();
 
-  const [maps, decks] = await Promise.all([
+  const [maps, decks, folders] = await Promise.all([
     supabase.from("maps").select("id, title, graph, updated_at").eq("document_id", id).order("updated_at", { ascending: false }),
     supabase.from("decks").select("id, title, created_at").eq("document_id", id).order("created_at", { ascending: false }),
+    loadFolders(supabase),
   ]);
   const made = (maps.data?.length ?? 0) + (decks.data?.length ?? 0);
   const preview = doc.pages.join("\n\n").slice(0, 4000);
 
   return (
     <div className="mx-auto flex max-w-[1100px] flex-col gap-4">
-      <Breadcrumb current={doc.title} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Breadcrumb trail={folderTrail(folders, doc.folder_id)} current={doc.title} />
+        <MoveToFolder table="documents" id={doc.id} current={doc.folder_id} options={treeOptions(folders)} />
+      </div>
       <header className="mb-4 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-[24px] leading-tight font-bold break-words">{doc.title}</h1>
@@ -85,7 +92,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
 
         <section aria-label="Testo estratto" className="panel flex flex-col gap-4 lg:col-span-7">
           <h2 className="text-[15px] font-bold">Testo estratto</h2>
-          <div className="max-h-[420px] overflow-auto rounded-row bg-sheet p-4 text-[15px] leading-relaxed whitespace-pre-wrap">
+          <div className="max-h-[420px] overflow-auto reading rounded-row bg-sheet p-4 whitespace-pre-wrap">
             {preview}
             {doc.pages.join("\n\n").length > preview.length && <span className="text-muted"> …</span>}
           </div>
@@ -102,6 +109,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
           id={doc.id}
           storagePath={doc.storage_path}
           label="Elimina documento"
+          redirect={`/folders/${doc.folder_id}`}
           confirm={`Eliminare "${doc.title}"? Mappe e flashcard già create resteranno nella libreria.`}
         />
       </section>

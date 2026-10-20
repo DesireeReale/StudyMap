@@ -33,6 +33,16 @@ export function canSaveDocument(plan: PlanId, currentCount: number): Decision {
   };
 }
 
+export function canCreateSubject(plan: PlanId, currentCount: number): Decision {
+  const max = PLANS[plan].maxSubjects;
+  if (currentCount < max) return allow;
+  return {
+    ok: false,
+    reason: `Il piano ${plan} consente al massimo ${max} materie. Puoi creare sottocartelle dentro quelle che hai o passare a Pro.`,
+    upgrade: plan === "free",
+  };
+}
+
 export function checkPdfPages(plan: PlanId, pages: number): Decision {
   const max = PLANS[plan].maxPdfPages;
   if (pages <= max) return allow;

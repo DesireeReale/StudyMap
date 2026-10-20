@@ -11,9 +11,10 @@ import { apiUser, denied, fail } from "@/lib/api";
 
 export const maxDuration = 300;
 
+const folderId = z.uuid().optional();
 const Body = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("text"), title: z.string().trim().min(1).max(200), text: z.string().trim().min(20) }),
-  z.object({ kind: z.literal("file"), title: z.string().trim().min(1).max(200), storagePath: z.string().min(1) }),
+  z.object({ kind: z.literal("text"), title: z.string().trim().min(1).max(200), text: z.string().trim().min(20), folderId }),
+  z.object({ kind: z.literal("file"), title: z.string().trim().min(1).max(200), storagePath: z.string().min(1), folderId }),
 ]);
 
 export async function POST(request: Request) {
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
     const pages = textToPages(body.text);
     const { data, error } = await supabase
       .from("documents")
-      .insert({ title: body.title, kind: "text", pages, page_count: pages.length })
+      .insert({ title: body.title, kind: "text", pages, page_count: pages.length, folder_id: body.folderId })
       .select("id")
       .single();
     if (error) return fail("Salvataggio non riuscito", 500);
@@ -93,6 +94,7 @@ export async function POST(request: Request) {
     .from("documents")
     .insert({
       title: body.title,
+      folder_id: body.folderId,
       kind: kind === "pdf" ? "pdf" : "image",
       storage_path: body.storagePath,
       pages,

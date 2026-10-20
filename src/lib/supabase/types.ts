@@ -1,3 +1,4 @@
+import type { FolderColor, FolderIcon } from "@/config/styles";
 import type { Graph } from "@/core/graph";
 
 type Table<Row, Required extends keyof Row = never> = {
@@ -12,12 +13,35 @@ export type Profile = {
   plan: "free" | "pro";
   ai_data_sharing_consent_at: string | null;
   exam_date: string | null;
+  preferences: Record<string, unknown>;
   created_at: string;
+};
+
+export type FolderRow = {
+  id: string;
+  user_id: string;
+  parent_id: string | null;
+  name: string;
+  color: FolderColor;
+  icon: FolderIcon;
+  position: number;
+  created_at: string;
+};
+
+export type NoteRow = {
+  id: string;
+  user_id: string;
+  folder_id: string;
+  title: string;
+  body: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type DocumentRow = {
   id: string;
   user_id: string;
+  folder_id: string;
   title: string;
   kind: "pdf" | "image" | "text";
   storage_path: string | null;
@@ -29,6 +53,7 @@ export type DocumentRow = {
 export type MapRow = {
   id: string;
   user_id: string;
+  folder_id: string;
   document_id: string | null;
   title: string;
   graph: Graph;
@@ -39,6 +64,7 @@ export type MapRow = {
 export type DeckRow = {
   id: string;
   user_id: string;
+  folder_id: string;
   document_id: string | null;
   title: string;
   created_at: string;
@@ -77,6 +103,8 @@ export type Database = {
   public: {
     Tables: {
       profiles: Table<Profile, "id">;
+      folders: Table<FolderRow, "name">;
+      notes: Table<NoteRow, "title">;
       documents: Table<DocumentRow, "title" | "kind">;
       maps: Table<MapRow, "title" | "graph">;
       decks: Table<DeckRow, "title">;
@@ -86,6 +114,7 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      move_document: { Args: { p_document: string; p_folder: string }; Returns: undefined };
       consume_quota: {
         Args: { p_user: string; p_kind: string; p_period: string; p_amount?: number; p_limit?: number | null };
         Returns: boolean;

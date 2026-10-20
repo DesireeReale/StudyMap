@@ -99,7 +99,7 @@ export function FlashcardReview({ cards: initial }: { cards: Card[] }) {
         }`}
       >
         <span className="text-sm text-muted">{flipped ? "Risposta" : "Domanda"}</span>
-        <span aria-live="polite" className="text-[22px] leading-snug md:text-[24px]">
+        <span aria-live="polite" className="reading text-[22px] leading-snug md:text-[24px]">
           {flipped ? card!.back : card!.front}
         </span>
         <span className="text-sm text-muted">{flipped ? "Tocca per rivedere la domanda" : "Tocca o premi Spazio per la risposta"}</span>

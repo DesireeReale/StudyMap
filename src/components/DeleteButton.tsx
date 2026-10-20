@@ -11,12 +11,14 @@ export function DeleteButton({
   storagePath,
   label,
   confirm: question,
+  redirect = "/library",
 }: {
-  table: "documents" | "maps" | "decks";
+  table: "documents" | "maps" | "decks" | "notes";
   id: string;
   storagePath?: string | null;
   label: string;
   confirm: string;
+  redirect?: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export function DeleteButton({
     const { error } = await supabase.from(table).delete().eq("id", id);
     if (error) return setError("Eliminazione non riuscita.");
     if (storagePath) await supabase.storage.from("documents").remove([storagePath]);
-    router.push("/library");
+    router.push(redirect);
     router.refresh();
   }
 

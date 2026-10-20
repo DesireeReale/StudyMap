@@ -3,8 +3,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { PLANS } from "@/config/plans";
 import { ConsentToggle, DeleteAccount, ExamDate } from "@/components/AccountActions";
-import { StylePicker } from "@/components/StyleSwitch";
-import { getAppStyle } from "@/lib/app-style";
+import { WorkspacePicker } from "@/components/StyleSwitch";
+import { getWorkspace } from "@/lib/app-style";
 import { requireUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Impostazioni" };
@@ -19,6 +19,7 @@ export default async function SettingsPage() {
     ["Generazioni AI al mese", fmt(free.generationsPerMonth), fmt(pro.generationsPerMonth)],
     ["Pagine per PDF", fmt(free.maxPdfPages), fmt(pro.maxPdfPages)],
     ["Documenti salvati", fmt(free.maxDocuments), fmt(pro.maxDocuments)],
+    ["Materie", fmt(free.maxSubjects), fmt(pro.maxSubjects)],
     ["Esportazione", "PNG con marchio", "PNG e PDF"],
   ];
 
@@ -63,8 +64,8 @@ export default async function SettingsPage() {
         <ExamDate userId={user.id} initial={profile.exam_date} />
       </Section>
 
-      <Section id="stile" title="Stile" description="Come appaiono l'app e le mappe su questo dispositivo. Ogni stile ha una versione chiara e una scura, che segue il sistema.">
-        <StylePicker initial={await getAppStyle()} />
+      <Section id="stile" title="Il tuo spazio" description="Stile, carattere e dimensione del testo. Le scelte si salvano nel tuo account e le ritrovi su ogni dispositivo. Ogni stile ha una versione chiara e una scura, che segue il sistema.">
+        <WorkspacePicker initial={(await getWorkspace(profile.preferences)).prefs} />
       </Section>
 
       <Section

@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { Icon } from "./icons";
 
-export function Breadcrumb({ current, parent }: { current: string; parent?: { href: string; label: string } }) {
-  const trail = [{ href: "/library", label: "Libreria" }, ...(parent ? [parent] : [])];
+type Crumb = { href: string; label: string };
+
+export function Breadcrumb({ current, parent, trail: path = [] }: { current: string; parent?: Crumb; trail?: Crumb[] }) {
+  const trail = [{ href: "/library", label: "Libreria" }, ...path, ...(parent ? [parent] : [])];
   return (
     <nav aria-label="Percorso" className="text-sm text-muted">
       <ol className="flex flex-wrap items-center gap-1">

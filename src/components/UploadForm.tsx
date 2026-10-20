@@ -14,7 +14,17 @@ const ACCEPT: Record<string, string> = {
 
 type Problem = { message: string; upgrade: boolean };
 
-export function UploadForm({ userId, maxUploadBytes }: { userId: string; maxUploadBytes: number }) {
+export function UploadForm({
+  userId,
+  maxUploadBytes,
+  folders,
+  initialFolder,
+}: {
+  userId: string;
+  maxUploadBytes: number;
+  folders: { id: string; name: string; depth: number }[];
+  initialFolder?: string;
+}) {
   const router = useRouter();
   const [mode, setMode] = useState<"file" | "text">("file");
   const [busy, setBusy] = useState(false);
@@ -36,10 +46,11 @@ export function UploadForm({ userId, maxUploadBytes }: { userId: string; maxUplo
     setProblem(null);
     const form = new FormData(e.currentTarget);
     const title = String(form.get("title")).trim();
+    const folderId = String(form.get("folder") ?? "");
     setBusy(true);
     try {
       if (mode === "text") {
-        await submit({ kind: "text", title, text: String(form.get("text")) });
+        await submit({ kind: "text", title, text: String(form.get("text")), folderId });
         return;
       }
       const file = form.get("file");
@@ -57,7 +68,7 @@ export function UploadForm({ userId, maxUploadBytes }: { userId: string; maxUplo
         .storage.from("documents")
         .upload(storagePath, file, { contentType: file.type });
       if (error) return setProblem({ message: "Caricamento non riuscito. Riprova.", upgrade: false });
-      await submit({ kind: "file", title: title || file.name.replace(/\.[^.]+$/, ""), storagePath });
+      await submit({ kind: "file", title: title || file.name.replace(/\.[^.]+$/, ""), storagePath, folderId });
     } catch {
       setProblem({ message: "Errore di rete. Riprova.", upgrade: false });
     } finally {
@@ -88,6 +99,19 @@ export function UploadForm({ userId, maxUploadBytes }: { userId: string; maxUplo
           </label>
         ))}
       </fieldset>
+
+      <div className="flex flex-col gap-2">
+        <label htmlFor="upload-folder" className="label">
+          Cartella
+        </label>
+        <select id="upload-folder" name="folder" defaultValue={initialFolder} className="field">
+          {folders.map((f) => (
+            <option key={f.id} value={f.id}>
+              {"\u00a0\u00a0\u00a0".repeat(f.depth) + f.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div className="flex flex-col gap-2">
         <label htmlFor="upload-title" className="label">
