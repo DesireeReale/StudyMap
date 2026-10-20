@@ -446,9 +446,11 @@ h3,
 .folder-card,
 .folder-new {
   position: relative;
-  display: block;
   aspect-ratio: 4 / 3;
   margin-top: 12px;
+}
+.folder-card {
+  display: block;
 }
 .folder-card::before {
   content: "";

@@ -1,36 +1,37 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { shortDate } from "@/core/dates";
-import type { Graph } from "@/core/graph";
 import type { FolderColor, FolderIcon } from "@/config/styles";
-import { Icon } from "./icons";
-import { DeckStrip, MapThumb, type DeckCounts } from "./StudyMarks";
+import { shortDate } from "@/core/dates";
+import { Icon, type IconName } from "./icons";
 
-const KIND_LABEL = { pdf: "PDF", image: "Immagine", text: "Testo" } as const;
-
-export function Panel({
+export function PageHeader({
+  eyebrow,
   title,
-  count,
-  className = "",
-  action,
-  children,
+  actions,
 }: {
-  title: string;
-  count?: number;
-  className?: string;
-  action?: ReactNode;
-  children: ReactNode;
+  eyebrow: ReactNode;
+  title: ReactNode;
+  actions?: ReactNode;
 }) {
   return (
-    <section aria-label={title} className={`panel flex flex-col gap-4 ${className}`}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-[15px] font-bold">
+    <header className="flex flex-col gap-3">
+      <div className="text-[14px] text-muted">{eyebrow}</div>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <h1 className="max-w-[24ch] min-w-0 text-[32px] leading-[1.05] font-bold tracking-[-0.025em] break-words md:text-[44px]">
           {title}
-          {count !== undefined && (
-            <span className="num rounded-full bg-sheet px-2 py-0.5 text-xs font-normal text-muted">{count}</span>
-          )}
-        </h2>
-        {action}
+        </h1>
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      </div>
+    </header>
+  );
+}
+
+export function Section({ title, aside, children }: { title: string; aside?: ReactNode; children: ReactNode }) {
+  return (
+    <section aria-label={title} className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-[17px] font-bold">{title}</h2>
+        {aside}
       </div>
       {children}
     </section>
@@ -41,14 +42,11 @@ export function Empty({ children }: { children: ReactNode }) {
   return <p className="rounded-row border border-dashed border-control px-4 py-3 text-sm text-muted">{children}</p>;
 }
 
-export function EmptyAction({ href, label, children }: { href: string; label: string; children: ReactNode }) {
+export function EmptyAction({ children, actions }: { children: ReactNode; actions: ReactNode }) {
   return (
-    <div className="flex flex-col items-start gap-3 rounded-row border border-dashed border-control px-4 py-4 text-sm text-muted">
+    <div className="flex flex-col items-start gap-3 rounded-row border border-dashed border-control px-5 py-5 text-[15px] text-muted">
       <p>{children}</p>
-      <Link href={href} className="btn-primary">
-        <Icon name="upload" />
-        {label}
-      </Link>
+      <div className="flex flex-wrap gap-2">{actions}</div>
     </div>
   );
 }
@@ -56,7 +54,7 @@ export function EmptyAction({ href, label, children }: { href: string; label: st
 export function FolderBadge({ color, icon, size = 40 }: { color: FolderColor; icon: FolderIcon; size?: number }) {
   return (
     <span
-      className="folder-tile flex shrink-0 items-center justify-center rounded-lg"
+      className="folder-tile inline-flex shrink-0 items-center justify-center rounded-lg align-middle"
       style={{ "--folder-bg": `var(--${color})`, "--folder-ink": `var(--${color}-ink)`, width: size, height: size } as React.CSSProperties}
     >
       <Icon name={icon} size={Math.round(size / 2)} />
@@ -64,97 +62,98 @@ export function FolderBadge({ color, icon, size = 40 }: { color: FolderColor; ic
   );
 }
 
-export function DocumentList({
-  items,
-}: {
-  items: { id: string; title: string; kind: keyof typeof KIND_LABEL; page_count: number; created_at: string }[];
-}) {
+export type MaterialKind = "documento" | "appunto" | "mappa" | "flashcard";
+
+export type Material = { kind: MaterialKind; id: string; title: string; detail: string; date: string; place?: string };
+
+const KINDS: Record<MaterialKind, { label: string; icon: IconName; href: string; chip: string }> = {
+  documento: { label: "Documento", icon: "file", href: "/documents", chip: "bg-surface text-muted" },
+  appunto: { label: "Appunto", icon: "note", href: "/notes", chip: "bg-pill-positive text-pill-positive-ink" },
+  mappa: { label: "Mappa", icon: "map", href: "/maps", chip: "bg-accent-soft text-ink" },
+  flashcard: { label: "Flashcard", icon: "cards", href: "/decks", chip: "bg-notice text-notice-ink" },
+};
+
+export const MATERIAL_FILTERS: { id: MaterialKind | null; name: string }[] = [
+  { id: null, name: "Tutto" },
+  { id: "documento", name: "Documenti" },
+  { id: "appunto", name: "Appunti" },
+  { id: "mappa", name: "Mappe" },
+  { id: "flashcard", name: "Flashcard" },
+];
+
+export function MaterialList({ items }: { items: Material[] }) {
   return (
-    <ul className="flex flex-col gap-2">
-      {items.map((d) => (
-        <li key={d.id}>
-          <Link href={`/documents/${d.id}`} className="row-card flex min-h-[63px] items-center gap-3 hover:border-control">
-            <Icon name="file" size={16} className="shrink-0 text-muted" />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate font-bold">{d.title}</span>
-              <span className="num block text-[13px] text-muted">
-                {KIND_LABEL[d.kind]} · {d.page_count} {d.page_count === 1 ? "pagina" : "pagine"}
+    <ul className="flex flex-col border-t border-rule">
+      {items.map((m) => {
+        const k = KINDS[m.kind];
+        return (
+          <li key={`${m.kind}-${m.id}`} className="border-b border-rule">
+            <Link
+              href={`${k.href}/${m.id}`}
+              className="flex min-h-14 items-center gap-3 rounded-lg px-2 py-2.5 transition-colors duration-150 hover:bg-active"
+            >
+              <Icon name={k.icon} size={18} className="shrink-0 text-muted" />
+              <span className="min-w-0 flex-1">
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="truncate font-bold">{m.title}</span>
+                  <span className={`num rounded-full px-2 py-0.5 text-[12px] ${k.chip}`}>
+                    {k.label}
+                    {m.detail && ` · ${m.detail}`}
+                  </span>
+                </span>
               </span>
-            </span>
-            <span className="num shrink-0 text-[13px] text-muted">{shortDate(d.created_at)}</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-export function MapList({ items }: { items: { id: string; title: string; graph: Graph; updated_at: string }[] }) {
-  return (
-    <ul className="grid gap-2 md:grid-cols-2">
-      {items.map((m) => (
-        <li key={m.id}>
-          <Link href={`/maps/${m.id}`} className="row-card flex min-h-[63px] items-center gap-3 hover:border-control">
-            <MapThumb graph={m.graph} />
-            <span className="min-w-0">
-              <span className="block truncate font-bold">{m.title}</span>
-              <span className="num block text-[13px] text-muted">
-                {m.graph.nodes.length} concetti · {shortDate(m.updated_at)}
+              <span className="num hidden shrink-0 text-[13px] text-muted sm:block">
+                {m.place ? `${m.place} · ` : ""}
+                {shortDate(m.date)}
               </span>
-            </span>
-          </Link>
-        </li>
-      ))}
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   );
 }
 
-export function DeckList({ items, counts }: { items: { id: string; title: string }[]; counts?: Map<string, DeckCounts> }) {
+export function FilterLinks({ base, current }: { base: string; current: MaterialKind | null }) {
   return (
-    <ul className="flex flex-col gap-2">
-      {items.map((d) => (
-        <li key={d.id}>
-          <Link href={`/decks/${d.id}`} className="row-card flex min-h-[63px] flex-col gap-2 hover:border-control">
-            <span className="flex items-center gap-2 font-bold">
-              <Icon name="cards" size={16} className="shrink-0 text-muted" />
-              <span className="truncate">{d.title}</span>
-            </span>
-            {counts && <DeckStrip counts={counts.get(d.id) ?? { known: 0, unknown: 0, fresh: 0 }} />}
+    <nav aria-label="Filtra per tipo" className="flex flex-wrap gap-1 rounded-full bg-sheet p-1 text-[13px]">
+      {MATERIAL_FILTERS.map((f) => {
+        const href = f.id ? `${base}?tipo=${f.id}` : base;
+        const on = current === f.id;
+        return (
+          <Link
+            key={f.name}
+            href={href}
+            scroll={false}
+            aria-current={on ? "page" : undefined}
+            className={`flex min-h-8 items-center rounded-full px-3 ${on ? "bg-raised font-bold text-ink" : "text-muted hover:text-ink"}`}
+          >
+            {f.name}
           </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-export function NoteList({ items }: { items: { id: string; title: string; preview: string; updated_at: string }[] }) {
-  return (
-    <ul className="flex flex-col gap-2">
-      {items.map((n) => (
-        <li key={n.id}>
-          <Link href={`/notes/${n.id}`} className="row-card flex min-h-[63px] items-start gap-3 hover:border-control">
-            <Icon name="note" size={16} className="mt-1 shrink-0 text-muted" />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate font-bold">{n.title}</span>
-              <span className="line-clamp-2 block text-[13px] text-muted">{n.preview || "Appunto vuoto"}</span>
-            </span>
-            <span className="num shrink-0 text-[13px] text-muted">{shortDate(n.updated_at)}</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
+        );
+      })}
+    </nav>
   );
 }
 
 export function SearchForm({ q, label }: { q: string; label: string }) {
   return (
-    <form role="search" className="flex gap-2">
+    <form role="search" className="flex items-center gap-2 border-b border-control focus-within:border-accent has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--focus)]">
+      <Icon name="search" className="shrink-0 text-muted" />
       <label htmlFor="search" className="sr-only">
         {label}
       </label>
-      <input id="search" name="q" type="search" defaultValue={q} placeholder={label} maxLength={100} className="field h-11" />
-      <button type="submit" className="btn-secondary h-11" aria-label="Cerca">
-        <Icon name="search" />
+      <input
+        id="search"
+        name="q"
+        type="search"
+        defaultValue={q}
+        placeholder={label}
+        maxLength={100}
+        className="h-11 min-w-0 flex-1 bg-transparent px-1 text-[15px] text-ink placeholder:text-muted focus:outline-none"
+      />
+      <button type="submit" className="btn-ghost h-9 px-3 text-sm">
+        Cerca
       </button>
     </form>
   );

@@ -51,7 +51,7 @@ test("create a subject and a subfolder, upload a PDF there, the map shows up in 
   await expect(page.getByRole("navigation", { name: "Percorso" }).getByRole("link", { name: "Scritto" })).toBeVisible();
 
   await page.goto(folderUrl);
-  await expect(page.getByRole("region", { name: "Mappe" }).getByRole("link", { name: /Il contratto/ })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Materiale" }).getByRole("link", { name: /Il contratto.*Mappa/ })).toBeVisible();
 
   await page.goto(subjectUrl);
   await expect(page.getByRole("link", { name: /Scritto.*1 mappa/ })).toBeVisible();

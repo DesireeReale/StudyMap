@@ -36,7 +36,7 @@ export function NoteEditor({ noteId, title, body }: { noteId: string; title: str
   const statusText = { saved: "Salvato", saving: "Salvataggio…", error: "Salvataggio non riuscito" }[status];
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex w-full max-w-[860px] flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <label htmlFor="note-title" className="sr-only">
           Titolo dell&apos;appunto
@@ -46,7 +46,7 @@ export function NoteEditor({ noteId, title, body }: { noteId: string; title: str
           value={draft.title}
           maxLength={200}
           onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-          className="min-w-0 flex-1 rounded-field bg-transparent px-1 text-[24px] leading-tight font-bold text-ink"
+          className="min-w-0 flex-1 rounded-field bg-transparent px-1 text-[32px] leading-[1.05] font-bold tracking-[-0.025em] break-words md:text-[44px] text-ink"
         />
         <p role="status" className={`text-sm ${status === "error" ? "text-negative" : "text-muted"}`}>
           {statusText}

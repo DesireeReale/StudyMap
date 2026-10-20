@@ -27,7 +27,7 @@ export default async function DeckPage({ params }: PageProps<"/decks/[id]">) {
   ]);
 
   return (
-    <div className="mx-auto flex max-w-[760px] flex-col gap-4">
+    <div className="mx-auto flex max-w-[1100px] flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Breadcrumb
           trail={folderTrail(folders, deck.folder_id)}
@@ -38,7 +38,9 @@ export default async function DeckPage({ params }: PageProps<"/decks/[id]">) {
       </div>
       <EditableTitle table="decks" id={deck.id} title={deck.title} label="Titolo del mazzo" />
       {cards?.length ? (
-        <FlashcardReview cards={cards} />
+        <div className="w-full max-w-[760px]">
+          <FlashcardReview cards={cards} />
+        </div>
       ) : (
         <p className="rounded-row border border-dashed border-control px-4 py-3 text-sm text-muted">Questo mazzo è vuoto.</p>
       )}

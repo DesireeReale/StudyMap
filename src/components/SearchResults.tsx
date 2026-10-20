@@ -1,60 +1,39 @@
 import Link from "next/link";
 import type { supabaseServer } from "@/lib/supabase/server";
-import { searchWorkspace, snippet } from "@/lib/workspace";
-import { DeckList, DocumentList, Empty, FolderBadge, MapList, NoteList, Panel } from "./LibraryLists";
+import { searchWorkspace, toMaterials, type FolderItem } from "@/lib/workspace";
+import { Empty, FolderBadge, MaterialList, Section } from "./LibraryLists";
 
 export async function SearchResults({
   q,
   supabase,
+  folders,
   folderIds,
 }: {
   q: string;
   supabase: Awaited<ReturnType<typeof supabaseServer>>;
+  folders: FolderItem[];
   folderIds?: string[];
 }) {
   const r = await searchWorkspace(supabase, q, folderIds);
-  const total = r.folders.length + r.documents.length + r.maps.length + r.decks.length + r.notes.length;
+  const items = toMaterials(r, folders);
+  const total = r.folders.length + items.length;
 
   return (
-    <section aria-label="Risultati della ricerca" className="flex flex-col gap-4">
-      <p role="status" className="text-[15px] text-muted">
-        {total === 0 ? `Nessun risultato per "${q}".` : `${total} ${total === 1 ? "risultato" : "risultati"} per "${q}".`}
-      </p>
-      {total === 0 && <Empty>Prova con una parola più corta o controlla l&apos;ortografia.</Empty>}
+    <Section title="Risultati" aside={<p role="status" className="text-[14px] text-muted">{`${total} ${total === 1 ? "risultato" : "risultati"} per "${q}"`}</p>}>
+      {total === 0 && <Empty>Nessun risultato. Prova con una parola più corta o controlla l&apos;ortografia.</Empty>}
       {r.folders.length > 0 && (
-        <Panel title="Cartelle" count={r.folders.length}>
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {r.folders.map((f) => (
-              <li key={f.id}>
-                <Link href={`/folders/${f.id}`} className="row-card flex items-center gap-3 hover:border-control">
-                  <FolderBadge color={f.color} icon={f.icon} size={32} />
-                  <span className="truncate font-bold">{f.name}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Panel>
+        <ul className="flex flex-wrap gap-2">
+          {r.folders.map((f) => (
+            <li key={f.id}>
+              <Link href={`/folders/${f.id}`} className="flex items-center gap-2 rounded-full border border-border py-1 pr-4 pl-1 font-bold hover:border-control">
+                <FolderBadge color={f.color} icon={f.icon} size={28} />
+                {f.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
       )}
-      {r.notes.length > 0 && (
-        <Panel title="Appunti" count={r.notes.length}>
-          <NoteList items={r.notes.map((n) => ({ ...n, preview: snippet(n.body, q) }))} />
-        </Panel>
-      )}
-      {r.documents.length > 0 && (
-        <Panel title="Documenti" count={r.documents.length}>
-          <DocumentList items={r.documents} />
-        </Panel>
-      )}
-      {r.maps.length > 0 && (
-        <Panel title="Mappe" count={r.maps.length}>
-          <MapList items={r.maps} />
-        </Panel>
-      )}
-      {r.decks.length > 0 && (
-        <Panel title="Flashcard" count={r.decks.length}>
-          <DeckList items={r.decks} />
-        </Panel>
-      )}
-    </section>
+      {items.length > 0 && <MaterialList items={items} />}
+    </Section>
   );
 }

@@ -38,7 +38,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
   const preview = doc.pages.join("\n\n").slice(0, 4000);
 
   return (
-    <div className="mx-auto flex max-w-[1100px] flex-col gap-4">
+    <div className="mx-auto flex max-w-[1100px] flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Breadcrumb trail={folderTrail(folders, doc.folder_id)} current={doc.title} />
         <MoveToFolder table="documents" id={doc.id} current={doc.folder_id} options={treeOptions(folders)} />

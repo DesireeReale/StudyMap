@@ -23,7 +23,7 @@ export default async function NotePage({ params }: PageProps<"/notes/[id]">) {
   if (!note) notFound();
 
   return (
-    <div className="mx-auto flex max-w-[860px] flex-col gap-4">
+    <div className="mx-auto flex max-w-[1100px] flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Breadcrumb trail={folderTrail(folders, note.folder_id)} current={note.title} />
         <MoveToFolder table="notes" id={note.id} current={note.folder_id} options={treeOptions(folders)} />

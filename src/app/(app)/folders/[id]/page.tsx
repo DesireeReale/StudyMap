@@ -5,11 +5,22 @@ import { childrenOf, MAX_FOLDER_DEPTH, moveTargets, pathTo, subtreeIds } from "@
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { FolderGrid, FolderSettings } from "@/components/FolderControls";
 import { Icon } from "@/components/icons";
-import { DeckList, DocumentList, Empty, EmptyAction, FolderBadge, MapList, NoteList, Panel, SearchForm } from "@/components/LibraryLists";
+import {
+  Empty,
+  EmptyAction,
+  FilterLinks,
+  FolderBadge,
+  MATERIAL_FILTERS,
+  MaterialList,
+  PageHeader,
+  SearchForm,
+  Section,
+  type MaterialKind,
+} from "@/components/LibraryLists";
 import { SearchResults } from "@/components/SearchResults";
 import { StudyDock } from "@/components/StudyDock";
 import { requireUser } from "@/lib/supabase/server";
-import { folderStats, folderTrail, loadFolders, loadStudy, pageTitle } from "@/lib/workspace";
+import { folderStats, folderTrail, loadFolders, loadStudy, pageTitle, toMaterials } from "@/lib/workspace";
 
 export async function generateMetadata({ params }: PageProps<"/folders/[id]">): Promise<Metadata> {
   return pageTitle("folders", (await params).id);
@@ -19,113 +30,116 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
   const { id } = await params;
   const query = await searchParams;
   const q = String(query.q ?? "").trim().slice(0, 100);
+  const tipo = (MATERIAL_FILTERS.find((f) => f.id === query.tipo)?.id ?? null) as MaterialKind | null;
   const { supabase, profile } = await requireUser();
   const folders = await loadFolders(supabase);
   const folder = folders.find((f) => f.id === id);
   if (!folder) notFound();
 
-  const path = pathTo(folders, id);
-  const depth = path.length;
+  const depth = pathTo(folders, id).length;
   const tree = subtreeIds(folders, id);
   const children = childrenOf(folders, id);
   const [study, docs, maps, decks, notes] = await Promise.all([
     depth === 1 ? loadStudy(supabase, profile, tree) : null,
-    supabase.from("documents").select("id, title, kind, page_count, created_at, folder_id").in("folder_id", tree).order("created_at", { ascending: false }),
-    supabase.from("maps").select("id, title, graph, updated_at, folder_id").in("folder_id", tree).order("updated_at", { ascending: false }),
-    supabase.from("decks").select("id, title, folder_id").in("folder_id", tree).order("created_at", { ascending: false }),
-    supabase.from("notes").select("id, title, body, updated_at, folder_id").in("folder_id", tree).order("updated_at", { ascending: false }),
+    supabase.from("documents").select("id, title, kind, page_count, created_at, folder_id").in("folder_id", tree),
+    supabase.from("maps").select("id, title, graph, updated_at, folder_id").in("folder_id", tree),
+    supabase.from("decks").select("id, title, created_at, folder_id").in("folder_id", tree),
+    supabase.from("notes").select("id, title, updated_at, folder_id").in("folder_id", tree),
   ]);
   const here = <T extends { folder_id: string }>(rows: T[] | null) => (rows ?? []).filter((r) => r.folder_id === id);
-  const [docList, mapList, deckList, noteList] = [here(docs.data), here(maps.data), here(decks.data), here(notes.data)];
+  const all = toMaterials(
+    { documents: here(docs.data), notes: here(notes.data), maps: here(maps.data), decks: here(decks.data) },
+    [],
+    study?.counts,
+  );
+  const items = tipo ? all.filter((m) => m.kind === tipo) : all;
   const stats = folderStats(folders, [docs.data ?? [], maps.data ?? [], decks.data ?? [], notes.data ?? []]);
-  const isEmpty = children.length + docList.length + mapList.length + deckList.length + noteList.length === 0;
+  const isEmpty = children.length + all.length === 0;
   const rootCount = childrenOf(folders, null).length;
   const kind = depth === 1 ? "materia" : "cartella";
   const upload = `/upload?folder=${id}`;
+  const base = `/folders/${id}`;
+
   const subfolders = (children.length > 0 || depth < MAX_FOLDER_DEPTH) && (
-    <Panel title="Cartelle" count={children.length}>
-      {children.length === 0 && (
-        <p className="text-sm text-muted">Facoltativo: dividi questa {kind} in parti, per esempio Scritto e Orale.</p>
-      )}
-      <FolderGrid
-        key={children.map((c) => `${c.id}${c.position}`).join()}
-        folders={children}
-        stats={stats}
-        parentId={id}
-        newLabel="Nuova cartella"
-        placeholder="es. Scritto"
-        canCreate={depth < MAX_FOLDER_DEPTH}
-      />
-    </Panel>
+    <FolderGrid
+      key={children.map((c) => `${c.id}${c.position}`).join()}
+      title="Cartelle"
+      hint={children.length ? undefined : "facoltative, per dividerla in parti"}
+      folders={children}
+      stats={stats}
+      parentId={id}
+      newLabel="Nuova cartella"
+      placeholder="es. Scritto"
+      canCreate={depth < MAX_FOLDER_DEPTH}
+    />
   );
 
   return (
-    <div className="mx-auto flex max-w-[1100px] flex-col gap-4">
-      <Breadcrumb trail={folderTrail(folders, id).slice(0, -1)} current={folder.name} />
-      <header className="mb-2 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-4">
-          <FolderBadge color={folder.color} icon={folder.icon} size={56} />
-          <div className="min-w-0">
-            <h1 className="text-[28px] leading-tight font-bold break-words md:text-[36px]">{folder.name}</h1>
-            <p className="text-[15px] text-muted">{stats[id] || `Questa ${kind} è vuota.`}</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href={upload} className="btn-primary">
-            <Icon name="upload" />
-            Carica qui
-          </Link>
-        </div>
-      </header>
-
-      {study && <StudyDock data={study.dock} />}
-
-      <SearchForm q={q} label={`Cerca in ${folder.name}`} />
+    <div className="mx-auto flex max-w-[1100px] flex-col gap-10">
+      <div className="flex flex-col gap-6">
+        <PageHeader
+          eyebrow={<Breadcrumb trail={folderTrail(folders, id).slice(0, -1)} current={folder.name} />}
+          title={
+            <span className="flex items-center gap-3">
+              <FolderBadge color={folder.color} icon={folder.icon} size={44} />
+              <span className="min-w-0">{folder.name}</span>
+            </span>
+          }
+          actions={
+            <>
+              <Link href={`${base}?personalizza=1#personalizza`} className="btn-secondary h-11 px-5">
+                Personalizza
+              </Link>
+              <Link href={upload} className="btn-primary h-11 px-5">
+                <Icon name="upload" />
+                Carica qui
+              </Link>
+            </>
+          }
+        />
+        {study && <StudyDock data={study.dock} />}
+        <SearchForm q={q} label={`Cerca in ${folder.name}`} />
+      </div>
 
       {q ? (
-        <SearchResults q={q} supabase={supabase} folderIds={tree} />
+        <SearchResults q={q} supabase={supabase} folders={folders} folderIds={tree} />
       ) : (
         <>
           {children.length > 0 && subfolders}
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Panel title="Documenti" count={docList.length}>
-              {docList.length ? (
-                <DocumentList items={docList} />
-              ) : (
-                <EmptyAction href={upload} label="Carica PDF o foto">
-                  Carica qui il materiale di questa {kind}: PDF o foto degli appunti.
-                </EmptyAction>
-              )}
-            </Panel>
-            <Panel title="Appunti" count={noteList.length}>
-              {noteList.length ? (
-                <NoteList items={noteList.map((n) => ({ ...n, preview: n.body.slice(0, 200) }))} />
-              ) : (
-                <EmptyAction href={`${upload}&mode=text`} label="Scrivi un appunto">
-                  Scrivi o incolla i tuoi appunti: potrai modificarli e generare mappe e flashcard.
-                </EmptyAction>
-              )}
-            </Panel>
-            <Panel title="Mappe" count={mapList.length}>
-              {mapList.length ? <MapList items={mapList} /> : <Empty>Le mappe che generi dai documenti di questa cartella compaiono qui.</Empty>}
-            </Panel>
-            <Panel title="Flashcard" count={deckList.length}>
-              {deckList.length ? (
-                <DeckList items={deckList} counts={study?.counts} />
-              ) : (
-                <Empty>I mazzi generati dai documenti di questa cartella compaiono qui.</Empty>
-              )}
-            </Panel>
-          </div>
+          <Section title="Materiale" aside={all.length > 0 && <FilterLinks base={base} current={tipo} />}>
+            {all.length === 0 ? (
+              <EmptyAction
+                actions={
+                  <>
+                    <Link href={upload} className="btn-primary">
+                      <Icon name="upload" />
+                      Carica PDF o foto
+                    </Link>
+                    <Link href={`${upload}&mode=text`} className="btn-secondary">
+                      <Icon name="note" />
+                      Scrivi un appunto
+                    </Link>
+                  </>
+                }
+              >
+                Questa {kind} è vuota. Carica il materiale dell&apos;esame o scrivi i tuoi appunti: da qui generi mappe e
+                flashcard.
+              </EmptyAction>
+            ) : items.length ? (
+              <MaterialList items={items} />
+            ) : (
+              <Empty>Niente di questo tipo in questa {kind}.</Empty>
+            )}
+          </Section>
 
           {children.length === 0 && subfolders}
         </>
       )}
 
-      <details className="panel mt-6" open={!!query.personalizza}>
-        <summary className="cursor-pointer text-[15px] font-bold">Personalizza {kind}</summary>
-        <div className="mt-4">
+      <details id="personalizza" className="border-t border-rule pt-6" open={!!query.personalizza}>
+        <summary className="cursor-pointer text-[17px] font-bold">Personalizza {kind}</summary>
+        <div className="mt-6">
           <FolderSettings
             folder={folder}
             parentId={folder.parent_id}

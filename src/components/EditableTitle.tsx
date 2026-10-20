@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
-const H1 = "text-[24px] leading-tight font-bold break-words";
+const H1 = "text-[32px] leading-[1.05] font-bold tracking-[-0.025em] break-words md:text-[44px]";
 
 export function EditableTitle({ table, id, title, label }: { table: "documents" | "decks"; id: string; title: string; label: string }) {
   const router = useRouter();

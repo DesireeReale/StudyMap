@@ -4,6 +4,7 @@ import { daysUntil } from "@/core/dates";
 import { monthPeriod } from "@/core/entitlements";
 import { pathTo } from "@/core/folders";
 import type { DockData } from "@/components/StudyDock";
+import type { Material } from "@/components/LibraryLists";
 import type { DeckCounts } from "@/components/StudyMarks";
 import { supabaseServer } from "./supabase/server";
 import type { FolderRow, Profile } from "./supabase/types";
@@ -101,11 +102,11 @@ export async function searchWorkspace(supabase: Supabase, q: string, folderIds?:
   const folderQuery = supabase.from("folders").select("id, parent_id, name, color, icon, position, created_at").ilike("name", like);
   const [folders, documents, maps, decks, noteTitles, noteBodies] = await Promise.all([
     folderIds ? folderQuery.in("id", folderIds) : folderQuery,
-    scoped(supabase.from("documents").select("id, title, kind, page_count, created_at").ilike("title", like)).limit(30),
-    scoped(supabase.from("maps").select("id, title, graph, updated_at").ilike("title", like)).limit(30),
-    scoped(supabase.from("decks").select("id, title, created_at").ilike("title", like)).limit(30),
-    scoped(supabase.from("notes").select("id, title, body, updated_at").ilike("title", like)).limit(30),
-    scoped(supabase.from("notes").select("id, title, body, updated_at").ilike("body", like)).limit(30),
+    scoped(supabase.from("documents").select("id, title, kind, page_count, created_at, folder_id").ilike("title", like)).limit(30),
+    scoped(supabase.from("maps").select("id, title, graph, updated_at, folder_id").ilike("title", like)).limit(30),
+    scoped(supabase.from("decks").select("id, title, created_at, folder_id").ilike("title", like)).limit(30),
+    scoped(supabase.from("notes").select("id, title, body, updated_at, folder_id").ilike("title", like)).limit(30),
+    scoped(supabase.from("notes").select("id, title, body, updated_at, folder_id").ilike("body", like)).limit(30),
   ]);
   const notes = [...(noteTitles.data ?? []), ...(noteBodies.data ?? [])].filter(
     (n, i, all) => all.findIndex((m) => m.id === n.id) === i,
@@ -124,4 +125,43 @@ export function snippet(body: string, q: string, size = 140): string {
   const start = Math.max(0, (at < 0 ? 0 : at) - size / 2);
   const text = body.slice(start, start + size).replace(/\s+/g, " ").trim();
   return `${start > 0 ? "…" : ""}${text}${start + size < body.length ? "…" : ""}`;
+}
+
+const DOC_LABEL = { pdf: "PDF", image: "Immagine", text: "Testo" } as const;
+
+export function toMaterials(
+  rows: {
+    documents?: { id: string; title: string; kind: keyof typeof DOC_LABEL; page_count: number; created_at: string; folder_id: string }[];
+    notes?: { id: string; title: string; updated_at: string; folder_id: string }[];
+    maps?: { id: string; title: string; graph: { nodes: unknown[] }; updated_at: string; folder_id: string }[];
+    decks?: { id: string; title: string; created_at: string; folder_id: string }[];
+  },
+  folders: FolderItem[] = [],
+  counts?: Map<string, { unknown: number; fresh: number }>,
+): Material[] {
+  const place = (id: string) => folders.find((f) => f.id === id)?.name;
+  const pending = (id: string) => {
+    const k = counts?.get(id);
+    return k ? `${k.unknown + k.fresh} da ripassare` : "";
+  };
+  return [
+    ...(rows.documents ?? []).map((d) => ({
+      kind: "documento" as const,
+      id: d.id,
+      title: d.title,
+      detail: `${DOC_LABEL[d.kind]} · ${d.page_count} ${d.page_count === 1 ? "pagina" : "pagine"}`,
+      date: d.created_at,
+      place: place(d.folder_id),
+    })),
+    ...(rows.notes ?? []).map((n) => ({ kind: "appunto" as const, id: n.id, title: n.title, detail: "", date: n.updated_at, place: place(n.folder_id) })),
+    ...(rows.maps ?? []).map((m) => ({
+      kind: "mappa" as const,
+      id: m.id,
+      title: m.title,
+      detail: `${m.graph.nodes.length} concetti`,
+      date: m.updated_at,
+      place: place(m.folder_id),
+    })),
+    ...(rows.decks ?? []).map((d) => ({ kind: "flashcard" as const, id: d.id, title: d.title, detail: pending(d.id), date: d.created_at, place: place(d.folder_id) })),
+  ].sort((a, b) => b.date.localeCompare(a.date));
 }

@@ -29,6 +29,8 @@ function closeMenu(e: React.MouseEvent) {
 }
 
 export function FolderGrid({
+  title,
+  hint,
   folders,
   stats,
   parentId,
@@ -37,6 +39,8 @@ export function FolderGrid({
   canCreate,
   limitNotice,
 }: {
+  title: string;
+  hint?: string;
   folders: GridFolder[];
   stats: Record<string, string>;
   parentId: string | null;
@@ -98,9 +102,14 @@ export function FolderGrid({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <section aria-label={title} className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-[17px] font-bold">
+          {title}
+          {hint && <span className="ml-2 text-[14px] font-normal text-muted">{hint}</span>}
+        </h2>
       {items.length > 1 && (
-        <div role="radiogroup" aria-label="Ordina per" className="flex w-fit gap-1 self-end rounded-full bg-sheet p-1 text-[13px]">
+        <div role="radiogroup" aria-label="Ordina per" className="flex w-fit gap-1 rounded-full bg-sheet p-1 text-[13px]">
           {SORTS.map((s) => (
             <button
               key={s.id}
@@ -115,8 +124,9 @@ export function FolderGrid({
           ))}
         </div>
       )}
+      </div>
 
-      <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
+      <ul className="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-3 lg:grid-cols-5">
         {canCreate && (
           <li>
             {creating ? (
@@ -215,7 +225,7 @@ export function FolderGrid({
       <p role="status" className="sr-only">
         {status}
       </p>
-    </div>
+    </section>
   );
 }
 
