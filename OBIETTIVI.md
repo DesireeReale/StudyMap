@@ -119,8 +119,14 @@
 - [ ] Flashcard: export ed elimina in un menu (bassa, piccolo)
 - [ ] Landing: primo schermo con mappa grande e leggibile (alta, medio)
 - [ ] Landing: "come funziona" in 3 passi (alta, piccolo)
-- [ ] Landing: schede per strumento (media, medio)
+- [x] Landing: schede per strumento (media, medio)
 - [ ] Landing: domande frequenti (media, piccolo)
+- [x] Landing: fascia "Leggi come ti viene meglio" con interruttori dal vivo
+- [ ] Landing: barra di navigazione fissa (Come funziona, Strumenti, Prezzi, Domande, Inizia gratis)
+- [ ] Landing: primo schermo a due colonne con flashcard ed esito quiz sopra la mappa
+- [ ] Landing: prezzi Gratis/Pro dai dati di plans.ts e promessa "i contenuti restano tuoi"
+- [ ] Landing: togliere Showcase, LiveCard e animazioni di comparsa rimasti dalla versione precedente
+- [ ] Landing: verifica nei due temi, chiaro/scuro e su telefono
 - [ ] Landing: argomenti verificabili al posto dei numeri (bassa, piccolo)
 
 ## Da fare tu

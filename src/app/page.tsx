@@ -5,8 +5,10 @@ import type { ReactNode } from "react";
 import { PLANS } from "@/config/plans";
 import { BrandMark } from "@/components/icons";
 import { LiveCard } from "@/components/landing/LiveCard";
-import { MapArt } from "@/components/landing/MapArt";
+import { HEART_FAILURE, MapArt } from "@/components/landing/MapArt";
 import { RevealOnScroll } from "@/components/landing/Motion";
+import { ReadingDemo } from "@/components/landing/ReadingDemo";
+import { ToolTabs } from "@/components/landing/ToolTabs";
 import { Showcase } from "@/components/landing/Showcase";
 import { getUser } from "@/lib/supabase/server";
 
@@ -31,7 +33,7 @@ const STEPS: { line: string; text: string; proof?: ReactNode; accent?: boolean }
     line: "Poi l'AI lo scompone in concetti.",
     text: "Ne esce una mappa in italiano, con i termini tecnici della tua materia e le relazioni scritte tra i concetti.",
     proof: (
-      <MapArt
+      <MapArt data={HEART_FAILURE}
         label="Mappa concettuale sul contratto: requisiti, effetti, patologie e scioglimento"
         className="rounded-row border-8 border-surface"
       />
@@ -152,6 +154,19 @@ export default async function Home() {
               </div>
             </div>
           ))}
+        </section>
+
+        <section aria-labelledby="tools-title" className="mx-auto flex max-w-[1180px] flex-col gap-8 px-4 pb-24 md:px-8 md:pb-32">
+          <h2 id="tools-title" className="text-[clamp(28px,3.6vw,40px)] leading-tight font-bold">
+            Un materiale, cinque modi di studiarlo
+          </h2>
+          <ToolTabs />
+        </section>
+
+        <section aria-label="Impostazioni di lettura" className="bg-primary px-4 py-20 text-on-primary md:px-8 md:py-28">
+          <div className="mx-auto max-w-[1180px]">
+            <ReadingDemo />
+          </div>
         </section>
 
         <section aria-labelledby="price-title" className="flex min-h-[80svh] flex-col justify-center bg-surface px-4 py-24 md:px-8">
