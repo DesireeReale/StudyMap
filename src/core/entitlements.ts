@@ -88,6 +88,14 @@ export function quizLimitReached(plan: PlanId): Denied {
   };
 }
 
+export function chatLimitReached(plan: PlanId): Denied {
+  return {
+    ok: false,
+    reason: `Hai usato le ${PLANS[plan].chatQuestionsPerMonth} domande al documento del piano ${plan} per questo mese. Riassunti, flashcard e quiz restano disponibili.`,
+    upgrade: plan === "free",
+  };
+}
+
 export function weekPeriod(d = new Date()): string {
   const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
   const day = t.getUTCDay() || 7;

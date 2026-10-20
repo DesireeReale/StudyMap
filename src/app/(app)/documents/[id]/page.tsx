@@ -6,6 +6,8 @@ import { treeOptions } from "@/core/folders";
 import { MoveToFolder } from "@/components/FolderControls";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { DeleteButton } from "@/components/DeleteButton";
+import { DocumentChat } from "@/components/DocumentChat";
+import { excerptsFor } from "@/core/retrieval";
 import { EditableTitle } from "@/components/EditableTitle";
 import { GenerateButtons } from "@/components/GenerateButtons";
 import { Icon } from "@/components/icons";
@@ -30,11 +32,13 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
     .maybeSingle();
   if (!doc) notFound();
 
-  const [maps, decks, folders] = await Promise.all([
+  const [maps, decks, folders, chat] = await Promise.all([
     supabase.from("maps").select("id, title, graph, updated_at").eq("document_id", id).order("updated_at", { ascending: false }),
     supabase.from("decks").select("id, title, created_at").eq("document_id", id).order("created_at", { ascending: false }),
     loadFolders(supabase),
+    supabase.from("chat_messages").select("id, role, content, pages").eq("document_id", id).order("id"),
   ]);
+  const messages = chat.data ?? [];
   const made = (maps.data?.length ?? 0) + (decks.data?.length ?? 0);
   const preview = doc.pages.join("\n\n").slice(0, 4000);
 
@@ -105,6 +109,13 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
           </div>
         </section>
       </div>
+
+      <DocumentChat
+        source={{ documentId: doc.id }}
+        unit={doc.kind === "pptx" ? "Slide" : "Pagina"}
+        initial={messages}
+        excerpts={excerptsFor(doc.pages, messages.flatMap((m) => m.pages))}
+      />
 
       <section aria-label="Elimina documento" className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
         <p className="max-w-xl text-sm text-muted">

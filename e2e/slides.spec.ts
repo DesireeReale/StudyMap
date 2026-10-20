@@ -39,6 +39,19 @@ test("upload PowerPoint slides, read their pictures and summarise them", async (
   await expect(text).toContainText("Figura: Grafico velocità-tempo");
   await expect(text).toContainText("Note del relatore:");
 
+  const chat = page.getByRole("region", { name: "Chiedi al documento" });
+  await chat.getByLabel("La tua domanda").fill("Quali sono i sintomi?");
+  await chat.getByRole("button", { name: "Chiedi" }).click();
+  await expect(chat.getByText(/lo scompenso si manifesta con dispnea/)).toBeVisible();
+  await chat.getByRole("button", { name: "Slide 1" }).click();
+  await expect(page.locator("[popover]:popover-open")).toContainText("Introduzione alla cinematica");
+  await page.keyboard.press("Escape");
+
+  await page.reload();
+  await expect(chat.getByText("Quali sono i sintomi?")).toBeVisible();
+  await chat.getByRole("button", { name: "Nuova conversazione" }).click();
+  await expect(chat.getByText("Quali sono i sintomi?")).toBeHidden();
+
   await page.getByRole("button", { name: "Riassunto" }).click();
   await expect(page).toHaveURL(/\/notes\//);
 });

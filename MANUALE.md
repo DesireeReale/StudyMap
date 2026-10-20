@@ -274,6 +274,14 @@ Il consenso è la colonna `profiles.ai_data_sharing_consent_at`, che l'utente at
 - **Post-elaborazione**: domande deduplicate (`dedupeBy`) e tagliate a 20; poi `balanceAnswers` rimescola le opzioni delle domande a scelta in modo che la risposta giusta cada in modo uniforme su A, B, C e D (i modelli tendono a metterla sempre nella stessa posizione).
 - **Limiti**: oltre alla generazione mensile, il Free ha `quizzesPerWeek` quiz a settimana ([plans.ts](src/config/plans.ts)), contati in `quota_counters` con `kind = "quiz"` e periodo ISO (`2026-W43`, `weekPeriod` in [entitlements.ts](src/core/entitlements.ts)). Se la generazione fallisce, la quota viene restituita.
 
+#### f) Chat con il documento: `askDocument`
+- **Dove**: [tasks.ts](src/core/ai/tasks.ts), con `type: "chat"`, chiamata da [api/chat](src/app/api/chat/route.ts); il riquadro "Chiedi al documento" è [DocumentChat.tsx](src/components/DocumentChat.tsx), nelle pagine del documento e dell'appunto.
+- **Quali pagine riceve il modello**: `selectPages` in [retrieval.ts](src/core/retrieval.ts). Se il documento sta in `CHUNK_INPUT_TOKENS` (circa 12.000 token) lo manda tutto; altrimenti sceglie le 6 pagine con più parole in comune con la domanda (e con la domanda precedente), pesando di più le parole rare, più le pagine vicine. Le parole si confrontano senza accenti, maiuscole e parole vuote, e togliendo l'ultima lettera alle parole lunghe (così "accelerazione" e "accelerazioni" coincidono). Limite: i sinonimi non vengono trovati; se capita spesso, passa agli embedding (pgvector su Supabase).
+- **Messaggi**: prompt di sistema [chat.v1.md](prompts/chat.v1.md) (solo il materiale, "Non lo trovo nel documento" quando manca, massimo 200 parole), gli ultimi 6 messaggi della conversazione, poi il materiale con le etichette `[Pagina N]` o `[Slide N]` e la domanda.
+- **Riferimenti**: il modello risponde con `{answer, pages}` (`ChatAnswerSchema`); `askDocument` scarta i numeri di pagina che non gli erano stati mandati. Il testo delle pagine citate arriva al browser con la risposta (`excerptsFor`) e si apre cliccando "Pag. N" o "Slide N".
+- **Limiti**: `chatQuestionsPerMonth` in [plans.ts](src/config/plans.ts) (Free 20, Pro 300), contate in `quota_counters` con `kind = "chat"`; se l'AI non risponde la domanda viene restituita. Vale anche il limite di 5 richieste AI al minuto. `max_tokens` 2000.
+- **Dati**: tabella `chat_messages` (migrazione `20261020600000_chat_messages.sql`); i messaggi si cancellano con "Nuova conversazione" o insieme al documento/appunto, e non si possono modificare.
+
 ### 3.4 Parametri di generazione
 
 Sono in [client.ts:66-75](src/core/ai/client.ts:66).
@@ -332,7 +340,7 @@ I token in input vengono anche sommati in `quota_counters` (`kind = "input_token
 > Oggi i prezzi in config sono **0** perché i piani usati sono gratuiti. I token però vengono registrati: quando passerai a un modello a pagamento basta mettere il prezzo in `MODELS` e il margine per utente si calcola subito (query nel README).
 
 ### 3.9 RAG, embedding, tool calling, streaming, caching
-Non presenti in questo progetto: niente database vettoriale, niente tool o function calling, niente streaming né prompt caching. Il modello riceve il testo del chunk direttamente nel prompt.
+Niente database vettoriale, niente tool o function calling, niente streaming né prompt caching. Il modello riceve il testo del chunk direttamente nel prompt. L'unica forma di RAG è la chat: le pagine si scelgono per parole in comune con la domanda (vedi 3.3 f), non con gli embedding.
 
 ### 3.10 Limiti noti e rischi
 - **Allucinazioni.** Il prompt vieta di inventare dosaggi e valori, ma niente lo verifica automaticamente. In ambito sanitario è il rischio principale.
@@ -435,8 +443,9 @@ npm run typecheck
 | Storage `documents/{uid}/` | il file originale | il documento resta, il file no |
 | `maps.graph` | nodi e archi della mappa (JSON) | perdi la mappa |
 | `decks` + `flashcards` | mazzi, carte, ultimo esito del ripasso | perdi il mazzo |
+| `chat_messages` | domande e risposte della chat, con le pagine citate, legate a un documento o a un appunto | perdi la conversazione |
 | `ai_usage` | log di ogni chiamata LLM e del suo costo | perdi lo storico dei costi |
-| `quota_counters` | contatori per periodo: `generation` (mese), `input_tokens` (mese), `rl:ai` (minuto) | si azzerano i limiti |
+| `quota_counters` | contatori per periodo: `generation`, `chat` e `input_tokens` (mese), `quiz` (settimana), `rl:ai` (minuto) | si azzerano i limiti |
 
 Ogni documento, mappa, mazzo e appunto ha un `folder_id` obbligatorio. Cartelle e contenuti sono descritti in [supabase/migrations/20261020000000_folders.sql](supabase/migrations/20261020000000_folders.sql):
 - la chiave esterna è composta, `(folder_id, user_id) → folders(id, user_id)`: il database rifiuta un contenuto nella cartella di un altro utente e l'eliminazione di una cartella che contiene qualcosa;

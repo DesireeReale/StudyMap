@@ -31,7 +31,7 @@
 - [x] Quiz a scelta multipla con spiegazioni
 - [ ] Simulazione d'esame a tempo
 - [x] Ripetizione dilazionata delle flashcard (SM-2 o FSRS) — fatta con SM-2; FSRS più avanti
-- [ ] Chat con il documento, con riferimenti alle pagine
+- [x] Chat con il documento, con riferimenti alle pagine
 - [ ] Abbonamento Stripe e pagina di gestione del piano
 - [ ] Disdetta in un clic e fatture automatiche (nuovo)
 - [x] Riassunto del documento (nuovo)

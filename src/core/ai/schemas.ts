@@ -33,6 +33,12 @@ export const SummarySchema = z.object({
 });
 export type Summary = z.infer<typeof SummarySchema>;
 
+export const ChatAnswerSchema = z.object({
+  answer: z.string().min(1).max(3000),
+  pages: z.array(z.number().int().min(1)).max(20),
+});
+export type ChatAnswer = z.infer<typeof ChatAnswerSchema>;
+
 export const QUESTION_TYPES = ["scelta", "vero_falso", "completamento"] as const;
 
 export const QuizSchema = z.object({

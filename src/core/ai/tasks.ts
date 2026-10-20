@@ -3,12 +3,15 @@ import { CHUNK_INPUT_TOKENS, TASKS, type TaskId } from "@/config/ai";
 import { chunkPages } from "./chunk";
 import { complete, type AiContext } from "./client";
 import { loadPrompt } from "./prompts";
+import { selectPages } from "../retrieval";
 import {
+  ChatAnswerSchema,
   FlashcardsSchema,
   MindMapSchema,
   QuizSchema,
   SummarySchema,
   TranscriptionSchema,
+  type ChatAnswer,
   type Flashcards,
   type MindMap,
   type QuizQuestion,
@@ -158,6 +161,28 @@ export async function describeFigure(ctx: AiContext, dataUrl: string, context: s
     ],
   });
   return data.markdown;
+}
+
+export type ChatTurn = { role: "user" | "assistant"; content: string };
+
+export async function askDocument(
+  ctx: AiContext,
+  input: { title: string; pages: string[]; unit: "Pagina" | "Slide"; history: ChatTurn[]; question: string },
+): Promise<ChatAnswer> {
+  const system = await systemPrompt("chat", ChatAnswerSchema, input.title);
+  const sent = selectPages(input.pages, `${input.history.filter((t) => t.role === "user").slice(-1)[0]?.content ?? ""} ${input.question}`, CHUNK_INPUT_TOKENS);
+  const material = sent.map((i) => `[${input.unit} ${i + 1}]\n${input.pages[i]!.trim()}`).join("\n\n");
+  const { data } = await complete(ctx, {
+    task: "chat",
+    schema: ChatAnswerSchema,
+    messages: [
+      { role: "system", content: system },
+      ...input.history.slice(-6),
+      { role: "user", content: `Materiale:\n${material}\n\nDomanda: ${input.question}` },
+    ],
+  });
+  const allowed = new Set(sent.map((i) => i + 1));
+  return { answer: data.answer, pages: [...new Set(data.pages)].filter((p) => allowed.has(p)).sort((a, b) => a - b) };
 }
 
 export async function generateSummary(ctx: AiContext, input: { title: string; pages: string[] }): Promise<Summary> {

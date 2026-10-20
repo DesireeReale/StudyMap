@@ -10,7 +10,7 @@ export type Plan = {
   maxUploadBytes: number;
   export: { png: boolean; pdf: boolean; watermark: boolean };
   quizzesPerWeek: number;
-  chat: boolean;
+  chatQuestionsPerMonth: number;
   audio: boolean;
 };
 
@@ -27,7 +27,7 @@ export const PLANS: Record<PlanId, Plan> = {
     maxUploadBytes: 10 * MB,
     export: { png: true, pdf: false, watermark: true },
     quizzesPerWeek: 1,
-    chat: false,
+    chatQuestionsPerMonth: 20,
     audio: false,
   },
   pro: {
@@ -40,7 +40,7 @@ export const PLANS: Record<PlanId, Plan> = {
     maxUploadBytes: 25 * MB,
     export: { png: true, pdf: true, watermark: false },
     quizzesPerWeek: Infinity,
-    chat: true,
+    chatQuestionsPerMonth: 300,
     audio: true,
   },
 };

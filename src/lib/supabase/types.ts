@@ -117,6 +117,17 @@ export type QuizAttemptRow = { id: number; quiz_id: string; user_id: string; sco
 
 export type StudySessionRow = { id: number; user_id: string; minutes: number; ended_at: string };
 
+export type ChatMessageRow = {
+  id: number;
+  user_id: string;
+  document_id: string | null;
+  note_id: string | null;
+  role: "user" | "assistant";
+  content: string;
+  pages: number[];
+  created_at: string;
+};
+
 export type QuotaCounterRow = { user_id: string; period: string; kind: string; count: number };
 
 export type Database = {
@@ -134,6 +145,7 @@ export type Database = {
       study_sessions: Table<StudySessionRow, "minutes">;
       quizzes: Table<QuizRow, "title" | "questions">;
       quiz_attempts: Table<QuizAttemptRow, "quiz_id" | "score" | "total">;
+      chat_messages: Table<ChatMessageRow, "role" | "content">;
     };
     Views: { [_ in never]: never };
     Functions: {

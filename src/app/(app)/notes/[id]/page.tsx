@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { treeOptions } from "@/core/folders";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { DeleteButton } from "@/components/DeleteButton";
+import { DocumentChat } from "@/components/DocumentChat";
+import { textToPages } from "@/core/ingest";
+import { excerptsFor } from "@/core/retrieval";
 import { MoveToFolder } from "@/components/FolderControls";
 import { GenerateButtons } from "@/components/GenerateButtons";
 import { NoteEditor } from "@/components/NoteEditor";
@@ -16,11 +19,13 @@ export async function generateMetadata({ params }: PageProps<"/notes/[id]">): Pr
 export default async function NotePage({ params }: PageProps<"/notes/[id]">) {
   const { id } = await params;
   const { supabase } = await requireUser();
-  const [{ data: note }, folders] = await Promise.all([
+  const [{ data: note }, folders, chat] = await Promise.all([
     supabase.from("notes").select("id, title, body, folder_id").eq("id", id).maybeSingle(),
     loadFolders(supabase),
+    supabase.from("chat_messages").select("id, role, content, pages").eq("note_id", id).order("id"),
   ]);
   if (!note) notFound();
+  const messages = chat.data ?? [];
 
   return (
     <div className="mx-auto flex max-w-[1100px] flex-col gap-6">
@@ -35,6 +40,12 @@ export default async function NotePage({ params }: PageProps<"/notes/[id]">) {
         </p>
         <GenerateButtons source={{ noteId: note.id }} />
       </section>
+      <DocumentChat
+        source={{ noteId: note.id }}
+        unit="Pagina"
+        initial={messages}
+        excerpts={excerptsFor(textToPages(note.body), messages.flatMap((m) => m.pages))}
+      />
       <div className="mt-6 flex justify-end border-t border-border pt-6">
         <DeleteButton
           table="notes"
