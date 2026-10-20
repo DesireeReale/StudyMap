@@ -127,6 +127,10 @@
 - [ ] Landing: prezzi Gratis/Pro dai dati di plans.ts e promessa "i contenuti restano tuoi"
 - [ ] Landing: togliere Showcase, LiveCard e animazioni di comparsa rimasti dalla versione precedente
 - [ ] Landing: verifica nei due temi, chiaro/scuro e su telefono
+
+## Modelli AI
+- [x] Nemotron VL e Gemma 4 gratuiti (OpenRouter) nella catena, solo con consenso
+- [ ] Prova reale di Nemotron VL e Gemma 4 (con ok dell'utente)
 - [ ] Landing: argomenti verificabili al posto dei numeri (bassa, piccolo)
 
 ## Da fare tu

@@ -133,7 +133,7 @@ Tasks (`src/core/ai/tasks.ts`) handle prompts, chunking and merging:
 Current defaults (development, zero cost):
 
 - Google Gemini free tier: `gemini-flash-latest`, then `gemini-flash-lite-latest`. Get a key at aistudio.google.com and put it in `GEMINI_API_KEY`.
-- OpenRouter's free router as a last resort.
+- OpenRouter free models: `nvidia/nemotron-3.5-super-vl:free` and `google/gemma-4-26b-a4b-it:free` (both with vision; JSON support not yet verified, so they use `json_object` + Zod), then `openrouter/free` as the last resort because it picks a model at random.
 - All of these may use data for training, so they only run for users who gave consent in Settings.
 
 Mistral no longer offers a free API tier, so `mistral-small` is configured with its paid prices and `enabled: false`.

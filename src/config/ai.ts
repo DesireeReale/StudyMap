@@ -63,6 +63,30 @@ export const MODELS: ModelConfig[] = [
     enabled: false,
   },
   {
+    key: "nemotron-vl-free",
+    provider: "openrouter",
+    id: "nvidia/nemotron-3.5-super-vl:free",
+    inputUsdPerMTok: 0,
+    outputUsdPerMTok: 0,
+    contextTokens: 1_000_000,
+    vision: true,
+    structuredOutput: "json_object",
+    usesDataForTraining: true,
+    enabled: true,
+  },
+  {
+    key: "gemma-4-free",
+    provider: "openrouter",
+    id: "google/gemma-4-26b-a4b-it:free",
+    inputUsdPerMTok: 0,
+    outputUsdPerMTok: 0,
+    contextTokens: 262_144,
+    vision: true,
+    structuredOutput: "json_object",
+    usesDataForTraining: true,
+    enabled: true,
+  },
+  {
     key: "openrouter-free",
     provider: "openrouter",
     id: "openrouter/free",
@@ -101,8 +125,24 @@ export const MODELS: ModelConfig[] = [
 ];
 
 export const CHAINS: Record<PlanId, string[]> = {
-  free: ["muse-spark-contributor", "mistral-small", "gemini-flash", "gemini-flash-lite", "openrouter-free"],
-  pro: ["muse-spark", "mistral-small", "gemini-flash", "gemini-flash-lite", "openrouter-free"],
+  free: [
+    "muse-spark-contributor",
+    "mistral-small",
+    "gemini-flash",
+    "gemini-flash-lite",
+    "nemotron-vl-free",
+    "gemma-4-free",
+    "openrouter-free",
+  ],
+  pro: [
+    "muse-spark",
+    "mistral-small",
+    "gemini-flash",
+    "gemini-flash-lite",
+    "nemotron-vl-free",
+    "gemma-4-free",
+    "openrouter-free",
+  ],
 };
 
 export type TaskId = "mindmap" | "flashcards" | "transcribe" | "figure" | "summary" | "quiz" | "chat";
