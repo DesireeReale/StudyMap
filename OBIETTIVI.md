@@ -117,22 +117,23 @@
 - [ ] Flashcard: stato del mazzo sempre visibile (media, piccolo)
 - [ ] Flashcard: scorrimento su mobile (media, medio)
 - [ ] Flashcard: export ed elimina in un menu (bassa, piccolo)
-- [ ] Landing: primo schermo con mappa grande e leggibile (alta, medio)
-- [ ] Landing: "come funziona" in 3 passi (alta, piccolo)
+- [x] Landing: primo schermo con mappa grande e leggibile (alta, medio)
+- [x] Landing: "come funziona" in 3 passi (alta, piccolo)
 - [x] Landing: schede per strumento (media, medio)
-- [ ] Landing: domande frequenti (media, piccolo)
+- [x] Landing: domande frequenti (media, piccolo)
 - [x] Landing: fascia "Leggi come ti viene meglio" con interruttori dal vivo
-- [ ] Landing: barra di navigazione fissa (Come funziona, Strumenti, Prezzi, Domande, Inizia gratis)
-- [ ] Landing: primo schermo a due colonne con flashcard ed esito quiz sopra la mappa
-- [ ] Landing: prezzi Gratis/Pro dai dati di plans.ts e promessa "i contenuti restano tuoi"
-- [ ] Landing: togliere Showcase, LiveCard e animazioni di comparsa rimasti dalla versione precedente
-- [ ] Landing: verifica nei due temi, chiaro/scuro e su telefono
+- [x] Landing: barra di navigazione fissa (Come funziona, Strumenti, Prezzi, Domande, Inizia gratis)
+- [x] Landing: primo schermo a due colonne con flashcard ed esito quiz sopra la mappa
+- [x] Landing: prezzi Gratis/Pro dai dati di plans.ts e promessa "i contenuti restano tuoi"
+- [x] Landing: togliere Showcase, LiveCard e animazioni di comparsa rimasti dalla versione precedente
+- [x] Landing: verifica in Classic chiaro/scuro e su telefono
+- [ ] Landing: verifica nel tema Vivid
 
 ## Modelli AI
 - [x] Nemotron VL e Gemma 4 gratuiti (OpenRouter) nella catena, solo con consenso
 - [x] Prova reale di Nemotron VL e Gemma 4 (con ok dell'utente): Gemma 4 ok con json_object (33 s, 873 token in ingresso, 1537 in uscita, 32 concetti); Nemotron in timeout due volte a 45 s, spostato dopo Gemma
 - [ ] Riprovare Nemotron VL più avanti o alzare il timeout solo per lui
-- [ ] Landing: argomenti verificabili al posto dei numeri (bassa, piccolo)
+- [x] Landing: argomenti verificabili al posto dei numeri (bassa, piccolo)
 
 ## Da fare tu
 - [x] Creare il progetto Supabase di sviluppo (regione UE)

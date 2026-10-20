@@ -216,11 +216,7 @@ The UI follows the "tasteskill" app-screen and page rules (style `editorial-gree
 - **Colour and type tokens.** They live in `src/app/globals.css`, in one `[data-style="…"]` block per style plus its dark variant. The same file holds the shared `btn-*`, `panel`, `row-card` and `field` utilities. Components use the tokens, never raw hex values. `src/app/tokens.test.ts` checks WCAG AA contrast for every style and theme.
 - **Study dock.** The library home opens with a large title naming the deck to review and a dark dock of six compact tiles (`src/components/StudyDock.tsx`): deck progress ring, cards to review (cards marked "don't know" plus cards never reviewed, until spaced repetition lands in phase 2), days until the exam (`profiles.exam_date`, set in Settings), a 25-minute study timer, the last edited map and AI generations used. Its colours are the `--dock-*` tokens of the active style.
 - **Concept-map node colours.** Nodes store a role (`radice`, `area-1`, `area-2`, `area-3`, `neutro`), not a hex value, and each style maps roles to `--node-*` tokens. Maps saved with hex colours are converted when opened (`nodeRole` in `src/core/graph.ts`).
-- **Landing-page screenshots.** The screenshots in `public/landing/` are real app screens with sample content. Regenerate them after UI changes; this uses the Supabase test project and fake AI:
-
-  ```bash
-  npm run shots
-  ```
+- **Landing page.** Product examples on the landing page (concept map, flashcard, quiz, summary, chat, reading options) are drawn in HTML/SVG with the theme tokens, so they follow the active theme and stay sharp; `src/components/landing/`. `npm run shots` still captures real app screens into `public/landing/` for reference.
 
 - **Design skill (optional).** It is restored with:
 

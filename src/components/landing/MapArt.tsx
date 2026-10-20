@@ -19,38 +19,38 @@ export type MapArtData = {
 
 export const HEART_FAILURE: MapArtData = {
   width: 640,
-  height: 380,
+  height: 430,
   sizes: { root: 17, branch: 15, leaf: 14 },
-  root: { x: 92, y: 190, label: "Scompenso cardiaco" },
+  root: { x: 118, y: 190, label: "Scompenso cardiaco" },
   branches: [
     {
-      x: 300,
+      x: 318,
       y: 70,
       label: "Segni e sintomi",
       role: "area-1",
       leaves: [
-        { x: 520, y: 42, label: "Dispnea da sforzo" },
-        { x: 520, y: 98, label: "Edemi declivi" },
+        { x: 524, y: 42, label: "Dispnea da sforzo" },
+        { x: 524, y: 98, label: "Edemi declivi" },
       ],
     },
     {
-      x: 300,
+      x: 318,
       y: 190,
       label: "Farmaci",
       role: "area-2",
       leaves: [
-        { x: 520, y: 162, label: "Diuretici" },
-        { x: 520, y: 218, label: "ACE-inibitori" },
+        { x: 524, y: 162, label: "Diuretici" },
+        { x: 524, y: 218, label: "ACE-inibitori" },
       ],
     },
     {
-      x: 300,
+      x: 318,
       y: 310,
       label: "Assistenza",
       role: "area-3",
       leaves: [
-        { x: 520, y: 282, label: "Peso ogni mattina" },
-        { x: 520, y: 338, label: "Bilancio idrico" },
+        { x: 524, y: 282, label: "Peso ogni mattina" },
+        { x: 524, y: 338, label: "Bilancio idrico" },
       ],
     },
   ],
