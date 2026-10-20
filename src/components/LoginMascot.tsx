@@ -5,7 +5,17 @@ import { useEffect, useRef } from "react";
 export type MascotPose = "idle" | "email" | "password" | "peek";
 
 const IDLE_END = 4;
-const HOLD = { email: 5, peek: 6.5, password: 7.5 };
+const HOLD = { peek: 6.5, password: 7.5 };
+const LOOK_LEFT = [2.42, 1.8];
+const LOOK_RIGHT = [3.0, 3.6];
+const LOOK_SPLIT = 0.6;
+
+function gazeTime(look: number) {
+  const k = Math.min(Math.max(look, 0), 1);
+  return k < LOOK_SPLIT
+    ? LOOK_LEFT[0] + (LOOK_LEFT[1] - LOOK_LEFT[0]) * (k / LOOK_SPLIT)
+    : LOOK_RIGHT[0] + (LOOK_RIGHT[1] - LOOK_RIGHT[0]) * ((k - LOOK_SPLIT) / (1 - LOOK_SPLIT));
+}
 
 function seek(video: HTMLVideoElement, target: number, done?: () => void) {
   const from = video.currentTime;
@@ -24,13 +34,17 @@ function seek(video: HTMLVideoElement, target: number, done?: () => void) {
   return () => cancelAnimationFrame(id);
 }
 
-export function LoginMascot({ pose }: { pose: MascotPose }) {
+export function LoginMascot({ pose, look }: { pose: MascotPose; look: number }) {
   const ref = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
     video.pause();
+    if (pose === "email") {
+      video.currentTime = gazeTime(look);
+      return;
+    }
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
       video.currentTime = pose === "idle" ? 0 : HOLD[pose];
       return;
@@ -49,7 +63,7 @@ export function LoginMascot({ pose }: { pose: MascotPose }) {
       stop?.();
       video.removeEventListener("timeupdate", rewind);
     };
-  }, [pose]);
+  }, [pose, look]);
 
   return (
     <video

@@ -6,6 +6,17 @@ import { supabaseBrowser } from "@/lib/supabase/browser";
 import { Icon } from "./icons";
 import { LoginMascot, type MascotPose } from "./LoginMascot";
 
+let ruler: CanvasRenderingContext2D | null = null;
+
+function textRatio(input: HTMLInputElement) {
+  ruler ??= document.createElement("canvas").getContext("2d");
+  if (!ruler) return 0;
+  const style = getComputedStyle(input);
+  ruler.font = style.font;
+  const room = input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+  return Math.min(ruler.measureText(input.value).width / room, 1);
+}
+
 export function LoginForm() {
   const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -14,6 +25,7 @@ export function LoginForm() {
   const [busy, setBusy] = useState(false);
   const [pose, setPose] = useState<MascotPose>("idle");
   const [showPassword, setShowPassword] = useState(false);
+  const [look, setLook] = useState(0);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -48,7 +60,7 @@ export function LoginForm() {
 
   return (
     <div className="flex flex-col">
-      <LoginMascot pose={pose === "password" && showPassword ? "peek" : pose} />
+      <LoginMascot pose={pose === "password" && showPassword ? "peek" : pose} look={look} />
       <div className="panel relative flex flex-col gap-5">
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
@@ -62,8 +74,12 @@ export function LoginForm() {
               required
               autoComplete="email"
               className="field h-11"
-              onFocus={() => setPose("email")}
+              onFocus={(e) => {
+                setPose("email");
+                setLook(textRatio(e.currentTarget));
+              }}
               onBlur={() => setPose("idle")}
+              onChange={(e) => setLook(textRatio(e.currentTarget))}
             />
           </div>
           <div className="flex flex-col gap-2">
