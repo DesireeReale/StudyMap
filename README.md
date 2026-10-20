@@ -86,6 +86,7 @@ Open http://localhost:3000.
 | `OPENROUTER_API_KEY` | server only | fallback provider (free models) |
 | `META_API_KEY` | server only | Meta Model API (models disabled by default) |
 | `AI_MOCK` | server only | `1` = fake AI responses outside production |
+| `AI_MOCK_DELAY_MS` | server only | optional delay for each fake AI response, to see the progress phases (E2E uses 2000) |
 | `FEEDBACK_EMAIL_TO` | server only | optional: address that receives new "Suggerisci un'idea" messages |
 | `RESEND_API_KEY` | server only | optional: Resend key used for that email |
 | `FEEDBACK_EMAIL_FROM` | server only | optional: sender, default `StudyMap <onboarding@resend.dev>` |

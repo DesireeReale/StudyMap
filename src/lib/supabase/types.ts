@@ -1,6 +1,7 @@
 import type { FolderColor, FolderIcon } from "@/config/styles";
 import type { QuizQuestion } from "@/core/ai/schemas";
 import type { Graph } from "@/core/graph";
+import type { JobPhase, JobStatus, JobType } from "@/core/jobs";
 
 type Table<Row, Required extends keyof Row = never> = {
   Row: Row;
@@ -141,14 +142,19 @@ export type FeatureRequestRow = {
 export type AiJobRow = {
   id: string;
   user_id: string;
-  type: "mindmap" | "flashcards" | "summary" | "quiz";
+  type: JobType;
   document_id: string | null;
   note_id: string | null;
-  status: "queued" | "running" | "done" | "error";
+  status: JobStatus;
+  phase: JobPhase;
+  done: number;
+  total: number;
+  title: string;
   href: string | null;
   error: string | null;
-  quota_period: string;
+  quota_period: string | null;
   quiz_period: string | null;
+  seen_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -172,7 +178,7 @@ export type Database = {
       quiz_attempts: Table<QuizAttemptRow, "quiz_id" | "score" | "total">;
       chat_messages: Table<ChatMessageRow, "role" | "content">;
       feature_requests: Table<FeatureRequestRow, "kind" | "message">;
-      ai_jobs: Table<AiJobRow, "user_id" | "type" | "quota_period">;
+      ai_jobs: Table<AiJobRow, "user_id" | "type">;
     };
     Views: { [_ in never]: never };
     Functions: {

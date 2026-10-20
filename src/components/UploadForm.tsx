@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MAX_NOTE_CHARS } from "@/core/files";
+import { announceJobs, markSeen, uploadWithProgress, waitForJob } from "@/lib/job-client";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { Icon } from "./icons";
 import { UpgradeNotice } from "./UpgradeNotice";
@@ -48,6 +49,15 @@ export function UploadForm({
   const [ext, setExt] = useState<string>();
   const [fileName, setFileName] = useState<string>();
   const [figures, setFigures] = useState(false);
+  const [uploaded, setUploaded] = useState<number | null>(null);
+  const [reading, setReading] = useState(false);
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
 
   async function submit(body: Record<string, string | boolean>) {
     const res = await fetch("/api/documents", {
@@ -57,7 +67,16 @@ export function UploadForm({
     });
     const json = await res.json();
     if (!res.ok) return setProblem({ message: json.error, upgrade: json.upgrade });
-    router.push(json.href);
+    if (json.href) return router.push(json.href);
+    announceJobs();
+    setReading(true);
+    const job = await waitForJob(json.jobId, () => alive.current);
+    if (!job) return;
+    await markSeen(job.id);
+    announceJobs();
+    setReading(false);
+    if (job.status === "done" && job.href) return router.push(job.href);
+    setProblem({ message: job.error ?? "Non è stato possibile leggere il file.", upgrade: false });
   }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -86,10 +105,13 @@ export function UploadForm({
         });
       }
       const storagePath = `${userId}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabaseBrowser()
-        .storage.from("documents")
-        .upload(storagePath, file, { contentType: MIME_OF[ext] });
-      if (error) return setProblem({ message: "Caricamento non riuscito. Riprova.", upgrade: false });
+      const { data: signed, error } = await supabaseBrowser().storage.from("documents").createSignedUploadUrl(storagePath);
+      setUploaded(0);
+      const ok =
+        !error &&
+        (await uploadWithProgress(signed.signedUrl, file, MIME_OF[ext]!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, setUploaded));
+      setUploaded(null);
+      if (!ok) return setProblem({ message: "Caricamento non riuscito. Riprova.", upgrade: false });
       await submit({ kind: "file", title: title || file.name.replace(/\.[^.]+$/, ""), storagePath, folderId, figures: ext !== "png" && ext !== "jpg" && ext !== "webp" && figures });
     } catch {
       setProblem({ message: "Errore di rete. Riprova.", upgrade: false });
@@ -221,11 +243,32 @@ export function UploadForm({
 
       {problem && <UpgradeNotice message={problem.message} upgrade={problem.upgrade} />}
 
+      {uploaded !== null && (
+        <div className="flex flex-col gap-1.5">
+          <p className="num text-sm font-bold">Caricamento del file: {Math.round(uploaded * 100)}%</p>
+          <div
+            role="progressbar"
+            aria-label="Caricamento del file"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(uploaded * 100)}
+            className="h-2 overflow-hidden rounded-full bg-rule"
+          >
+            <span className="block h-full rounded-full bg-accent" style={{ width: `${uploaded * 100}%` }} />
+          </div>
+        </div>
+      )}
+      {reading && (
+        <p className="rounded-row bg-accent-soft px-4 py-3 text-sm text-ink">
+          Sto leggendo il file. Puoi cambiare pagina: l&apos;avanzamento resta visibile in basso a destra.
+        </p>
+      )}
+
       <button type="submit" className="btn-primary self-start" disabled={busy}>
-        {busy ? "Elaborazione in corso…" : "Carica"}
+        {uploaded !== null ? "Caricamento…" : reading ? "Lettura in corso…" : busy ? "Elaborazione in corso…" : "Carica"}
       </button>
       <p aria-live="polite" className="sr-only">
-        {busy ? "Elaborazione del documento in corso" : ""}
+        {uploaded !== null ? "Caricamento del file in corso" : reading ? "File caricato. Lo sto leggendo." : ""}
       </p>
     </form>
   );

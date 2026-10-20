@@ -5,7 +5,7 @@ import { generationLimitReached, monthPeriod, quizLimitReached, quotaLimit, week
 import { textToPages } from "@/core/ingest";
 import { consumeQuota, guardAi } from "@/lib/ai";
 import { apiUser, denied, fail } from "@/lib/api";
-import { failJob, runJob, type Source } from "@/lib/jobs";
+import { failJob, generation, runJob, type Source } from "@/lib/jobs";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 export const maxDuration = 300;
@@ -54,6 +54,7 @@ export async function POST(request: Request) {
     .insert({
       user_id: profile.id,
       type: body.type,
+      title: doc.title.slice(0, 200),
       document_id: "documentId" in body ? body.documentId : null,
       note_id: "noteId" in body ? body.noteId : null,
       quota_period: period,
@@ -67,6 +68,6 @@ export async function POST(request: Request) {
     return fail("La generazione non è riuscita. Riprova.", 500);
   }
 
-  after(() => runJob(job, supabase, profile, doc).catch((e) => failJob(job, String(e))));
+  after(() => runJob(job, generation(supabase, profile, body.type, doc)).catch((e) => failJob(job, String(e))));
   return NextResponse.json({ jobId: job.id }, { status: 202 });
 }

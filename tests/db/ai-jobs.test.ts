@@ -32,5 +32,9 @@ describe("ai jobs", () => {
     expect((await a.client.from("ai_jobs").insert({ user_id: a.id, type: "quiz", note_id: note!.id, quota_period: "2026-10" })).error).not.toBeNull();
     await a.client.from("ai_jobs").update({ status: "done", href: "/maps/x" }).eq("id", job!.id);
     expect((await a.client.from("ai_jobs").select("status").eq("id", job!.id).single()).data?.status).toBe("queued");
+
+    const ingest = await admin.from("ai_jobs").insert({ user_id: a.id, type: "ingest", title: "Lezione 3" }).select("phase").single();
+    expect(ingest.data?.phase).toBe("queued");
+    expect((await admin.from("ai_jobs").insert({ user_id: a.id, type: "quiz", quota_period: "2026-10" })).error).not.toBeNull();
   });
 });

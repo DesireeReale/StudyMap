@@ -3,79 +3,101 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { AiUnavailableError } from "@/core/ai/client";
 import { generateFlashcards, generateMindMap, generateQuiz, generateSummary, summaryToText } from "@/core/ai/tasks";
 import { mindMapToGraph } from "@/core/graph";
-import type { JobStatus } from "@/core/jobs";
+import { isStale, JOB_STALE_ERROR, type JobPhase, type JobView, type Progress } from "@/core/jobs";
 import type { AiJobRow, Database, Profile } from "@/lib/supabase/types";
 import { aiContextFor, consumeQuota } from "./ai";
 import { supabaseAdmin } from "./supabase/server";
 
-export type JobType = AiJobRow["type"];
+export type GenerationType = Exclude<AiJobRow["type"], "ingest">;
 export type Source = { id: string | null; title: string; pages: string[]; folder_id: string };
 
-async function produce(
-  supabase: SupabaseClient<Database>,
-  profile: Profile,
-  type: JobType,
-  doc: Source,
-): Promise<string> {
-  const ctx = aiContextFor(profile);
-  const input = { title: doc.title, pages: doc.pages };
+export class JobFailure extends Error {}
 
-  if (type === "mindmap") {
-    const graph = mindMapToGraph(await generateMindMap(ctx, input));
-    const { data, error } = await supabase
-      .from("maps")
-      .insert({ title: doc.title, document_id: doc.id, folder_id: doc.folder_id, graph })
-      .select("id")
-      .single();
-    if (error) throw error;
-    return `/maps/${data.id}`;
-  }
-
-  if (type === "summary") {
-    const text = summaryToText(await generateSummary(ctx, input));
-    const { data, error } = await supabase
-      .from("notes")
-      .insert({
-        title: `Riassunto · ${doc.title}`.slice(0, 200),
-        body: text.slice(0, 100_000),
-        folder_id: doc.folder_id,
-        document_id: doc.id,
-      })
-      .select("id")
-      .single();
-    if (error) throw error;
-    return `/notes/${data.id}`;
-  }
-
-  if (type === "quiz") {
-    const questions = await generateQuiz(ctx, input);
-    const { data, error } = await supabase
-      .from("quizzes")
-      .insert({ title: doc.title, document_id: doc.id, folder_id: doc.folder_id, questions })
-      .select("id")
-      .single();
-    if (error) throw error;
-    return `/quizzes/${data.id}`;
-  }
-
-  const cards = await generateFlashcards(ctx, input);
-  const { data: deck, error } = await supabase
-    .from("decks")
-    .insert({ title: doc.title, document_id: doc.id, folder_id: doc.folder_id })
-    .select("id")
-    .single();
-  if (error) throw error;
-  const { error: cardsError } = await supabase
-    .from("flashcards")
-    .insert(cards.map((c, position) => ({ deck_id: deck.id, front: c.front, back: c.back, position })));
-  if (cardsError) {
-    await supabase.from("decks").delete().eq("id", deck.id);
-    throw cardsError;
-  }
-  return `/decks/${deck.id}`;
+export function toView(job: AiJobRow): JobView {
+  const { id, type, status, phase, done, total, title, href, error, document_id, note_id } = job;
+  const view = { id, type, status, phase, done, total, title, href, error, document_id, note_id };
+  return isStale(job) ? { ...view, status: "error", phase: "error", error: JOB_STALE_ERROR } : view;
 }
 
-async function settle(job: AiJobRow, patch: { status: JobStatus; href?: string; error?: string }) {
+function reporter(jobId: string): Progress {
+  let chain = Promise.resolve();
+  return (phase, done = 0, total = 0) => {
+    chain = chain
+      .then(async () => {
+        await supabaseAdmin()
+          .from("ai_jobs")
+          .update({ phase, done, total, updated_at: new Date().toISOString() })
+          .eq("id", jobId)
+          .eq("status", "running");
+      })
+      .catch((e) => console.error("job progress failed", e));
+  };
+}
+
+export function generation(supabase: SupabaseClient<Database>, profile: Profile, type: GenerationType, doc: Source) {
+  return async (progress: Progress): Promise<string> => {
+    const ctx = aiContextFor(profile);
+    const input = { title: doc.title, pages: doc.pages };
+    const onPart = (done: number, total: number) => progress("generate", done, total);
+
+    if (type === "mindmap") {
+      const map = await generateMindMap(ctx, input, onPart);
+      progress("merge");
+      const { data, error } = await supabase
+        .from("maps")
+        .insert({ title: doc.title, document_id: doc.id, folder_id: doc.folder_id, graph: mindMapToGraph(map) })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return `/maps/${data.id}`;
+    }
+
+    if (type === "summary") {
+      const text = summaryToText(await generateSummary(ctx, input, onPart));
+      const { data, error } = await supabase
+        .from("notes")
+        .insert({
+          title: `Riassunto · ${doc.title}`.slice(0, 200),
+          body: text.slice(0, 100_000),
+          folder_id: doc.folder_id,
+          document_id: doc.id,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return `/notes/${data.id}`;
+    }
+
+    if (type === "quiz") {
+      const questions = await generateQuiz(ctx, input, onPart);
+      const { data, error } = await supabase
+        .from("quizzes")
+        .insert({ title: doc.title, document_id: doc.id, folder_id: doc.folder_id, questions })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return `/quizzes/${data.id}`;
+    }
+
+    const cards = await generateFlashcards(ctx, input, onPart);
+    const { data: deck, error } = await supabase
+      .from("decks")
+      .insert({ title: doc.title, document_id: doc.id, folder_id: doc.folder_id })
+      .select("id")
+      .single();
+    if (error) throw error;
+    const { error: cardsError } = await supabase
+      .from("flashcards")
+      .insert(cards.map((c, position) => ({ deck_id: deck.id, front: c.front, back: c.back, position })));
+    if (cardsError) {
+      await supabase.from("decks").delete().eq("id", deck.id);
+      throw cardsError;
+    }
+    return `/decks/${deck.id}`;
+  };
+}
+
+async function settle(job: AiJobRow, patch: { status: "done" | "error"; phase: JobPhase; href?: string; error?: string }) {
   const { data } = await supabaseAdmin()
     .from("ai_jobs")
     .update({ ...patch, updated_at: new Date().toISOString() })
@@ -86,21 +108,23 @@ async function settle(job: AiJobRow, patch: { status: JobStatus; href?: string; 
 }
 
 export async function failJob(job: AiJobRow, message: string) {
-  if (!(await settle(job, { status: "error", error: message.slice(0, 500) }))) return;
-  await consumeQuota(job.user_id, "generation", job.quota_period, -1, null);
+  if (!(await settle(job, { status: "error", phase: "error", error: message.slice(0, 500) }))) return;
+  if (job.quota_period) await consumeQuota(job.user_id, "generation", job.quota_period, -1, null);
   if (job.quiz_period) await consumeQuota(job.user_id, "quiz", job.quiz_period, -1, null);
 }
 
-export async function runJob(job: AiJobRow, supabase: SupabaseClient<Database>, profile: Profile, doc: Source) {
+export async function runJob(job: AiJobRow, work: (progress: Progress) => Promise<string>, onFail?: () => Promise<unknown>) {
   await supabaseAdmin()
     .from("ai_jobs")
     .update({ status: "running", updated_at: new Date().toISOString() })
     .eq("id", job.id)
     .eq("status", "queued");
   try {
-    await settle(job, { status: "done", href: await produce(supabase, profile, job.type, doc) });
+    await settle(job, { status: "done", phase: "done", href: await work(reporter(job.id)) });
   } catch (e) {
-    if (!(e instanceof AiUnavailableError)) console.error("generation failed", e);
-    await failJob(job, e instanceof AiUnavailableError ? e.message : "La generazione non è riuscita. Riprova.");
+    const known = e instanceof JobFailure || e instanceof AiUnavailableError;
+    if (!known) console.error("job failed", e);
+    await onFail?.().catch(() => null);
+    await failJob(job, known ? e.message : "Non è riuscito. Riprova.");
   }
 }

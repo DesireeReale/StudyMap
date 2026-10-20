@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { z } from "zod";
 import { PLANS } from "@/config/plans";
 import { AiUnavailableError } from "@/core/ai/client";
@@ -10,6 +10,8 @@ import { officeKind, readDocx, readPptx } from "@/core/office";
 import { readZip } from "@/core/zip";
 import { aiContextFor, guardAi } from "@/lib/ai";
 import { apiUser, denied, fail } from "@/lib/api";
+import { failJob, JobFailure, runJob } from "@/lib/jobs";
+import { supabaseAdmin } from "@/lib/supabase/server";
 
 export const maxDuration = 300;
 
@@ -83,47 +85,60 @@ export async function POST(request: Request) {
     return denied(guard, 429);
   }
 
+  const { data: job, error: jobError } = await supabaseAdmin()
+    .from("ai_jobs")
+    .insert({ user_id: user.id, type: "ingest", title: body.title })
+    .select("*")
+    .single();
+  if (jobError) {
+    await removeUpload();
+    return fail("Salvataggio non riuscito", 500);
+  }
+
   const ctx = aiContextFor(profile);
   const plan = PLANS[profile.plan];
   const transcribe = (dataUrl: string) => transcribeImage(ctx, dataUrl);
   const figures = body.figures ? { describe: (dataUrl: string, context: string) => describeFigure(ctx, dataUrl, context), max: plan.maxFigures } : undefined;
-  let pages: string[];
-  try {
-    if (kind === "pdf") pages = await ingestPdf(bytes, { maxPages: plan.maxPdfPages, transcribe, figures });
-    else if (kind === "docx") pages = await ingestOffice(readDocx(zip!), { maxPages: plan.maxPdfPages, figures });
-    else if (kind === "pptx") pages = await ingestOffice(readPptx(zip!), { maxPages: plan.maxPdfPages, figures });
-    else pages = [await transcribe(`data:${MIME[kind]};base64,${Buffer.from(bytes).toString("base64")}`)];
-  } catch (e) {
-    await removeUpload();
-    if (e instanceof PageLimitError) {
-      const decision = checkPdfPages(profile.plan, e.pages);
-      if (!decision.ok) return denied(decision, 413);
+
+  const work: Parameters<typeof runJob>[1] = async (progress) => {
+    progress("read");
+    const onPage = (done: number, total: number) => progress("transcribe", done, total);
+    let pages: string[];
+    try {
+      if (kind === "pdf") pages = await ingestPdf(bytes, { maxPages: plan.maxPdfPages, transcribe, figures, onPage });
+      else if (kind === "docx") pages = await ingestOffice(readDocx(zip!), { maxPages: plan.maxPdfPages, figures, onPage });
+      else if (kind === "pptx") pages = await ingestOffice(readPptx(zip!), { maxPages: plan.maxPdfPages, figures, onPage });
+      else {
+        onPage(0, 1);
+        pages = [await transcribe(`data:${MIME[kind]};base64,${Buffer.from(bytes).toString("base64")}`)];
+      }
+    } catch (e) {
+      if (e instanceof PageLimitError) {
+        const decision = checkPdfPages(profile.plan, e.pages);
+        if (!decision.ok) throw new JobFailure(decision.reason);
+      }
+      if (e instanceof JobFailure || e instanceof AiUnavailableError) throw e;
+      console.error("ingest failed", e);
+      throw new JobFailure("Non è stato possibile leggere il file.");
     }
-    if (e instanceof AiUnavailableError) return fail(e.message, 503);
-    console.error("ingest failed", e);
-    return fail("Non è stato possibile leggere il file.", 422);
-  }
+    if (!pages.some((p) => p.trim())) throw new JobFailure("Non ho trovato testo nel file.");
 
-  if (!pages.some((p) => p.trim())) {
-    await removeUpload();
-    return fail("Non ho trovato testo nel file.", 422);
-  }
+    const { data, error } = await supabase
+      .from("documents")
+      .insert({
+        title: body.title,
+        folder_id: body.folderId,
+        kind: kind === "png" || kind === "jpeg" || kind === "webp" ? "image" : kind,
+        storage_path: body.storagePath,
+        pages,
+        page_count: pages.length,
+      })
+      .select("id")
+      .single();
+    if (error) throw new JobFailure("Salvataggio non riuscito");
+    return `/documents/${data.id}`;
+  };
 
-  const { data, error } = await supabase
-    .from("documents")
-    .insert({
-      title: body.title,
-      folder_id: body.folderId,
-      kind: kind === "png" || kind === "jpeg" || kind === "webp" ? "image" : kind,
-      storage_path: body.storagePath,
-      pages,
-      page_count: pages.length,
-    })
-    .select("id")
-    .single();
-  if (error) {
-    await removeUpload();
-    return fail("Salvataggio non riuscito", 500);
-  }
-  return NextResponse.json({ id: data.id, href: `/documents/${data.id}` });
+  after(() => runJob(job, work, removeUpload).catch((e) => failJob(job, String(e))));
+  return NextResponse.json({ jobId: job.id }, { status: 202 });
 }

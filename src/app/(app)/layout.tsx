@@ -1,4 +1,5 @@
 import { AppNav } from "@/components/AppNav";
+import { JobTray } from "@/components/JobTray";
 import { PreferencesSync } from "@/components/StyleSwitch";
 import { StudyTimerProvider } from "@/components/StudyTimer";
 import { aiMockEnabled } from "@/lib/ai";
@@ -34,6 +35,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
       </div>
+      <JobTray />
     </div>
     </StudyTimerProvider>
   );

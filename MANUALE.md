@@ -154,6 +154,9 @@ Le parentesi in `(app)` raggruppano delle pagine senza comparire nella URL. Prim
     - `guardAi` controlla il rate limit e il tetto di token;
     - `consumeQuota(..., "generation", ...)` consuma una generazione del mese (e per i quiz una della settimana). Se sei al limite risponde 402 con `upgrade: true` e la UI mostra `UpgradeNotice`;
     - crea una riga nella tabella `ai_jobs` (stato `queued`) e **risponde subito** con `jobId`. Il lavoro vero parte con `after()` di Next, nella stessa funzione ma dopo la risposta: la richiesta del browser non resta aperta.
+    - Anche la lettura del file (`POST /api/documents`) è un job di tipo `ingest`: il file arriva su Storage con un URL firmato e `XMLHttpRequest` (per mostrare la percentuale), poi testo e trascrizioni si fanno in background.
+    - Ogni job ha una fase (`read`, `transcribe`, `generate`, `merge`) e i contatori `done`/`total`, aggiornati a ogni pagina trascritta e a ogni parte generata. I testi per l'utente sono in `phaseText` ([core/jobs.ts](src/core/jobs.ts)).
+    - L'indicatore [JobTray.tsx](src/components/JobTray.tsx), in basso a destra in tutte le pagine dell'app, legge `GET /api/jobs` (job delle ultime 24 ore non ancora chiusi) ogni 2 secondi solo mentre c'è un job attivo. Chiudere un avviso scrive `seen_at` su Supabase.
     - Il browser chiede lo stato ogni 2 secondi a `GET /api/jobs/{id}` ([jobs/[id]/route.ts](src/app/api/jobs/[id]/route.ts)) e, a stato `done`, apre il risultato.
     - **Limite:** `after()` ha la stessa durata massima della funzione (`maxDuration = 300`, il massimo del piano Hobby di Vercel). Se la funzione viene interrotta, il job resta fermo: dopo 6 minuti (`JOB_STALE_MS` in [core/jobs.ts](src/core/jobs.ts)) la lettura dello stato lo segna come errore e restituisce le quote. Per generazioni più lunghe servirà una coda vera (per esempio Vercel Workflows o una Edge Function).
 11. **Contesto AI.** `aiContextFor(profile)` ([lib/ai.ts:20](src/lib/ai.ts:20)) sceglie i modelli in base a piano e consenso e prepara la funzione che registra i consumi.
@@ -383,6 +386,7 @@ L'elenco completo è in [.env.example](.env.example). Copialo in `.env.local`, c
 | `OPENROUTER_API_KEY` | no | come sopra | riserva |
 | `META_API_KEY` | no | come sopra | modelli Meta (spenti) |
 | `AI_MOCK` | no | [lib/ai.ts:17](src/lib/ai.ts:17) | `1` = risposte finte, ignorato in produzione |
+| `AI_MOCK_DELAY_MS` | no | [lib/ai.ts](src/lib/ai.ts) | ritardo di ogni risposta finta, per vedere le fasi di avanzamento |
 | `FEEDBACK_EMAIL_TO` | no | [lib/notify.ts](src/lib/notify.ts) | indirizzo che riceve i messaggi di "Suggerisci un'idea" |
 | `RESEND_API_KEY` | no | come sopra | chiave di Resend per inviare quell'email |
 | `FEEDBACK_EMAIL_FROM` | no | come sopra | mittente; senza, `StudyMap <onboarding@resend.dev>` |

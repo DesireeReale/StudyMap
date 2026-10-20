@@ -27,13 +27,18 @@ async function systemPrompt(task: TaskId, schema: z.ZodType, title = "") {
   });
 }
 
+export type OnPart = (done: number, total: number) => void;
+
 export async function generateMindMap(
   ctx: AiContext,
   input: { title: string; pages: string[] },
+  onPart?: OnPart,
 ): Promise<MindMap> {
   const system = await systemPrompt("mindmap", MindMapSchema, input.title);
   const parts: MindMap[] = [];
-  for (const chunk of chunkPages(input.pages, CHUNK_INPUT_TOKENS)) {
+  const chunks = chunkPages(input.pages, CHUNK_INPUT_TOKENS);
+  for (const [i, chunk] of chunks.entries()) {
+    onPart?.(i, chunks.length);
     const { data } = await complete(ctx, {
       task: "mindmap",
       schema: MindMapSchema,
@@ -98,10 +103,13 @@ export function mergeMindMaps(title: string, parts: MindMap[]): MindMap {
 export async function generateFlashcards(
   ctx: AiContext,
   input: { title: string; pages: string[] },
+  onPart?: OnPart,
 ): Promise<Flashcards["cards"]> {
   const system = await systemPrompt("flashcards", FlashcardsSchema, input.title);
   const cards: Flashcards["cards"] = [];
-  for (const chunk of chunkPages(input.pages, CHUNK_INPUT_TOKENS)) {
+  const chunks = chunkPages(input.pages, CHUNK_INPUT_TOKENS);
+  for (const [i, chunk] of chunks.entries()) {
+    onPart?.(i, chunks.length);
     const { data } = await complete(ctx, {
       task: "flashcards",
       schema: FlashcardsSchema,
@@ -185,10 +193,16 @@ export async function askDocument(
   return { answer: data.answer, pages: [...new Set(data.pages)].filter((p) => allowed.has(p)).sort((a, b) => a - b) };
 }
 
-export async function generateSummary(ctx: AiContext, input: { title: string; pages: string[] }): Promise<Summary> {
+export async function generateSummary(
+  ctx: AiContext,
+  input: { title: string; pages: string[] },
+  onPart?: OnPart,
+): Promise<Summary> {
   const system = await systemPrompt("summary", SummarySchema, input.title);
   const sections: Summary["sections"] = [];
-  for (const chunk of chunkPages(input.pages, CHUNK_INPUT_TOKENS)) {
+  const chunks = chunkPages(input.pages, CHUNK_INPUT_TOKENS);
+  for (const [i, chunk] of chunks.entries()) {
+    onPart?.(i, chunks.length);
     const { data } = await complete(ctx, {
       task: "summary",
       schema: SummarySchema,
@@ -206,10 +220,16 @@ export function summaryToText(summary: Summary): string {
   return summary.sections.map((s) => `## ${s.heading}\n${s.points.map((p) => `- ${p}`).join("\n")}`).join("\n\n");
 }
 
-export async function generateQuiz(ctx: AiContext, input: { title: string; pages: string[] }): Promise<QuizQuestion[]> {
+export async function generateQuiz(
+  ctx: AiContext,
+  input: { title: string; pages: string[] },
+  onPart?: OnPart,
+): Promise<QuizQuestion[]> {
   const system = await systemPrompt("quiz", QuizSchema, input.title);
   const questions: QuizQuestion[] = [];
-  for (const chunk of chunkPages(input.pages, CHUNK_INPUT_TOKENS)) {
+  const chunks = chunkPages(input.pages, CHUNK_INPUT_TOKENS);
+  for (const [i, chunk] of chunks.entries()) {
+    onPart?.(i, chunks.length);
     const { data } = await complete(ctx, {
       task: "quiz",
       schema: QuizSchema,

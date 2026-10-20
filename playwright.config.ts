@@ -13,6 +13,6 @@ export default defineConfig({
     url: `http://localhost:${port}`,
     reuseExistingServer: false,
     timeout: 120_000,
-    env: loadTestEnv(),
+    env: { ...loadTestEnv(), AI_MOCK_DELAY_MS: "2000" },
   },
 });

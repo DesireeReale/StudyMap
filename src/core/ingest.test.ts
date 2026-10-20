@@ -22,6 +22,15 @@ describe("ingestPdf", () => {
     expect(transcribe).toHaveBeenCalledTimes(1);
   });
 
+  it("counts only the pages that need an image pass", async () => {
+    const onPage = vi.fn();
+    await ingestPdf(samplePdf(), { maxPages: 5, transcribe: async () => "pagina scansionata", onPage });
+    expect(onPage.mock.calls).toEqual([
+      [0, 1],
+      [1, 1],
+    ]);
+  });
+
   it("describes the figures of pages with text when asked", async () => {
     const transcribe = vi.fn(async () => "pagina scansionata");
     const describe = vi.fn(async () => "grafico pressione-volume");

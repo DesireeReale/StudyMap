@@ -16,6 +16,11 @@ import type { Profile } from "./supabase/types";
 
 export const aiMockEnabled = process.env.AI_MOCK === "1" && process.env.NODE_ENV !== "production";
 const hasKey = (m: ModelConfig) => !!process.env[PROVIDERS[m.provider].apiKeyEnv];
+const mockDelayMs = Number(process.env.AI_MOCK_DELAY_MS ?? 0);
+const slowMockChat: typeof mockChat = async (req) => {
+  if (mockDelayMs > 0) await new Promise((r) => setTimeout(r, mockDelayMs));
+  return mockChat(req);
+};
 
 export function aiContextFor(profile: Profile): AiContext {
   const admin = supabaseAdmin();
@@ -24,7 +29,7 @@ export function aiContextFor(profile: Profile): AiContext {
   return {
     chain: modelChain(profile.plan, { consent, hasKey: keyFilter }),
     visionChain: modelChain(profile.plan, { consent, vision: true, hasKey: keyFilter }),
-    chat: aiMockEnabled ? mockChat : openaiChat,
+    chat: aiMockEnabled ? slowMockChat : openaiChat,
     record: async (u) => {
       const { error } = await admin.from("ai_usage").insert({
         user_id: profile.id,

@@ -40,6 +40,7 @@
 - [x] Risposte giuste dei quiz distribuite tra le opzioni (nuovo)
 - [ ] Prima rigenerazione di una mappa gratuita (nuovo)
 - [x] Generazione AI in background: job su Supabase, risposta immediata, stato aggiornato nella pagina, quote restituite in caso di errore (nuovo)
+- [x] Avanzamento visibile: percentuale di caricamento, fasi e contatori dei job, indicatore in basso a destra in tutta l'app (nuovo)
 - [x] Impostazioni: "Suggerisci un'idea" per idee e segnalazioni, salvate su Supabase (nuovo)
 - [ ] Email di avviso per i nuovi suggerimenti: impostare FEEDBACK_EMAIL_TO e RESEND_API_KEY
 
