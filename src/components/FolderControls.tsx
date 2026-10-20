@@ -15,12 +15,68 @@ type Option = { id: string; name: string; depth: number };
 
 const indent = (o: Option) => `${"   ".repeat(o.depth)}${o.name}`;
 
-export function NewFolderForm({ parentId, label, placeholder }: { parentId: string | null; label: string; placeholder: string }) {
+type GridFolder = Folder & { created_at: string };
+type Sort = "personale" | "data" | "nome";
+const SORTS: { id: Sort; name: string }[] = [
+  { id: "data", name: "Data" },
+  { id: "nome", name: "Nome" },
+  { id: "personale", name: "Personale" },
+];
+
+function closeMenu(e: React.MouseEvent) {
+  const menu = (e.currentTarget as HTMLElement).closest("details");
+  if (menu) menu.open = false;
+}
+
+export function FolderGrid({
+  folders,
+  stats,
+  parentId,
+  newLabel,
+  placeholder,
+  canCreate,
+  limitNotice,
+}: {
+  folders: GridFolder[];
+  stats: Record<string, string>;
+  parentId: string | null;
+  newLabel: string;
+  placeholder: string;
+  canCreate: boolean;
+  limitNotice?: React.ReactNode;
+}) {
   const router = useRouter();
+  const [items, setItems] = useState(folders);
+  const [sort, setSort] = useState<Sort>("personale");
+  const [dragged, setDragged] = useState<string | null>(null);
+  const [status, setStatus] = useState("");
+  const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<{ message: string; upgrade: boolean } | null>(null);
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const shown =
+    sort === "personale"
+      ? items
+      : [...items].sort((a, b) =>
+          sort === "nome" ? a.name.localeCompare(b.name, "it") : b.created_at.localeCompare(a.created_at),
+        );
+
+  async function move(id: string, to: number) {
+    const next = reorder(items, id, to);
+    if (next === items) return;
+    setItems(next);
+    const supabase = supabaseBrowser();
+    const results = await Promise.all(
+      next.map((f, position) =>
+        f.position === position ? null : supabase.from("folders").update({ position }).eq("id", f.id),
+      ),
+    );
+    setItems(next.map((f, position) => ({ ...f, position })));
+    setStatus(results.some((r) => r?.error) ? "Ordine non salvato. Riprova." : `${next[to]!.name} spostata in posizione ${to + 1}.`);
+    router.refresh();
+  }
+
+  async function create(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const name = String(new FormData(e.currentTarget).get("name")).trim();
     setBusy(true);
@@ -41,93 +97,125 @@ export function NewFolderForm({ parentId, label, placeholder }: { parentId: stri
     }
   }
 
-  const id = `new-folder-${parentId ?? "root"}`;
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-2">
-      <label htmlFor={id} className="label">
-        {label}
-      </label>
-      <div className="flex flex-wrap gap-2">
-        <input id={id} name="name" required maxLength={80} placeholder={placeholder} className="field max-w-sm flex-1" />
-        <button type="submit" className="btn-primary h-10" disabled={busy}>
-          <Icon name="plus" />
-          Crea
-        </button>
-      </div>
-      {problem && <UpgradeNotice message={problem.message} upgrade={problem.upgrade} />}
-    </form>
-  );
-}
+    <div className="flex flex-col gap-4">
+      {items.length > 1 && (
+        <div role="radiogroup" aria-label="Ordina per" className="flex w-fit gap-1 self-end rounded-full bg-sheet p-1 text-[13px]">
+          {SORTS.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              role="radio"
+              aria-checked={sort === s.id}
+              onClick={() => setSort(s.id)}
+              className={`min-h-8 cursor-pointer rounded-full px-3 ${sort === s.id ? "bg-raised font-bold text-ink" : "text-muted hover:text-ink"}`}
+            >
+              {s.name}
+            </button>
+          ))}
+        </div>
+      )}
 
-export function FolderTiles({ folders, stats }: { folders: Folder[]; stats: Record<string, string> }) {
-  const router = useRouter();
-  const [items, setItems] = useState(folders);
-  const [dragged, setDragged] = useState<string | null>(null);
-  const [status, setStatus] = useState("");
-
-  async function move(id: string, to: number) {
-    const next = reorder(items, id, to);
-    if (next === items) return;
-    setItems(next);
-    const supabase = supabaseBrowser();
-    const results = await Promise.all(
-      next.map((f, position) =>
-        f.position === position ? null : supabase.from("folders").update({ position }).eq("id", f.id),
-      ),
-    );
-    const failed = results.some((r) => r?.error);
-    setItems(next.map((f, position) => ({ ...f, position })));
-    setStatus(failed ? "Ordine non salvato. Riprova." : `${next[to]!.name} spostata in posizione ${to + 1}.`);
-    router.refresh();
-  }
-
-  return (
-    <>
-      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {items.map((f, i) => (
-          <li
-            key={f.id}
-            draggable
-            onDragStart={() => setDragged(f.id)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={() => dragged && move(dragged, i)}
-            onDragEnd={() => setDragged(null)}
-            className={`row-card flex items-center gap-3 ${dragged === f.id ? "opacity-50" : ""}`}
-          >
-            <FolderBadge color={f.color} icon={f.icon} />
-            <Link href={`/folders/${f.id}`} className="min-w-0 flex-1 hover:underline">
-              <span className="block truncate font-bold">{f.name}</span>
-              <span className="num block truncate text-[13px] text-muted">{stats[f.id] ?? "Vuota"}</span>
-            </Link>
-            {items.length > 1 && (
-              <span className="flex shrink-0 flex-col">
-                <button
-                  type="button"
-                  className="btn-ghost h-7 px-2"
-                  aria-label={`Sposta ${f.name} prima`}
-                  disabled={i === 0}
-                  onClick={() => move(f.id, i - 1)}
-                >
-                  <Icon name="up" size={16} />
-                </button>
-                <button
-                  type="button"
-                  className="btn-ghost h-7 px-2"
-                  aria-label={`Sposta ${f.name} dopo`}
-                  disabled={i === items.length - 1}
-                  onClick={() => move(f.id, i + 1)}
-                >
-                  <Icon name="down" size={16} />
-                </button>
-              </span>
+      <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
+        {canCreate && (
+          <li>
+            {creating ? (
+              <form onSubmit={create} className="folder-new flex flex-col justify-center gap-2 p-3">
+                <label htmlFor={`new-folder-${parentId ?? "root"}`} className="sr-only">
+                  {newLabel}
+                </label>
+                <input
+                  id={`new-folder-${parentId ?? "root"}`}
+                  name="name"
+                  required
+                  maxLength={80}
+                  autoFocus
+                  placeholder={placeholder}
+                  onKeyDown={(e) => e.key === "Escape" && setCreating(false)}
+                  className="field"
+                />
+                <div className="flex gap-2">
+                  <button type="submit" className="btn-primary h-9 flex-1" disabled={busy}>
+                    Crea
+                  </button>
+                  <button type="button" className="btn-ghost h-9" onClick={() => setCreating(false)}>
+                    Annulla
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button type="button" aria-label={newLabel} onClick={() => setCreating(true)} className="folder-new flex w-full cursor-pointer items-center justify-center text-accent">
+                <Icon name="plus" size={32} />
+              </button>
             )}
+            <p className="mt-2 text-center text-[15px] font-bold text-accent" aria-hidden="true">
+              {newLabel}
+            </p>
           </li>
-        ))}
+        )}
+        {shown.map((f) => {
+          const i = items.findIndex((x) => x.id === f.id);
+          const movable = sort === "personale" && items.length > 1;
+          return (
+            <li
+              key={f.id}
+              draggable={movable}
+              onDragStart={() => setDragged(f.id)}
+              onDragOver={(e) => movable && e.preventDefault()}
+              onDrop={() => dragged && move(dragged, i)}
+              onDragEnd={() => setDragged(null)}
+              className={`relative ${dragged === f.id ? "opacity-50" : ""}`}
+            >
+              <Link
+                href={`/folders/${f.id}`}
+                className="group block rounded-row"
+                style={{ "--folder-bg": `var(--${f.color})`, "--folder-ink": `var(--${f.color}-ink)` } as React.CSSProperties}
+              >
+                <span className="folder-card" aria-hidden="true">
+                  <span className="folder-face">
+                    <Icon name={f.icon} size={32} />
+                  </span>
+                </span>
+                <span className="mt-2 block truncate text-center text-[15px] font-bold group-hover:underline">{f.name}</span>
+                <span className="num block truncate text-center text-[13px] text-muted">{stats[f.id] || "Vuota"}</span>
+              </Link>
+              <details className="absolute top-3 right-1">
+                <summary
+                  aria-label={`Azioni per ${f.name}`}
+                  className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-full text-[18px] leading-none hover:bg-black/10"
+                  style={{ color: `var(--${f.color}-ink)` }}
+                >
+                  ⋯
+                </summary>
+                <div className="absolute right-0 z-10 mt-1 flex w-44 flex-col rounded-row border border-border bg-raised p-1 text-[14px] shadow-lg">
+                  {movable && (
+                    <>
+                      <button type="button" disabled={i === 0} className="btn-ghost h-9 justify-start" onClick={(e) => { closeMenu(e); move(f.id, i - 1); }}>
+                        <Icon name="up" size={16} />
+                        Sposta prima
+                      </button>
+                      <button type="button" disabled={i === items.length - 1} className="btn-ghost h-9 justify-start" onClick={(e) => { closeMenu(e); move(f.id, i + 1); }}>
+                        <Icon name="down" size={16} />
+                        Sposta dopo
+                      </button>
+                    </>
+                  )}
+                  <Link href={`/folders/${f.id}?personalizza=1`} className="btn-ghost h-9 justify-start">
+                    <Icon name="settings" size={16} />
+                    Personalizza
+                  </Link>
+                </div>
+              </details>
+            </li>
+          );
+        })}
       </ul>
+      {!canCreate && limitNotice}
+      {problem && <UpgradeNotice message={problem.message} upgrade={problem.upgrade} />}
       <p role="status" className="sr-only">
         {status}
       </p>
-    </>
+    </div>
   );
 }
 

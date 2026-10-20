@@ -3,14 +3,14 @@ export const STYLE_COOKIE = "studymap-style";
 export const APP_STYLES = [
   {
     id: "corsia",
-    name: "Corsia",
-    description: "Blu calmo, superfici chiare e concetti a capsula.",
+    name: "Classic",
+    description: "Blu calmo, superfici chiare e concetti arrotondati.",
     colors: ["blu", "pesca", "azzurro", "menta", "grigio"],
   },
   {
     id: "evidenziatore",
-    name: "Evidenziatore",
-    description: "Colori da evidenziatore, contorni a inchiostro e titoli decisi.",
+    name: "Vivid",
+    description: "Colori vivaci, contorni a inchiostro e titoli decisi.",
     colors: ["giallo", "menta", "lilla", "corallo", "carta"],
   },
 ] as const;

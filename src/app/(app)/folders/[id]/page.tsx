@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { childrenOf, MAX_FOLDER_DEPTH, moveTargets, pathTo, subtreeIds } from "@/core/folders";
 import { Breadcrumb } from "@/components/Breadcrumb";
-import { FolderSettings, FolderTiles, NewFolderForm } from "@/components/FolderControls";
+import { FolderGrid, FolderSettings } from "@/components/FolderControls";
 import { Icon } from "@/components/icons";
 import { DeckList, DocumentList, Empty, EmptyAction, FolderBadge, MapList, NoteList, Panel, SearchForm } from "@/components/LibraryLists";
 import { SearchResults } from "@/components/SearchResults";
@@ -17,7 +17,8 @@ export async function generateMetadata({ params }: PageProps<"/folders/[id]">): 
 
 export default async function FolderPage({ params, searchParams }: PageProps<"/folders/[id]">) {
   const { id } = await params;
-  const q = String((await searchParams).q ?? "").trim().slice(0, 100);
+  const query = await searchParams;
+  const q = String(query.q ?? "").trim().slice(0, 100);
   const { supabase, profile } = await requireUser();
   const folders = await loadFolders(supabase);
   const folder = folders.find((f) => f.id === id);
@@ -43,16 +44,18 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
   const upload = `/upload?folder=${id}`;
   const subfolders = (children.length > 0 || depth < MAX_FOLDER_DEPTH) && (
     <Panel title="Cartelle" count={children.length}>
-      {children.length > 0 && (
-        <FolderTiles key={children.map((c) => `${c.id}${c.position}`).join()} folders={children} stats={stats} />
+      {children.length === 0 && (
+        <p className="text-sm text-muted">Facoltativo: dividi questa {kind} in parti, per esempio Scritto e Orale.</p>
       )}
-      {depth < MAX_FOLDER_DEPTH && (
-        <NewFolderForm
-          parentId={id}
-          label={children.length ? "Nuova cartella" : "Nuova cartella (facoltativa, per dividerla in parti)"}
-          placeholder="es. Scritto, Orale, Esercizi svolti"
-        />
-      )}
+      <FolderGrid
+        key={children.map((c) => `${c.id}${c.position}`).join()}
+        folders={children}
+        stats={stats}
+        parentId={id}
+        newLabel="Nuova cartella"
+        placeholder="es. Scritto"
+        canCreate={depth < MAX_FOLDER_DEPTH}
+      />
     </Panel>
   );
 
@@ -120,7 +123,7 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
         </>
       )}
 
-      <details className="panel mt-6">
+      <details className="panel mt-6" open={!!query.personalizza}>
         <summary className="cursor-pointer text-[15px] font-bold">Personalizza {kind}</summary>
         <div className="mt-4">
           <FolderSettings

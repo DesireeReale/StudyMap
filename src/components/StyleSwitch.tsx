@@ -43,7 +43,7 @@ export function StyleToggle({ initial }: { initial: Preferences }) {
   const [prefs, choose] = usePreferences(initial);
   const current: AppStyle = prefs.style;
   return (
-    <div role="radiogroup" aria-label="Stile grafico" className="grid grid-cols-2 gap-1 rounded-full bg-active p-1">
+    <div role="radiogroup" aria-label="Tema" className="grid grid-cols-2 gap-1 rounded-full bg-active p-1">
       {APP_STYLES.map((s) => (
         <button
           key={s.id}
@@ -67,7 +67,7 @@ export function WorkspacePicker({ initial }: { initial: Preferences }) {
   const current: AppStyle = prefs.style;
   return (
     <div className="flex flex-col gap-8">
-    <div role="radiogroup" aria-label="Stile grafico" className="grid gap-3 sm:grid-cols-2">
+    <div role="radiogroup" aria-label="Tema" className="grid gap-3 sm:grid-cols-2">
       {APP_STYLES.map((s) => (
         <button
           key={s.id}
@@ -95,7 +95,7 @@ export function WorkspacePicker({ initial }: { initial: Preferences }) {
             <span className="mt-1 block text-sm text-muted">{s.description}</span>
           </span>
           <span className={`text-sm font-bold ${current === s.id ? "text-accent" : "text-muted"}`}>
-            {current === s.id ? "In uso" : "Usa questo stile"}
+            {current === s.id ? "In uso" : "Usa questo tema"}
           </span>
         </button>
       ))}

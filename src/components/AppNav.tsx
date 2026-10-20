@@ -56,6 +56,10 @@ function Account({ email, plan, prefs }: { email: string; plan: "free" | "pro"; 
   const router = useRouter();
   return (
     <div className="flex flex-col gap-2 border-t border-border pt-4">
+      <p className="flex items-center gap-1.5 px-3 text-[13px] text-muted" aria-hidden="true">
+        <Icon name="layout" size={14} />
+        Cambia tema
+      </p>
       <StyleToggle initial={prefs} />
       <p className="px-3 text-sm text-muted">
         Piano <span className="font-bold text-ink">{plan === "pro" ? "Pro" : "Free"}</span>

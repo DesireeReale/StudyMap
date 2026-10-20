@@ -55,6 +55,7 @@ test("capture product screenshots for the landing page", async ({ page }) => {
 
   for (const name of ["Diritto privato", "Analisi 1"]) {
     await page.goto("/library");
+    await page.getByRole("button", { name: "Nuova materia" }).click();
     await page.getByLabel("Nuova materia").fill(name);
     await page.getByRole("button", { name: "Crea" }).click();
     await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();

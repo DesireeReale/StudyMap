@@ -64,7 +64,7 @@ export default async function SettingsPage() {
         <ExamDate userId={user.id} initial={profile.exam_date} />
       </Section>
 
-      <Section id="stile" title="Il tuo spazio" description="Stile, carattere e dimensione del testo. Le scelte si salvano nel tuo account e le ritrovi su ogni dispositivo. Ogni stile ha una versione chiara e una scura, che segue il sistema.">
+      <Section id="stile" title="Il tuo spazio" description="Tema, carattere e dimensione del testo. Le scelte si salvano nel tuo account e le ritrovi su ogni dispositivo. Ogni tema ha una versione chiara e una scura, che segue il sistema.">
         <WorkspacePicker initial={(await getWorkspace(profile.preferences)).prefs} />
       </Section>
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { PLANS } from "@/config/plans";
 import { longDate } from "@/core/dates";
 import { childrenOf } from "@/core/folders";
-import { FolderTiles, NewFolderForm } from "@/components/FolderControls";
+import { FolderGrid } from "@/components/FolderControls";
 import { Empty, MapList, Panel, SearchForm } from "@/components/LibraryLists";
 import { SearchResults } from "@/components/SearchResults";
 import { StudyDock } from "@/components/StudyDock";
@@ -60,18 +60,24 @@ export default async function LibraryPage({ searchParams }: PageProps<"/library"
       ) : (
         <div className="grid gap-4 lg:grid-cols-12">
           <Panel title="Materie" count={subjects.length} className="lg:col-span-9">
-            <FolderTiles key={subjects.map((s) => `${s.id}${s.position}`).join()} folders={subjects} stats={stats} />
-            {subjects.length < plan.maxSubjects ? (
-              <NewFolderForm parentId={null} label="Nuova materia" placeholder="es. Diritto privato, Analisi 1, Farmacologia" />
-            ) : (
-              <p className="text-sm text-muted">
-                Hai {subjects.length} materie su {plan.maxSubjects}: crea sottocartelle dentro una materia o{" "}
-                <Link href="/settings#piano" className="font-bold text-accent hover:underline">
-                  passa a Pro
-                </Link>
-                .
-              </p>
-            )}
+            <FolderGrid
+              key={subjects.map((s) => `${s.id}${s.position}`).join()}
+              folders={subjects}
+              stats={stats}
+              parentId={null}
+              newLabel="Nuova materia"
+              placeholder="es. Diritto privato"
+              canCreate={subjects.length < plan.maxSubjects}
+              limitNotice={
+                <p className="text-sm text-muted">
+                  Hai {subjects.length} materie su {plan.maxSubjects}: crea sottocartelle dentro una materia o{" "}
+                  <Link href="/settings#piano" className="font-bold text-accent hover:underline">
+                    passa a Pro
+                  </Link>
+                  .
+                </p>
+              }
+            />
           </Panel>
 
           <Panel title="Il tuo piano" className="lg:col-span-3">

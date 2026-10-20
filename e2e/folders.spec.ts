@@ -26,11 +26,13 @@ test("create a subject and a subfolder, upload a PDF there, the map shows up in 
   await page.getByRole("button", { name: "Accedi", exact: true }).click();
   await expect(page).toHaveURL(/\/library/);
 
+  await page.getByRole("button", { name: "Nuova materia" }).click();
   await page.getByLabel("Nuova materia").fill("Diritto privato");
   await page.getByRole("button", { name: "Crea" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Diritto privato" })).toBeVisible();
   const subjectUrl = page.url();
 
+  await page.getByRole("button", { name: "Nuova cartella" }).click();
   await page.getByLabel("Nuova cartella").fill("Scritto");
   await page.getByRole("button", { name: "Crea" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Scritto" })).toBeVisible();

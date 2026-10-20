@@ -442,3 +442,58 @@ h3,
   letter-spacing: var(--reading-letters);
   word-spacing: var(--reading-words);
 }
+
+.folder-card,
+.folder-new {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  margin-top: 12px;
+}
+.folder-card::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 0;
+  width: 44%;
+  height: 22px;
+  border-radius: 10px 10px 0 0;
+  background: var(--folder-bg);
+  filter: brightness(0.92);
+}
+.folder-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px 16px 16px 16px;
+  background: var(--folder-bg);
+  color: var(--folder-ink);
+  transition: transform 150ms;
+}
+a:hover .folder-face {
+  transform: translateY(-2px);
+}
+.folder-new {
+  border: 2px dashed var(--control);
+  border-radius: 16px;
+  background: transparent;
+}
+[data-style="evidenziatore"] .folder-card::before {
+  border: 2px solid var(--text);
+  border-bottom: none;
+  filter: none;
+}
+[data-style="evidenziatore"] .folder-face {
+  border: 2px solid var(--text);
+  box-shadow: 3px 3px 0 var(--text);
+}
+[data-style="evidenziatore"] .folder-new {
+  border-color: var(--text);
+}
+@media (prefers-reduced-motion: reduce) {
+  a:hover .folder-face {
+    transform: none;
+  }
+}
