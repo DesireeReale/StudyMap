@@ -63,7 +63,7 @@
 - [ ] Registro del testo: semplice o tecnico (nuovo)
 - [ ] Input da Word e PowerPoint (nuovo)
 - [ ] Input da link web e YouTube (nuovo)
-- [ ] Input da registrazione audio della lezione (nuovo)
+- [ ] Input da registrazione audio della lezione (nuovo) — rimandato. Idea: tasto "Registra lezione" nella materia, audio a pezzi da 10 minuti, scaricato sul dispositivo e non salvato su Storage (1 GB gratuiti in tutto), su Supabase solo trascrizione e riassunto; prima verificare un provider gratuito di trascrizione utilizzabile in UE; avviso di registrare solo col permesso del docente
 - [ ] Altri tipi di domanda: vero/falso, completamento, aperta (nuovo)
 - [ ] Progressi per argomento e data dell'esame (nuovo)
 - [ ] Export flashcard in CSV / Anki (nuovo)
