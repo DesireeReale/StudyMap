@@ -7,7 +7,7 @@ import { MoveToFolder } from "@/components/FolderControls";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { DeleteButton } from "@/components/DeleteButton";
 import { DocumentChat } from "@/components/DocumentChat";
-import { excerptsFor } from "@/core/retrieval";
+import { excerptsFor, reflow } from "@/core/retrieval";
 import { EditableTitle } from "@/components/EditableTitle";
 import { GenerateButtons } from "@/components/GenerateButtons";
 import { Icon } from "@/components/icons";
@@ -40,7 +40,8 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
   ]);
   const messages = chat.data ?? [];
   const made = (maps.data?.length ?? 0) + (decks.data?.length ?? 0);
-  const preview = doc.pages.join("\n\n").slice(0, 4000);
+  const fullText = reflow(doc.pages.join("\n\n"));
+  const preview = fullText.slice(0, 4000);
 
   return (
     <div className="mx-auto flex max-w-[1100px] flex-col gap-6">
@@ -105,7 +106,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
           <h2 className="text-[15px] font-bold">Testo estratto</h2>
           <div className="max-h-[420px] overflow-auto reading rounded-row bg-sheet p-4 whitespace-pre-wrap [overflow-wrap:anywhere]">
             {preview}
-            {doc.pages.join("\n\n").length > preview.length && <span className="text-muted"> …</span>}
+            {fullText.length > preview.length && <span className="text-muted"> …</span>}
           </div>
         </section>
       </div>

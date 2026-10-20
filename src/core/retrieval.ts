@@ -16,8 +16,26 @@ export function words(text: string): string[] {
     .map((w) => (w.length > 5 ? w.slice(0, -1) : w));
 }
 
+const STARTS_BLOCK = /^(?:[-•*▪◦–]|\d+[.)]\s|#|\[|\{|\}|Figura:|Note del relatore:)/;
+
+export function reflow(text: string): string {
+  const out: string[] = [];
+  for (const raw of text.replace(/\r\n/g, "\n").split("\n")) {
+    const line = raw.trim().replace(/(?<!\p{L})(?:\p{Lu} ){2,}\p{Lu}(?!\p{L})/gu, (m) => m.replace(/ /g, ""));
+    const prev = out[out.length - 1];
+    if (!line) {
+      if (prev) out.push("");
+    } else if (prev && !/[.:;!?]$/.test(prev) && !STARTS_BLOCK.test(line) && !prev.startsWith("#") && !(prev.length < 60 && /^\p{Lu}/u.test(line))) {
+      out[out.length - 1] = `${prev} ${line}`;
+    } else {
+      out.push(line);
+    }
+  }
+  return out.join("\n").trim();
+}
+
 export const excerptsFor = (pages: string[], cited: number[]): Record<number, string> =>
-  Object.fromEntries(cited.filter((p) => pages[p - 1] !== undefined).map((p) => [p, pages[p - 1]!.trim().slice(0, 4000)]));
+  Object.fromEntries(cited.filter((p) => pages[p - 1] !== undefined).map((p) => [p, reflow(pages[p - 1]!).slice(0, 4000)]));
 
 // ponytail: keyword overlap, misses synonyms; switch to embeddings (pgvector) if answers miss the right pages.
 export function selectPages(pages: string[], question: string, maxTokens: number, top = 6): number[] {

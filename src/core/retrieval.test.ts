@@ -3,7 +3,7 @@ import { MODELS } from "@/config/ai";
 import type { AiContext } from "./ai/client";
 import { mockChat } from "./ai/mock";
 import { askDocument } from "./ai/tasks";
-import { selectPages, words } from "./retrieval";
+import { reflow, selectPages, words } from "./retrieval";
 
 const filler = (n: number) => Array.from({ length: n }, (_, i) => `testo generico numero ${i}`).join(" ");
 
@@ -22,6 +22,17 @@ describe("selectPages", () => {
   it("ignores accents, case and short words, and folds plurals", () => {
     expect(words("Le Velocità è nulla")).toEqual(["velocit", "nulla"]);
     expect(words("accelerazioni")).toEqual(words("accelerazione"));
+  });
+});
+
+describe("reflow", () => {
+  it("joins lines the PDF broke mid-sentence and keeps lists and headings apart", () => {
+    expect(reflow("A P I · C I S C R A e a te")).toBe("API · CISCRA e a te");
+    expect(reflow("1.1 Classi e processi\nL'endpoint è identico")).toBe("1.1 Classi e processi\nL'endpoint è identico");
+    const raw = "A P I R E F E R E N C E\n1. Convenzioni\n• Base URL: tutte le rotte (es.\n{BASE_URL}/sessions).\n• Il nome della classe\n(case-sensitive).\nUna frase\nspezzata in due.";
+    expect(reflow(raw)).toBe(
+      "APIREFERENCE\n1. Convenzioni\n• Base URL: tutte le rotte (es.\n{BASE_URL}/sessions).\n• Il nome della classe (case-sensitive).\nUna frase spezzata in due.",
+    );
   });
 });
 
