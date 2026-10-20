@@ -28,7 +28,7 @@ test("write a note, get a summary and take a quiz", async ({ page }) => {
   await page.getByRole("button", { name: "Riassunto" }).click();
   await expect(page).toHaveURL(/\/notes\//);
   await expect(page).not.toHaveURL(noteUrl);
-  await expect(page.getByLabel("Testo dell'appunto")).toHaveValue(/## Segni e sintomi/);
+  await expect(page.getByRole("heading", { level: 3, name: "Segni e sintomi" })).toBeVisible();
 
   await page.goto(noteUrl);
   await page.getByRole("button", { name: "Quiz" }).click();

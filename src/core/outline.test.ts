@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { outline } from "./outline";
+import { blocks, outline } from "./outline";
 
 describe("outline", () => {
   it("lists markdown headings with their position in the text", () => {
@@ -12,5 +12,15 @@ describe("outline", () => {
 
   it("returns nothing for plain notes", () => {
     expect(outline("Appunti senza titoli.\nSeconda riga.")).toEqual([]);
+  });
+});
+
+describe("blocks", () => {
+  it("splits a summary into headings, points and plain lines", () => {
+    expect(blocks("## Segni\n- Dispnea\n\nNota finale")).toEqual([
+      { kind: "heading", text: "Segni" },
+      { kind: "point", text: "Dispnea" },
+      { kind: "text", text: "Nota finale" },
+    ]);
   });
 });

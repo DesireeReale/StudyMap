@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MAX_NOTE_CHARS } from "@/core/files";
 import { outline } from "@/core/outline";
+import { SummaryView } from "./SummaryView";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
 export function NoteEditor({ noteId, title, body }: { noteId: string; title: string; body: string }) {
@@ -11,6 +12,7 @@ export function NoteEditor({ noteId, title, body }: { noteId: string; title: str
   const saved = useRef(JSON.stringify({ title, body }));
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const headings = outline(draft.body);
+  const [reading, setReading] = useState(() => outline(body).length > 1);
   const snapshot = JSON.stringify(draft);
 
   useEffect(() => {
@@ -36,7 +38,8 @@ export function NoteEditor({ noteId, title, body }: { noteId: string; title: str
     return () => window.removeEventListener("beforeunload", warn);
   }, [snapshot]);
 
-  function jumpTo(offset: number) {
+  function jumpTo(offset: number, index: number) {
+    if (reading) return document.getElementById(`sezione-${index}`)?.scrollIntoView({ behavior: "smooth" });
     const ta = bodyRef.current;
     if (!ta) return;
     ta.blur();
@@ -47,7 +50,7 @@ export function NoteEditor({ noteId, title, body }: { noteId: string; title: str
   const statusText = { saved: "Salvato", saving: "Salvataggio…", error: "Salvataggio non riuscito" }[status];
 
   return (
-    <div className={`flex w-full flex-col gap-3 ${headings.length > 1 ? "max-w-[1076px]" : "max-w-[860px]"}`}>
+    <div className={`mx-auto flex w-full flex-col gap-3 ${headings.length > 1 ? "max-w-[1184px]" : "max-w-[960px]"}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <label htmlFor="note-title" className="sr-only">
           Titolo dell&apos;appunto
@@ -59,20 +62,25 @@ export function NoteEditor({ noteId, title, body }: { noteId: string; title: str
           onChange={(e) => setDraft({ ...draft, title: e.target.value })}
           className="min-w-0 flex-1 rounded-field bg-transparent px-1 text-[32px] leading-[1.05] font-bold tracking-[-0.025em] break-words md:text-[44px] text-ink"
         />
-        <p role="status" className={`text-sm ${status === "error" ? "text-negative" : "text-muted"}`}>
-          {statusText}
-        </p>
+        <span className="flex items-center gap-3">
+          <p role="status" className={`text-sm ${status === "error" ? "text-negative" : "text-muted"}`}>
+            {statusText}
+          </p>
+          <button type="button" className="btn-secondary" onClick={() => setReading((r) => !r)} aria-pressed={!reading}>
+            {reading ? "Modifica" : "Leggi"}
+          </button>
+        </span>
       </div>
-      <div className={headings.length > 1 ? "grid gap-4 lg:grid-cols-[200px_minmax(0,1fr)]" : "flex flex-col"}>
+      <div className={headings.length > 1 ? "grid gap-6 lg:grid-cols-[200px_minmax(0,960px)]" : "flex flex-col"}>
         {headings.length > 1 && (
           <nav aria-label="Sezioni" className="lg:sticky lg:top-4 lg:self-start">
             <p className="label mb-2">Sezioni</p>
             <ol className="flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
-              {headings.map((h) => (
+              {headings.map((h, i) => (
                 <li key={h.offset} className="shrink-0">
                   <button
                     type="button"
-                    onClick={() => jumpTo(h.offset)}
+                    onClick={() => jumpTo(h.offset, i)}
                     className="w-full cursor-pointer rounded-field px-2.5 py-1.5 text-left text-sm text-muted hover:bg-active hover:text-ink"
                   >
                     {h.title}
@@ -82,6 +90,12 @@ export function NoteEditor({ noteId, title, body }: { noteId: string; title: str
             </ol>
           </nav>
         )}
+        {reading ? (
+          <div className="min-h-[60vh] rounded-[4px] border border-border bg-raised px-[clamp(20px,7%,72px)] py-[clamp(24px,6%,64px)] shadow-[0_2px_12px_-4px_rgb(15_27_45/0.25)] lg:aspect-[210/297]">
+            <SummaryView body={draft.body} />
+          </div>
+        ) : (
+          <>
         <label htmlFor="note-body" className="sr-only">
           Testo dell&apos;appunto
         </label>
@@ -93,8 +107,10 @@ export function NoteEditor({ noteId, title, body }: { noteId: string; title: str
           onChange={(e) => setDraft({ ...draft, body: e.target.value })}
           placeholder="Scrivi o incolla qui i tuoi appunti. Si salvano da soli."
           spellCheck
-          className="reading field min-h-[60vh] resize-y p-4"
+          className="reading field h-auto min-h-[60vh] resize-y rounded-[4px] px-[clamp(20px,7%,72px)] py-[clamp(24px,6%,64px)] shadow-[0_2px_12px_-4px_rgb(15_27_45/0.25)] lg:aspect-[210/297]"
         />
+          </>
+        )}
       </div>
       <p className="num text-right text-[13px] text-muted">
         {draft.body.length.toLocaleString("it-IT")} / {MAX_NOTE_CHARS.toLocaleString("it-IT")} caratteri

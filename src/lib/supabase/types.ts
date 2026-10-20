@@ -34,6 +34,7 @@ export type NoteRow = {
   id: string;
   user_id: string;
   folder_id: string;
+  document_id: string | null;
   title: string;
   body: string;
   created_at: string;

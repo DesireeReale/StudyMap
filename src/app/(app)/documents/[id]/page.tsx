@@ -12,6 +12,7 @@ import { EditableTitle } from "@/components/EditableTitle";
 import { GenerateButtons } from "@/components/GenerateButtons";
 import { Icon } from "@/components/icons";
 import { MapThumb } from "@/components/StudyMarks";
+import { SummaryView } from "@/components/SummaryView";
 import { pageCount } from "@/core/files";
 import { requireUser } from "@/lib/supabase/server";
 import { folderTrail, loadFolders, pageTitle } from "@/lib/workspace";
@@ -32,12 +33,14 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
     .maybeSingle();
   if (!doc) notFound();
 
-  const [maps, decks, folders, chat] = await Promise.all([
+  const [maps, decks, folders, chat, summaries] = await Promise.all([
     supabase.from("maps").select("id, title, graph, updated_at").eq("document_id", id).order("updated_at", { ascending: false }),
     supabase.from("decks").select("id, title, created_at").eq("document_id", id).order("created_at", { ascending: false }),
     loadFolders(supabase),
     supabase.from("chat_messages").select("id, role, content, pages").eq("document_id", id).order("id"),
+    supabase.from("notes").select("id, body, updated_at").eq("document_id", id).order("updated_at", { ascending: false }).limit(1),
   ]);
+  const summary = summaries.data?.[0];
   const messages = chat.data ?? [];
   const made = (maps.data?.length ?? 0) + (decks.data?.length ?? 0);
   const fullText = reflow(doc.pages.join("\n\n"));
@@ -59,6 +62,31 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
         </div>
         <GenerateButtons source={{ documentId: doc.id }} />
       </header>
+
+      <section aria-labelledby="summary-title" className="panel flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="summary-title" className="text-[20px] font-bold">
+            Riassunto
+          </h2>
+          {summary && (
+            <Link href={`/notes/${summary.id}`} className="btn-secondary">
+              <Icon name="note" />
+              Apri e modifica
+            </Link>
+          )}
+        </div>
+        {summary ? (
+          <SummaryView
+            body={summary.body}
+            className="mx-auto w-full max-w-[72ch] rounded-row bg-sheet px-[clamp(16px,5%,48px)] py-6"
+          />
+        ) : (
+          <p className="rounded-row border border-dashed border-control px-4 py-3 text-sm text-muted">
+            Non c&apos;è ancora un riassunto di questo documento: premi &quot;Riassunto&quot; in alto per crearlo. Lo
+            trovi qui, prima del testo estratto.
+          </p>
+        )}
+      </section>
 
       <div className="grid gap-4 lg:grid-cols-12">
         <section aria-label="Creato da questo documento" className="panel flex min-w-0 flex-col gap-4 lg:col-span-5">
@@ -102,13 +130,17 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
           )}
         </section>
 
-        <section aria-label="Testo estratto" className="panel flex min-w-0 flex-col gap-4 lg:col-span-7">
-          <h2 className="text-[15px] font-bold">Testo estratto</h2>
-          <div className="max-h-[420px] overflow-auto reading rounded-row bg-sheet p-4 whitespace-pre-wrap [overflow-wrap:anywhere]">
+        <details className="panel group flex min-w-0 flex-col gap-4 self-start lg:col-span-7">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[15px] font-bold [&::-webkit-details-marker]:hidden">
+            Testo estratto
+            <span className="text-sm font-normal text-muted group-open:hidden">Mostra</span>
+            <span className="hidden text-sm font-normal text-muted group-open:inline">Nascondi</span>
+          </summary>
+          <div className="mt-4 max-h-[420px] overflow-auto reading rounded-row bg-sheet p-4 whitespace-pre-wrap [overflow-wrap:anywhere]">
             {preview}
             {fullText.length > preview.length && <span className="text-muted"> …</span>}
           </div>
-        </section>
+        </details>
       </div>
 
       <DocumentChat

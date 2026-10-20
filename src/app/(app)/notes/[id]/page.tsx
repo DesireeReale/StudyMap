@@ -28,7 +28,7 @@ export default async function NotePage({ params }: PageProps<"/notes/[id]">) {
   const messages = chat.data ?? [];
 
   return (
-    <div className="mx-auto flex max-w-[1100px] flex-col gap-6">
+    <div className="mx-auto flex max-w-[1184px] flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Breadcrumb trail={folderTrail(folders, note.folder_id)} current={note.title} />
         <MoveToFolder table="notes" id={note.id} current={note.folder_id} options={treeOptions(folders)} />

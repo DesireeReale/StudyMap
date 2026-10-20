@@ -25,6 +25,7 @@ export const FONTS = [
 ] as const;
 
 export const TEXT_SIZES = [
+  { id: "piccola", name: "Piccola" },
   { id: "normale", name: "Normale" },
   { id: "grande", name: "Grande" },
   { id: "molto-grande", name: "Molto grande" },

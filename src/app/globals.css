@@ -378,6 +378,9 @@ h3 {
   --reading-letters: normal;
   --reading-words: normal;
 }
+[data-size="piccola"] {
+  font-size: 15px;
+}
 [data-size="grande"] {
   font-size: 17px;
   --reading-size: 1.1875rem;

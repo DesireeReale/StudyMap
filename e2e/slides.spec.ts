@@ -34,7 +34,8 @@ test("upload PowerPoint slides, read their pictures and summarise them", async (
   await page.getByRole("button", { name: "Carica" }).click();
   await expect(page).toHaveURL(/\/documents\//);
   await expect(page.getByText("PowerPoint · 2 slide")).toBeVisible();
-  const text = page.getByRole("region", { name: "Testo estratto" });
+  await page.locator("summary", { hasText: "Testo estratto" }).click();
+  const text = page.locator("details").filter({ hasText: "Testo estratto" });
   await expect(text).toContainText("Introduzione alla cinematica");
   await expect(text).toContainText("Figura: Grafico velocità-tempo");
   await expect(text).toContainText("Note del relatore:");

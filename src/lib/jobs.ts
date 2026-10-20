@@ -35,7 +35,12 @@ async function produce(
     const text = summaryToText(await generateSummary(ctx, input));
     const { data, error } = await supabase
       .from("notes")
-      .insert({ title: `Riassunto · ${doc.title}`.slice(0, 200), body: text.slice(0, 100_000), folder_id: doc.folder_id })
+      .insert({
+        title: `Riassunto · ${doc.title}`.slice(0, 200),
+        body: text.slice(0, 100_000),
+        folder_id: doc.folder_id,
+        document_id: doc.id,
+      })
       .select("id")
       .single();
     if (error) throw error;
