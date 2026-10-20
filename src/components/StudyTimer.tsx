@@ -226,12 +226,26 @@ export function TimerCell() {
         <span className="study-chip">
           {MODE_LABEL[t.mode]} · {minutes} min
         </span>
-        <details className="relative">
-          <summary className="flex min-h-8 cursor-pointer list-none items-center gap-1 rounded-full px-2 text-[13px] hover:underline">
+        <button
+          type="button"
+          popoverTarget="timer-settings"
+          className="flex min-h-8 cursor-pointer items-center gap-1 rounded-full px-2 text-[13px] hover:underline"
+        >
             <Icon name="settings" size={14} />
             Imposta
-          </summary>
-          <div className="absolute right-0 z-20 mt-2 flex w-[300px] max-w-[80vw] flex-col gap-4 rounded-row border border-border bg-raised p-4 text-ink shadow-lg">
+        </button>
+        <div
+          id="timer-settings"
+          popover="auto"
+          aria-label="Impostazioni del timer"
+          className="timer-popover m-auto w-[340px] max-w-[calc(100vw-32px)] flex-col gap-4 rounded-row border border-border bg-raised p-5 text-ink shadow-lg"
+        >
+            <div className="flex items-center justify-between">
+              <p className="text-[17px] font-bold">Timer di studio</p>
+              <button type="button" popoverTarget="timer-settings" popoverTargetAction="hide" aria-label="Chiudi" className="btn-ghost h-9 w-9 px-0">
+                <Icon name="close" size={16} />
+              </button>
+            </div>
             <fieldset>
               <legend className="label mb-2">Ritmo</legend>
               <div className="flex flex-wrap gap-2">
@@ -258,8 +272,7 @@ export function TimerCell() {
             <button type="button" className="btn-ghost h-9 self-start px-3 text-sm" onClick={t.reset}>
               Ricomincia da capo
             </button>
-          </div>
-        </details>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-end justify-between gap-3">
