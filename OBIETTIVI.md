@@ -69,7 +69,9 @@
 - [ ] Export flashcard in CSV / Anki (nuovo)
 - [ ] Export mappa in Markdown e OPML (nuovo)
 - [ ] Calcolo dosaggi e scale cliniche (Braden, Glasgow, NEWS) (nuovo)
-- [ ] Cartelle e ricerca nella libreria (nuovo)
+- [ ] Materie come cartelle: dentro documenti, mappe, flashcard, appunti e strumenti di studio (nuovo)
+- [ ] Appunti propri nella materia, scritti a mano o incollati (nuovo)
+- [ ] Ricerca nella libreria e dentro le materie (nuovo)
 - [ ] Pagina prezzi che promette: i contenuti restano tuoi (nuovo)
 
 ## Direzione grafica
@@ -88,14 +90,14 @@
 - [x] Timer di studio nel dock (nuovo)
 
 ## Da fare tu
-- [ ] Creare il progetto Supabase di sviluppo (regione UE)
-- [ ] Creare il progetto Supabase di test (regione UE)
+- [x] Creare il progetto Supabase di sviluppo (regione UE)
+- [x] Creare il progetto Supabase di test (regione UE)
 - [ ] Applicare le migrazioni a entrambi (npm run db:push)
-- [ ] Compilare .env.local e .env.test con URL e chiavi
-- [ ] Prendere la chiave Gemini su aistudio.google.com
+- [x] Compilare .env.local e .env.test con URL e chiavi
+- [x] Prendere la chiave Gemini su aistudio.google.com
 - [ ] Prendere la chiave OpenRouter
-- [ ] Configurare Google OAuth (Google Cloud + Supabase)
-- [ ] Impostare Site URL e Redirect URL in Supabase
+- [x] Configurare Google OAuth (Google Cloud + Supabase)
+- [x] Impostare Site URL e Redirect URL in Supabase
 - [ ] Configurare un SMTP per le email di conferma
 - [ ] Scegliere un modello a pagamento UE per la produzione
 - [ ] Creare l'account Stripe e i prodotti Pro
