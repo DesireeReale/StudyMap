@@ -63,7 +63,7 @@ export function LoginMascot({ pose }: { pose: MascotPose }) {
       height={128}
       aria-hidden="true"
       tabIndex={-1}
-      className="pointer-events-none mx-auto -mb-[9px] block size-32 shrink-0 rounded-full object-cover"
+      className="pointer-events-none mx-auto -mb-[9px] block size-32 shrink-0 rounded-full object-cover ring-4 ring-surface dark:brightness-90"
       data-pose={pose}
     >
       <source src="/mascot/fox.mp4" type="video/mp4" />
