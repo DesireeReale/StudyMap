@@ -41,6 +41,18 @@ export function Empty({ children }: { children: ReactNode }) {
   return <p className="rounded-row border border-dashed border-control px-4 py-3 text-sm text-muted">{children}</p>;
 }
 
+export function EmptyAction({ href, label, children }: { href: string; label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col items-start gap-3 rounded-row border border-dashed border-control px-4 py-4 text-sm text-muted">
+      <p>{children}</p>
+      <Link href={href} className="btn-primary">
+        <Icon name="upload" />
+        {label}
+      </Link>
+    </div>
+  );
+}
+
 export function FolderBadge({ color, icon, size = 40 }: { color: FolderColor; icon: FolderIcon; size?: number }) {
   return (
     <span

@@ -8,7 +8,7 @@ import { loadFolders } from "@/lib/workspace";
 export const metadata: Metadata = { title: "Carica materiale" };
 
 export default async function UploadPage({ searchParams }: PageProps<"/upload">) {
-  const { folder } = await searchParams;
+  const { folder, mode } = await searchParams;
   const { supabase, user, profile } = await requireUser();
   const options = treeOptions(await loadFolders(supabase));
   const initialFolder = options.find((o) => o.id === folder)?.id ?? options[0]?.id;
@@ -25,7 +25,7 @@ export default async function UploadPage({ searchParams }: PageProps<"/upload">)
       </header>
       <div className="grid gap-4 lg:grid-cols-12">
         <div className="lg:col-span-8">
-          <UploadForm userId={user.id} maxUploadBytes={plan.maxUploadBytes} folders={options} initialFolder={initialFolder} />
+          <UploadForm userId={user.id} maxUploadBytes={plan.maxUploadBytes} folders={options} initialFolder={initialFolder} initialMode={mode === "text" ? "text" : "file"} />
         </div>
         <aside className="flex flex-col gap-4 lg:col-span-4">
           <div role="note" className="rounded-row border border-notice-border bg-notice p-4 text-sm text-notice-ink">

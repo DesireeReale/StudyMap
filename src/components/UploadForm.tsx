@@ -20,14 +20,16 @@ export function UploadForm({
   maxUploadBytes,
   folders,
   initialFolder,
+  initialMode = "file",
 }: {
   userId: string;
   maxUploadBytes: number;
   folders: { id: string; name: string; depth: number }[];
   initialFolder?: string;
+  initialMode?: "file" | "text";
 }) {
   const router = useRouter();
-  const [mode, setMode] = useState<"file" | "text">("file");
+  const [mode, setMode] = useState<"file" | "text">(initialMode);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<Problem | null>(null);
 

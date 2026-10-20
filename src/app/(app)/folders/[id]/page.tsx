@@ -5,7 +5,7 @@ import { childrenOf, MAX_FOLDER_DEPTH, moveTargets, pathTo, subtreeIds } from "@
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { FolderSettings, FolderTiles, NewFolderForm } from "@/components/FolderControls";
 import { Icon } from "@/components/icons";
-import { DeckList, DocumentList, Empty, FolderBadge, MapList, NoteList, Panel, SearchForm } from "@/components/LibraryLists";
+import { DeckList, DocumentList, Empty, EmptyAction, FolderBadge, MapList, NoteList, Panel, SearchForm } from "@/components/LibraryLists";
 import { SearchResults } from "@/components/SearchResults";
 import { StudyDock } from "@/components/StudyDock";
 import { requireUser } from "@/lib/supabase/server";
@@ -40,6 +40,21 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
   const isEmpty = children.length + docList.length + mapList.length + deckList.length + noteList.length === 0;
   const rootCount = childrenOf(folders, null).length;
   const kind = depth === 1 ? "materia" : "cartella";
+  const upload = `/upload?folder=${id}`;
+  const subfolders = (children.length > 0 || depth < MAX_FOLDER_DEPTH) && (
+    <Panel title="Cartelle" count={children.length}>
+      {children.length > 0 && (
+        <FolderTiles key={children.map((c) => `${c.id}${c.position}`).join()} folders={children} stats={stats} />
+      )}
+      {depth < MAX_FOLDER_DEPTH && (
+        <NewFolderForm
+          parentId={id}
+          label={children.length ? "Nuova cartella" : "Nuova cartella (facoltativa, per dividerla in parti)"}
+          placeholder="es. Scritto, Orale, Esercizi svolti"
+        />
+      )}
+    </Panel>
+  );
 
   return (
     <div className="mx-auto flex max-w-[1100px] flex-col gap-4">
@@ -53,7 +68,7 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Link href={`/upload?folder=${id}`} className="btn-primary">
+          <Link href={upload} className="btn-primary">
             <Icon name="upload" />
             Carica qui
           </Link>
@@ -68,26 +83,25 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
         <SearchResults q={q} supabase={supabase} folderIds={tree} />
       ) : (
         <>
-          {(children.length > 0 || depth < MAX_FOLDER_DEPTH) && (
-            <Panel title="Cartelle" count={children.length}>
-              {children.length > 0 && (
-                <FolderTiles key={children.map((c) => `${c.id}${c.position}`).join()} folders={children} stats={stats} />
-              )}
-              {depth < MAX_FOLDER_DEPTH && (
-                <NewFolderForm parentId={id} label="Nuova cartella" placeholder="es. Scritto, Orale, Esercizi svolti" />
-              )}
-            </Panel>
-          )}
+          {children.length > 0 && subfolders}
 
           <div className="grid gap-4 lg:grid-cols-2">
             <Panel title="Documenti" count={docList.length}>
-              {docList.length ? <DocumentList items={docList} /> : <Empty>Carica qui PDF o foto degli appunti.</Empty>}
+              {docList.length ? (
+                <DocumentList items={docList} />
+              ) : (
+                <EmptyAction href={upload} label="Carica PDF o foto">
+                  Carica qui il materiale di questa {kind}: PDF o foto degli appunti.
+                </EmptyAction>
+              )}
             </Panel>
             <Panel title="Appunti" count={noteList.length}>
               {noteList.length ? (
                 <NoteList items={noteList.map((n) => ({ ...n, preview: n.body.slice(0, 200) }))} />
               ) : (
-                <Empty>Con &ldquo;Carica qui&rdquo; → &ldquo;Testo o appunti&rdquo; scrivi o incolli i tuoi appunti.</Empty>
+                <EmptyAction href={`${upload}&mode=text`} label="Scrivi un appunto">
+                  Scrivi o incolla i tuoi appunti: potrai modificarli e generare mappe e flashcard.
+                </EmptyAction>
               )}
             </Panel>
             <Panel title="Mappe" count={mapList.length}>
@@ -101,6 +115,8 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
               )}
             </Panel>
           </div>
+
+          {children.length === 0 && subfolders}
         </>
       )}
 
