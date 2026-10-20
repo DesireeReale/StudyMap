@@ -1,11 +1,17 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { DeleteButton } from "@/components/DeleteButton";
+import { EditableTitle } from "@/components/EditableTitle";
 import { FlashcardReview } from "@/components/FlashcardReview";
 import { treeOptions } from "@/core/folders";
 import { MoveToFolder } from "@/components/FolderControls";
 import { requireUser } from "@/lib/supabase/server";
-import { folderTrail, loadFolders } from "@/lib/workspace";
+import { folderTrail, loadFolders, pageTitle } from "@/lib/workspace";
+
+export async function generateMetadata({ params }: PageProps<"/decks/[id]">): Promise<Metadata> {
+  return pageTitle("decks", (await params).id);
+}
 
 export default async function DeckPage({ params }: PageProps<"/decks/[id]">) {
   const { id } = await params;
@@ -30,7 +36,7 @@ export default async function DeckPage({ params }: PageProps<"/decks/[id]">) {
         />
         <MoveToFolder table="decks" id={deck.id} current={deck.folder_id} options={treeOptions(folders)} />
       </div>
-      <h1 className="text-[24px] leading-tight font-bold">{deck.title}</h1>
+      <EditableTitle table="decks" id={deck.id} title={deck.title} label="Titolo del mazzo" />
       {cards?.length ? (
         <FlashcardReview cards={cards} />
       ) : (

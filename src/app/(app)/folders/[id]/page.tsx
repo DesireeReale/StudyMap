@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { childrenOf, MAX_FOLDER_DEPTH, moveTargets, pathTo, subtreeIds } from "@/core/folders";
@@ -8,7 +9,11 @@ import { DeckList, DocumentList, Empty, FolderBadge, MapList, NoteList, Panel, S
 import { SearchResults } from "@/components/SearchResults";
 import { StudyDock } from "@/components/StudyDock";
 import { requireUser } from "@/lib/supabase/server";
-import { folderStats, folderTrail, loadFolders, loadStudy } from "@/lib/workspace";
+import { folderStats, folderTrail, loadFolders, loadStudy, pageTitle } from "@/lib/workspace";
+
+export async function generateMetadata({ params }: PageProps<"/folders/[id]">): Promise<Metadata> {
+  return pageTitle("folders", (await params).id);
+}
 
 export default async function FolderPage({ params, searchParams }: PageProps<"/folders/[id]">) {
   const { id } = await params;

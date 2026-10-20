@@ -60,7 +60,7 @@ export function StudyDock({ data }: { data: DockData }) {
           <p className={big}>
             {Math.round(pct * 100)}
             <span className="text-[15px]">%</span>
-            <span className="sr-only"> di carte sapute</span>
+            <span className="sr-only"> delle carte che sai</span>
           </p>
         </div>
       </Tile>

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { treeOptions } from "@/core/folders";
 import { Breadcrumb } from "@/components/Breadcrumb";
@@ -6,7 +7,11 @@ import { MoveToFolder } from "@/components/FolderControls";
 import { GenerateButtons } from "@/components/GenerateButtons";
 import { NoteEditor } from "@/components/NoteEditor";
 import { requireUser } from "@/lib/supabase/server";
-import { folderTrail, loadFolders } from "@/lib/workspace";
+import { folderTrail, loadFolders, pageTitle } from "@/lib/workspace";
+
+export async function generateMetadata({ params }: PageProps<"/notes/[id]">): Promise<Metadata> {
+  return pageTitle("notes", (await params).id);
+}
 
 export default async function NotePage({ params }: PageProps<"/notes/[id]">) {
   const { id } = await params;

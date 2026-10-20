@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { shortDate } from "@/core/dates";
@@ -5,13 +6,18 @@ import { treeOptions } from "@/core/folders";
 import { MoveToFolder } from "@/components/FolderControls";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { DeleteButton } from "@/components/DeleteButton";
+import { EditableTitle } from "@/components/EditableTitle";
 import { GenerateButtons } from "@/components/GenerateButtons";
 import { Icon } from "@/components/icons";
 import { MapThumb } from "@/components/StudyMarks";
 import { requireUser } from "@/lib/supabase/server";
-import { folderTrail, loadFolders } from "@/lib/workspace";
+import { folderTrail, loadFolders, pageTitle } from "@/lib/workspace";
 
 const KIND_LABEL = { pdf: "PDF", image: "Immagine", text: "Testo incollato" } as const;
+
+export async function generateMetadata({ params }: PageProps<"/documents/[id]">): Promise<Metadata> {
+  return pageTitle("documents", (await params).id);
+}
 
 export default async function DocumentPage({ params }: PageProps<"/documents/[id]">) {
   const { id } = await params;
@@ -39,7 +45,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
       </div>
       <header className="mb-4 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-[24px] leading-tight font-bold break-words">{doc.title}</h1>
+          <EditableTitle table="documents" id={doc.id} title={doc.title} label="Titolo del documento" />
           <p className="num mt-1 text-[15px] text-muted">
             {KIND_LABEL[doc.kind]} · {doc.page_count} {doc.page_count === 1 ? "pagina" : "pagine"} · caricato il{" "}
             {shortDate(doc.created_at)}

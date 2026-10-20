@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { DeleteButton } from "@/components/DeleteButton";
@@ -7,7 +8,11 @@ import { treeOptions } from "@/core/folders";
 import { MoveToFolder } from "@/components/FolderControls";
 import { getAppStyle } from "@/lib/app-style";
 import { requireUser } from "@/lib/supabase/server";
-import { folderTrail, loadFolders } from "@/lib/workspace";
+import { folderTrail, loadFolders, pageTitle } from "@/lib/workspace";
+
+export async function generateMetadata({ params }: PageProps<"/maps/[id]">): Promise<Metadata> {
+  return pageTitle("maps", (await params).id);
+}
 
 export default async function MapPage({ params }: PageProps<"/maps/[id]">) {
   const { id } = await params;

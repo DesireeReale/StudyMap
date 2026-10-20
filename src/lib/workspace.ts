@@ -5,11 +5,18 @@ import { monthPeriod } from "@/core/entitlements";
 import { pathTo } from "@/core/folders";
 import type { DockData } from "@/components/StudyDock";
 import type { DeckCounts } from "@/components/StudyMarks";
-import type { supabaseServer } from "./supabase/server";
+import { supabaseServer } from "./supabase/server";
 import type { FolderRow, Profile } from "./supabase/types";
 
 type Supabase = Awaited<ReturnType<typeof supabaseServer>>;
 export type FolderItem = Pick<FolderRow, "id" | "parent_id" | "name" | "color" | "icon" | "position">;
+
+export async function pageTitle(table: "folders" | "documents" | "maps" | "decks" | "notes", id: string) {
+  const supabase = await supabaseServer();
+  const column = table === "folders" ? "name" : "title";
+  const { data } = await supabase.from(table).select(column).eq("id", id).maybeSingle();
+  return { title: (data as Record<string, string> | null)?.[column] ?? "Non trovato" };
+}
 
 export async function loadFolders(supabase: Supabase): Promise<FolderItem[]> {
   const { data } = await supabase.from("folders").select("id, parent_id, name, color, icon, position").order("position");
