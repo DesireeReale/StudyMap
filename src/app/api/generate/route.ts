@@ -5,12 +5,14 @@ import { AiUnavailableError } from "@/core/ai/client";
 import { generateFlashcards, generateMindMap } from "@/core/ai/tasks";
 import { generationLimitReached, monthPeriod, quotaLimit } from "@/core/entitlements";
 import { mindMapToGraph } from "@/core/graph";
+import { textToPages } from "@/core/ingest";
 import { aiContextFor, consumeQuota, guardAi } from "@/lib/ai";
 import { apiUser, denied, fail } from "@/lib/api";
 
 export const maxDuration = 300;
 
-const Body = z.object({ documentId: z.uuid(), type: z.enum(["mindmap", "flashcards"]) });
+const type = z.enum(["mindmap", "flashcards"]);
+const Body = z.union([z.object({ documentId: z.uuid(), type }), z.object({ noteId: z.uuid(), type })]);
 
 export async function POST(request: Request) {
   const auth = await apiUser();
@@ -19,10 +21,19 @@ export async function POST(request: Request) {
 
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return fail("Richiesta non valida", 400);
-  const { documentId, type } = parsed.data;
+  const body = parsed.data;
 
-  const { data: doc } = await supabase.from("documents").select("id, title, pages, folder_id").eq("id", documentId).single();
-  if (!doc) return fail("Documento non trovato", 404);
+  let doc: { id: string | null; title: string; pages: string[]; folder_id: string };
+  if ("noteId" in body) {
+    const { data: note } = await supabase.from("notes").select("title, body, folder_id").eq("id", body.noteId).single();
+    if (!note) return fail("Appunto non trovato", 404);
+    if (note.body.trim().length < 20) return fail("L'appunto è troppo corto: scrivi almeno qualche riga.", 400);
+    doc = { id: null, title: note.title, pages: textToPages(note.body), folder_id: note.folder_id };
+  } else {
+    const { data } = await supabase.from("documents").select("id, title, pages, folder_id").eq("id", body.documentId).single();
+    if (!data) return fail("Documento non trovato", 404);
+    doc = data;
+  }
 
   const guard = await guardAi(profile);
   if (!guard.ok) return denied(guard, 429);
@@ -36,7 +47,7 @@ export async function POST(request: Request) {
   const ctx = aiContextFor(profile);
   const input = { title: doc.title, pages: doc.pages };
   try {
-    if (type === "mindmap") {
+    if (body.type === "mindmap") {
       const graph = mindMapToGraph(await generateMindMap(ctx, input));
       const { data, error } = await supabase
         .from("maps")

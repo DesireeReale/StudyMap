@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { MAX_NOTE_CHARS } from "@/core/files";
 import { supabaseBrowser } from "@/lib/supabase/browser";
-
-export const MAX_NOTE_CHARS = 100_000;
 
 export function NoteEditor({ noteId, title, body }: { noteId: string; title: string; body: string }) {
   const [draft, setDraft] = useState({ title, body });

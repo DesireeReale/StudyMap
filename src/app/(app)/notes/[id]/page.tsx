@@ -3,6 +3,7 @@ import { treeOptions } from "@/core/folders";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { DeleteButton } from "@/components/DeleteButton";
 import { MoveToFolder } from "@/components/FolderControls";
+import { GenerateButtons } from "@/components/GenerateButtons";
 import { NoteEditor } from "@/components/NoteEditor";
 import { requireUser } from "@/lib/supabase/server";
 import { folderTrail, loadFolders } from "@/lib/workspace";
@@ -23,6 +24,12 @@ export default async function NotePage({ params }: PageProps<"/notes/[id]">) {
         <MoveToFolder table="notes" id={note.id} current={note.folder_id} options={treeOptions(folders)} />
       </div>
       <NoteEditor noteId={note.id} title={note.title} body={note.body} />
+      <section aria-label="Genera dall'appunto" className="panel flex flex-wrap items-center justify-between gap-4">
+        <p className="max-w-md text-sm text-muted">
+          Crea una mappa o un mazzo dal testo salvato di questo appunto. Mappa e mazzo finiscono nella stessa cartella.
+        </p>
+        <GenerateButtons source={{ noteId: note.id }} />
+      </section>
       <div className="mt-6 flex justify-end border-t border-border pt-6">
         <DeleteButton
           table="notes"

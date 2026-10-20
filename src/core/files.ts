@@ -18,4 +18,4 @@ export function detectFileKind(bytes: Uint8Array): FileKind | null {
   return null;
 }
 
-export const MAX_TEXT_CHARS = 200_000;
+export const MAX_NOTE_CHARS = 100_000;

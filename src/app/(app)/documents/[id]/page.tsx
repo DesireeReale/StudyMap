@@ -45,7 +45,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
             {shortDate(doc.created_at)}
           </p>
         </div>
-        <GenerateButtons documentId={doc.id} />
+        <GenerateButtons source={{ documentId: doc.id }} />
       </header>
 
       <div className="grid gap-4 lg:grid-cols-12">

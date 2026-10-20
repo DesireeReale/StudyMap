@@ -307,30 +307,3 @@ export function MoveToFolder({
     </div>
   );
 }
-
-export function NewNoteButton({ folderId }: { folderId: string }) {
-  const router = useRouter();
-  const [error, setError] = useState(false);
-  async function onClick() {
-    const { data, error } = await supabaseBrowser()
-      .from("notes")
-      .insert({ title: "Nuovo appunto", folder_id: folderId })
-      .select("id")
-      .single();
-    if (error || !data) return setError(true);
-    router.push(`/notes/${data.id}`);
-  }
-  return (
-    <>
-      <button type="button" className="btn-secondary" onClick={onClick}>
-        <Icon name="note" />
-        Nuovo appunto
-      </button>
-      {error && (
-        <span role="alert" className="text-sm text-negative">
-          Non è stato possibile creare l&apos;appunto.
-        </span>
-      )}
-    </>
-  );
-}

@@ -7,7 +7,7 @@ import { UpgradeNotice } from "./UpgradeNotice";
 
 type Kind = "mindmap" | "flashcards";
 
-export function GenerateButtons({ documentId }: { documentId: string }) {
+export function GenerateButtons({ source }: { source: { documentId: string } | { noteId: string } }) {
   const router = useRouter();
   const [busy, setBusy] = useState<Kind | null>(null);
   const [problem, setProblem] = useState<{ message: string; upgrade: boolean } | null>(null);
@@ -19,7 +19,7 @@ export function GenerateButtons({ documentId }: { documentId: string }) {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ documentId, type }),
+        body: JSON.stringify({ ...source, type }),
       });
       const json = await res.json();
       if (!res.ok) return setProblem({ message: json.error, upgrade: json.upgrade });

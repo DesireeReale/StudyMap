@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { MAX_NOTE_CHARS } from "@/core/files";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { UpgradeNotice } from "./UpgradeNotice";
 
@@ -38,7 +39,7 @@ export function UploadForm({
     });
     const json = await res.json();
     if (!res.ok) return setProblem({ message: json.error, upgrade: json.upgrade });
-    router.push(`/documents/${json.id}`);
+    router.push(json.href);
   }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -95,7 +96,7 @@ export function UploadForm({
               onChange={() => setMode(m)}
               className="sr-only"
             />
-            {m === "file" ? "PDF o immagine" : "Testo"}
+            {m === "file" ? "PDF o immagine" : "Testo o appunti"}
           </label>
         ))}
       </fieldset>
@@ -144,7 +145,19 @@ export function UploadForm({
           <label htmlFor="upload-text" className="label">
             Testo
           </label>
-          <textarea id="upload-text" name="text" required minLength={20} rows={10} className="field h-auto py-2 leading-relaxed" />
+          <textarea
+            id="upload-text"
+            name="text"
+            required
+            minLength={20}
+            maxLength={MAX_NOTE_CHARS}
+            rows={10}
+            aria-describedby="upload-text-help"
+            className="field h-auto py-2 leading-relaxed"
+          />
+          <p id="upload-text-help" className="text-[13px] text-muted">
+            Diventa un appunto che puoi modificare quando vuoi e da cui generare mappa e flashcard.
+          </p>
         </div>
       )}
 

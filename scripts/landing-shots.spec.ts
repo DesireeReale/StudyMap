@@ -33,12 +33,12 @@ test("capture product screenshots for the landing page", async ({ page }) => {
   await expect(page).toHaveURL(/\/library/);
 
   await page.goto("/upload");
-  await page.getByText("Testo", { exact: true }).click();
+  await page.getByText("Testo o appunti", { exact: true }).click();
   await page.getByLabel("Titolo").fill("Scompenso cardiaco");
   await page.getByRole("textbox", { name: "Testo" }).fill(NOTES);
   await page.locator("main").screenshot({ path: `${OUT}/upload.png` });
   await page.getByRole("button", { name: "Carica", exact: true }).click();
-  await expect(page).toHaveURL(/\/documents\//);
+  await expect(page).toHaveURL(/\/notes\//);
   const documentUrl = page.url();
 
   await page.getByRole("button", { name: "Genera flashcard" }).click();

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { childrenOf, MAX_FOLDER_DEPTH, moveTargets, pathTo, subtreeIds } from "@/core/folders";
 import { Breadcrumb } from "@/components/Breadcrumb";
-import { FolderSettings, FolderTiles, NewFolderForm, NewNoteButton } from "@/components/FolderControls";
+import { FolderSettings, FolderTiles, NewFolderForm } from "@/components/FolderControls";
 import { Icon } from "@/components/icons";
 import { DeckList, DocumentList, Empty, FolderBadge, MapList, NoteList, Panel, SearchForm } from "@/components/LibraryLists";
 import { SearchResults } from "@/components/SearchResults";
@@ -48,7 +48,6 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <NewNoteButton folderId={id} />
           <Link href={`/upload?folder=${id}`} className="btn-primary">
             <Icon name="upload" />
             Carica qui
@@ -77,13 +76,13 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
 
           <div className="grid gap-4 lg:grid-cols-2">
             <Panel title="Documenti" count={docList.length}>
-              {docList.length ? <DocumentList items={docList} /> : <Empty>Carica qui PDF, foto o testo.</Empty>}
+              {docList.length ? <DocumentList items={docList} /> : <Empty>Carica qui PDF o foto degli appunti.</Empty>}
             </Panel>
             <Panel title="Appunti" count={noteList.length}>
               {noteList.length ? (
                 <NoteList items={noteList.map((n) => ({ ...n, preview: n.body.slice(0, 200) }))} />
               ) : (
-                <Empty>Scrivi o incolla i tuoi appunti con &ldquo;Nuovo appunto&rdquo;.</Empty>
+                <Empty>Con &ldquo;Carica qui&rdquo; → &ldquo;Testo o appunti&rdquo; scrivi o incolli i tuoi appunti.</Empty>
               )}
             </Panel>
             <Panel title="Mappe" count={mapList.length}>

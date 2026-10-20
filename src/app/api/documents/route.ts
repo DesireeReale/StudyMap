@@ -4,8 +4,8 @@ import { PLANS } from "@/config/plans";
 import { AiUnavailableError } from "@/core/ai/client";
 import { transcribeImage } from "@/core/ai/tasks";
 import { canSaveDocument, checkPdfPages, checkUploadSize } from "@/core/entitlements";
-import { MAX_TEXT_CHARS, MIME, detectFileKind } from "@/core/files";
-import { PageLimitError, ingestPdf, textToPages } from "@/core/ingest";
+import { MAX_NOTE_CHARS, MIME, detectFileKind } from "@/core/files";
+import { PageLimitError, ingestPdf } from "@/core/ingest";
 import { aiContextFor, guardAi } from "@/lib/ai";
 import { apiUser, denied, fail } from "@/lib/api";
 
@@ -30,16 +30,14 @@ export async function POST(request: Request) {
   const canSave = canSaveDocument(profile.plan, count ?? 0);
 
   if (body.kind === "text") {
-    if (!canSave.ok) return denied(canSave);
-    if (body.text.length > MAX_TEXT_CHARS) return fail("Il testo è troppo lungo.", 400);
-    const pages = textToPages(body.text);
+    if (body.text.length > MAX_NOTE_CHARS) return fail("Il testo è troppo lungo per un appunto.", 400);
     const { data, error } = await supabase
-      .from("documents")
-      .insert({ title: body.title, kind: "text", pages, page_count: pages.length, folder_id: body.folderId })
+      .from("notes")
+      .insert({ title: body.title, body: body.text, folder_id: body.folderId })
       .select("id")
       .single();
     if (error) return fail("Salvataggio non riuscito", 500);
-    return NextResponse.json({ id: data.id });
+    return NextResponse.json({ id: data.id, href: `/notes/${data.id}` });
   }
 
   const removeUpload = () => supabase.storage.from("documents").remove([body.storagePath]);
@@ -106,5 +104,5 @@ export async function POST(request: Request) {
     await removeUpload();
     return fail("Salvataggio non riuscito", 500);
   }
-  return NextResponse.json({ id: data.id });
+  return NextResponse.json({ id: data.id, href: `/documents/${data.id}` });
 }
