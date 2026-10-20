@@ -49,7 +49,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
       </header>
 
       <div className="grid gap-4 lg:grid-cols-12">
-        <section aria-label="Creato da questo documento" className="panel flex flex-col gap-4 lg:col-span-5">
+        <section aria-label="Creato da questo documento" className="panel flex min-w-0 flex-col gap-4 lg:col-span-5">
           <h2 className="flex items-center gap-2 text-[15px] font-bold">
             Creato da questo documento
             <span className="num rounded-full bg-sheet px-2 py-0.5 text-xs font-normal text-muted">{made}</span>
@@ -90,9 +90,9 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
           )}
         </section>
 
-        <section aria-label="Testo estratto" className="panel flex flex-col gap-4 lg:col-span-7">
+        <section aria-label="Testo estratto" className="panel flex min-w-0 flex-col gap-4 lg:col-span-7">
           <h2 className="text-[15px] font-bold">Testo estratto</h2>
-          <div className="max-h-[420px] overflow-auto reading rounded-row bg-sheet p-4 whitespace-pre-wrap">
+          <div className="max-h-[420px] overflow-auto reading rounded-row bg-sheet p-4 whitespace-pre-wrap [overflow-wrap:anywhere]">
             {preview}
             {doc.pages.join("\n\n").length > preview.length && <span className="text-muted"> …</span>}
           </div>
