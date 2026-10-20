@@ -114,5 +114,5 @@ export const TASKS: Record<TaskId, { promptVersion: string; maxTokens: number }>
 };
 
 export const CHUNK_INPUT_TOKENS = 12_000;
-export const REQUEST_TIMEOUT_MS = 90_000;
+export const REQUEST_TIMEOUT_MS = 45_000;
 export const RETRY_DELAYS_MS = [2_000, 5_000];

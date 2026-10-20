@@ -126,7 +126,8 @@ export async function complete<T>(
   }
   let totalInput = 0;
 
-  for (const model of chain) {
+  for (const [index, model] of chain.entries()) {
+    const isLast = index === chain.length - 1;
     const messages = [...opts.messages];
     try {
       for (let attempt = 0; attempt < 2; attempt++) {
@@ -147,7 +148,7 @@ export async function complete<T>(
               ok: false,
               error: e instanceof Error ? e.message.slice(0, 500) : String(e),
             });
-            if (!isBusy(e) || retry >= RETRY_DELAYS_MS.length) throw e;
+            if (!isBusy(e) || !isLast || retry >= RETRY_DELAYS_MS.length) throw e;
             await (ctx.sleep ?? wait)(RETRY_DELAYS_MS[retry]!);
           }
         }

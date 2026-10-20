@@ -49,31 +49,42 @@ describe("complete", () => {
     expect(c.chat).toHaveBeenCalledWith(expect.objectContaining({ maxTokens: TASKS.mindmap.maxTokens }));
   });
 
-  it.each([429, 500, 503])("retries a busy model (status %s) with backoff, then falls back", async (status) => {
+  it.each([429, 500, 503])("moves to the next model at once when one is busy (status %s)", async (status) => {
     const { c, usage } = ctx(async ({ model }) => {
       if (model.id === "model-a") throw new ProviderError("busy", status);
       return ok('{"answer":"b"}');
     });
     await expect(run(c)).resolves.toMatchObject({ data: { answer: "b" } });
-    const attemptsOnA = RETRY_DELAYS_MS.length + 1;
     expect(usage.map((u) => [u.model, u.ok])).toEqual([
-      ...Array.from({ length: attemptsOnA }, () => ["model-a", false]),
+      ["model-a", false],
       ["model-b", true],
     ]);
-    expect(vi.mocked(c.sleep!).mock.calls.map(([ms]) => ms)).toEqual(RETRY_DELAYS_MS);
+    expect(c.sleep).not.toHaveBeenCalled();
   });
 
-  it("recovers on the same model when it is busy only once", async () => {
+  it("retries the last model with backoff when it is busy", async () => {
     let calls = 0;
     const { c, usage } = ctx(async () => {
       if (calls++ === 0) throw new ProviderError("high demand", 503);
       return ok('{"answer":"a"}');
     });
+    c.chain = [modelA];
     await expect(run(c)).resolves.toMatchObject({ data: { answer: "a" } });
     expect(usage.map((u) => [u.model, u.ok])).toEqual([
       ["model-a", false],
       ["model-a", true],
     ]);
+    expect(vi.mocked(c.sleep!).mock.calls.map(([ms]) => ms)).toEqual([RETRY_DELAYS_MS[0]]);
+  });
+
+  it("gives up on the last model after the backoff delays", async () => {
+    const { c, usage } = ctx(async () => {
+      throw new ProviderError("high demand", 503);
+    });
+    c.chain = [modelA];
+    await expect(run(c)).rejects.toBeInstanceOf(AiUnavailableError);
+    expect(usage).toHaveLength(RETRY_DELAYS_MS.length + 1);
+    expect(vi.mocked(c.sleep!).mock.calls.map(([ms]) => ms)).toEqual(RETRY_DELAYS_MS);
   });
 
   it("falls back without waiting on network errors and timeouts", async () => {

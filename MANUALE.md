@@ -271,7 +271,7 @@ Tutto avviene in `complete()` ([client.ts:102](src/core/ai/client.ts:102)):
 - **sì**: con 429 (rate limit), 5xx, timeout o errori di rete (status assente), 401/403 (chiave sbagliata) e output non valido dopo il retry;
 - **no**: con 400, 404 e 422. Indicano un errore nella richiesta: cambiare modello non aiuterebbe e nasconderebbe il bug.
 
-Prima di cambiare modello, se l'errore è 429 o 5xx (modello "occupato", tipico dei piani gratuiti), si riprova **sullo stesso modello** dopo 2 e poi 5 secondi (`RETRY_DELAYS_MS` in [config/ai.ts](src/config/ai.ts)). Ogni tentativo fallito resta registrato in `ai_usage`. Timeout ed errori di rete passano subito al modello successivo, senza attesa.
+Se l'errore è 429 o 5xx (modello "occupato", tipico dei piani gratuiti) si passa **subito al modello successivo**: aspettare quello sovraccarico costava fino a quasi due minuti (prova reale del 20 ottobre). Solo sull'**ultimo** modello della catena si riprova dopo 2 e poi 5 secondi (`RETRY_DELAYS_MS` in [config/ai.ts](src/config/ai.ts)), perché non c'è altro da provare. Timeout ed errori di rete passano subito al modello successivo. Il timeout per singola richiesta è `REQUEST_TIMEOUT_MS` (45 secondi; stima **NON VERIFICATA** che basti per una mappa da 4000 token di uscita). Ogni tentativo fallito resta registrato in `ai_usage`.
 
 Se tutta la catena fallisce, `complete()` lancia `AiUnavailableError` ("servizio momentaneamente occupato") e l'API risponde 503.
 
