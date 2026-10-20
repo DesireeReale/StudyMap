@@ -595,3 +595,34 @@ a:hover .folder-face {
 .timer-popover::backdrop {
   background: rgb(0 0 0 / 0.25);
 }
+
+[data-paper="crema"] {
+  --sheet: #fbf5e6;
+  --raised: #fdf9ef;
+}
+[data-paper="azzurro"] {
+  --sheet: #eef5fc;
+  --raised: #f5f9fd;
+}
+[data-paper="verde"] {
+  --sheet: #eff7ee;
+  --raised: #f6faf5;
+}
+@media (prefers-color-scheme: dark) {
+  [data-paper="crema"] {
+    --sheet: #221e16;
+    --raised: #27221a;
+  }
+  [data-paper="azzurro"] {
+    --sheet: #142130;
+    --raised: #182638;
+  }
+  [data-paper="verde"] {
+    --sheet: #15221a;
+    --raised: #19281f;
+  }
+}
+[data-map-case="maiuscolo"] .concept-node {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}

@@ -54,8 +54,8 @@
 - [ ] App desktop con Tauri
 
 ## Dalla ricerca sui concorrenti
-- [ ] Pannello lettura DSA: dimensione, spaziatura, sfondo (nuovo) — fatti carattere, dimensione e spaziatura in Impostazioni → Il tuo spazio; manca lo sfondo
-- [ ] Mappa tutta in maiuscolo come opzione (nuovo)
+- [x] Pannello lettura DSA: dimensione, spaziatura, sfondo (nuovo) — in Impostazioni → Il tuo spazio, con carattere e sfondo dei fogli
+- [x] Mappa tutta in maiuscolo come opzione (nuovo)
 - [ ] Mappa mentale radiale oltre a quella gerarchica (nuovo)
 - [ ] Note e immagini dentro i nodi (nuovo)
 - [ ] Modifica della mappa con un comando AI (nuovo)
@@ -64,10 +64,10 @@
 - [ ] Input da Word e PowerPoint (nuovo)
 - [ ] Input da link web e YouTube (nuovo)
 - [ ] Input da registrazione audio della lezione (nuovo) — rimandato. Idea: tasto "Registra lezione" nella materia, audio a pezzi da 10 minuti, scaricato sul dispositivo e non salvato su Storage (1 GB gratuiti in tutto), su Supabase solo trascrizione e riassunto; prima verificare un provider gratuito di trascrizione utilizzabile in UE; avviso di registrare solo col permesso del docente
-- [ ] Altri tipi di domanda: vero/falso, completamento, aperta (nuovo)
+- [ ] Altri tipi di domanda: vero/falso, completamento, aperta (nuovo) — fatti vero/falso e completamento; manca la domanda aperta
 - [ ] Progressi per argomento e data dell'esame (nuovo)
-- [ ] Export flashcard in CSV / Anki (nuovo)
-- [ ] Export mappa in Markdown e OPML (nuovo)
+- [x] Export flashcard in CSV / Anki (nuovo)
+- [x] Export mappa in Markdown e OPML (nuovo)
 - [ ] Calcolo dosaggi e scale cliniche (Braden, Glasgow, NEWS) (nuovo)
 - [x] Materie come cartelle: dentro documenti, mappe, flashcard, appunti e strumenti di studio (nuovo)
 - [x] Sottocartelle nelle materie, fino a 3 livelli (nuovo)

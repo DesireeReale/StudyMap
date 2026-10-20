@@ -22,6 +22,7 @@ import "@xyflow/react/dist/style.css";
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { APP_STYLES, type AppStyle } from "@/config/styles";
 import { NODE_ROLES, childRole, layoutGraph, nodeRole, type Graph, type NodeRole } from "@/core/graph";
+import { graphToMarkdown, graphToOpml } from "@/core/export";
 import { Icon } from "./icons";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
@@ -247,6 +248,14 @@ function Editor({
     pdf.save(`${mapTitle || "mappa"}.pdf`);
   }
 
+  function exportText(kind: "md" | "opml") {
+    const name = mapTitle || "mappa";
+    const text = kind === "md" ? graphToMarkdown(name, toGraph(nodes, edges)) : graphToOpml(name, toGraph(nodes, edges));
+    const url = URL.createObjectURL(new Blob([text], { type: kind === "md" ? "text/markdown" : "text/x-opml" }));
+    download(url, `${name}.${kind}`);
+    URL.revokeObjectURL(url);
+  }
+
   function onKeyDown(e: React.KeyboardEvent) {
     if (editingId || selected.length !== 1) return;
     if (e.key === "F2" || (e.key === "Enter" && (e.target as HTMLElement).classList.contains("react-flow__node"))) {
@@ -329,6 +338,14 @@ function Editor({
                 PDF
               </button>
             )}
+            <button type="button" className="btn-secondary" onClick={() => exportText("md")}>
+              <Icon name="download" />
+              Markdown
+            </button>
+            <button type="button" className="btn-secondary" onClick={() => exportText("opml")}>
+              <Icon name="download" />
+              OPML
+            </button>
           </span>
         </div>
 

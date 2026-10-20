@@ -112,7 +112,7 @@ export const TASKS: Record<TaskId, { promptVersion: string; maxTokens: number }>
   flashcards: { promptVersion: "v2", maxTokens: 4000 },
   transcribe: { promptVersion: "v1", maxTokens: 3000 },
   summary: { promptVersion: "v1", maxTokens: 3000 },
-  quiz: { promptVersion: "v1", maxTokens: 4000 },
+  quiz: { promptVersion: "v2", maxTokens: 4000 },
 };
 
 export const CHUNK_INPUT_TOKENS = 12_000;

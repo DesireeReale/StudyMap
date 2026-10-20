@@ -36,6 +36,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       data-font={prefs.font}
       data-size={prefs.size}
       data-spacing={prefs.spacing}
+      data-paper={prefs.paper}
+      data-map-case={prefs.mapCase}
       data-timer-study={prefs.timerStudy}
       data-timer-break={prefs.timerBreak}
       data-timer-long={prefs.timerLong}

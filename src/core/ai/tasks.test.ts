@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import { MODELS } from "@/config/ai";
 import { chunkPages } from "./chunk";
 import type { AiContext } from "./client";
+import { sameAnswer } from "../answers";
 import { mockChat } from "./mock";
-import type { MindMap } from "./schemas";
+import { QuizSchema, type MindMap } from "./schemas";
 import {
   balanceAnswers,
   dedupeCards,
@@ -96,18 +97,37 @@ describe("summary and quiz", () => {
   });
 
   it("keeps each right answer while spreading answers across positions", () => {
-    const q = (n: number) => ({ question: `D${n}`, options: [`giusta${n}`, "b", "c", "d"], correct: 0, explanation: "x" });
+    const q = (n: number) => ({ type: "scelta" as const, question: `D${n}`, options: [`giusta${n}`, "b", "c", "d"], correct: 0, answer: "", explanation: "x" });
     let seed = 1;
     const random = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
-    const out = balanceAnswers([q(1), q(2), q(3), q(4), q(5), q(6), q(7), q(8)], random);
+    const tf = { type: "vero_falso" as const, question: "V?", options: ["Vero", "Falso"], correct: 1, answer: "", explanation: "x" };
+    const out = balanceAnswers([q(1), q(2), tf, q(3), q(4), q(5), q(6), q(7), q(8)], random);
+    expect(out.splice(2, 1)).toEqual([tf]);
     for (const [i, item] of out.entries()) expect(item.options[item.correct]).toBe(`giusta${i + 1}`);
     const counts = [0, 1, 2, 3].map((p) => out.filter((x) => x.correct === p).length);
     expect(counts).toEqual([2, 2, 2, 2]);
   });
 
-  it("generates a quiz from the mock with four options per question", async () => {
+  it("generates a quiz from the mock with every question type", async () => {
     const quiz = await generateQuiz(ctx, { title: "Scompenso", pages: ["Testo di prova."] });
-    expect(quiz).toHaveLength(3);
-    expect(quiz.every((x) => x.options.length === 4 && x.correct >= 0 && x.correct < 4)).toBe(true);
+    expect(quiz.map((x) => x.type)).toEqual(["scelta", "vero_falso", "completamento"]);
+    expect(quiz[0]!.options[quiz[0]!.correct]).toBe("Edemi declivi");
+  });
+
+  it("rejects a question that breaks the rules of its type", () => {
+    const base = { question: "La ___ è...", options: [], correct: 0, answer: "", explanation: "x" };
+    expect(QuizSchema.safeParse({ questions: [{ ...base, type: "completamento" }] }).success).toBe(false);
+    expect(QuizSchema.safeParse({ questions: [{ ...base, type: "completamento", answer: "norma" }] }).success).toBe(true);
+    expect(QuizSchema.safeParse({ questions: [{ ...base, type: "scelta" }] }).success).toBe(false);
+  });
+});
+
+describe("typed answers", () => {
+  it("ignores case, accents and punctuation, and accepts alternatives", () => {
+    expect(sameAnswer(" Semi fowler. ", "semi-Fowler")).toBe(true);
+    expect(sameAnswer("perche", "perché")).toBe(true);
+    expect(sameAnswer("dolo", "colpa / negligenza")).toBe(false);
+    expect(sameAnswer("negligenza", "colpa / negligenza")).toBe(true);
+    expect(sameAnswer("", "x")).toBe(false);
   });
 });

@@ -5,7 +5,7 @@ import { createTestUser, deleteTestUser, signedInClient } from "../supabase";
 
 let a: { id: string; client: SupabaseClient<Database> };
 let b: { id: string; client: SupabaseClient<Database> };
-const questions = [{ question: "Q", options: ["a", "b", "c", "d"], correct: 0, explanation: "e" }];
+const questions = [{ type: "scelta" as const, question: "Q", options: ["a", "b", "c", "d"], correct: 0, answer: "", explanation: "e" }];
 
 beforeAll(async () => {
   const [ua, ub] = await Promise.all([createTestUser("quiz-a"), createTestUser("quiz-b")]);

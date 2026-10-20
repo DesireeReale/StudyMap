@@ -12,6 +12,8 @@ describe("preferences", () => {
       font: "atkinson",
       size: "normale",
       spacing: "ampia",
+      paper: "stile",
+      mapCase: "normale",
       timerStudy: 25,
       timerBreak: 5,
       timerLong: 15,

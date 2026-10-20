@@ -250,8 +250,9 @@ Il consenso è la colonna `profiles.ai_data_sharing_consent_at`, che l'utente at
 
 #### e) Quiz: `generateQuiz`
 - **Dove**: [tasks.ts](src/core/ai/tasks.ts), con `type: "quiz"`; salvato nella tabella `quizzes` (domande in `questions`, jsonb) e giocato in [/quizzes/[id]](src/app/(app)/quizzes/[id]/page.tsx) con [QuizRunner.tsx](src/components/QuizRunner.tsx); ogni partita finita va in `quiz_attempts`.
-- **Prompt**: [quiz.v1.md](prompts/quiz.v1.md): 4 opzioni, una sola giusta, distrattori plausibili, spiegazione di 1-3 frasi, tra 5 e 15 domande.
-- **Post-elaborazione**: domande deduplicate (`dedupeBy`) e tagliate a 20; poi `balanceAnswers` rimescola le opzioni in modo che la risposta giusta cada in modo uniforme su A, B, C e D (i modelli tendono a metterla sempre nella stessa posizione).
+- **Prompt**: [quiz.v2.md](prompts/quiz.v2.md): tra 5 e 15 domande di tre tipi (`type`): `scelta` (4 opzioni, una giusta), `vero_falso` (opzioni "Vero"/"Falso") e `completamento` (frase con `___` e la parola mancante in `answer`; i sinonimi separati da `/`). Lo schema in [schemas.ts](src/core/ai/schemas.ts) rifiuta le domande che non rispettano le regole del loro tipo, e il client chiede al modello di correggerle. I quiz salvati prima di questa versione non hanno `type`: la pagina del quiz li tratta come `scelta`.
+- **Risposte scritte**: `sameAnswer` in [answers.ts](src/core/answers.ts) ignora maiuscole, accenti e punteggiatura. Se lo studente pensa di avere ragione comunque, "La mia risposta era giusta" conta il punto.
+- **Post-elaborazione**: domande deduplicate (`dedupeBy`) e tagliate a 20; poi `balanceAnswers` rimescola le opzioni delle domande a scelta in modo che la risposta giusta cada in modo uniforme su A, B, C e D (i modelli tendono a metterla sempre nella stessa posizione).
 - **Limiti**: oltre alla generazione mensile, il Free ha `quizzesPerWeek` quiz a settimana ([plans.ts](src/config/plans.ts)), contati in `quota_counters` con `kind = "quiz"` e periodo ISO (`2026-W43`, `weekPeriod` in [entitlements.ts](src/core/entitlements.ts)). Se la generazione fallisce, la quota viene restituita.
 
 ### 3.4 Parametri di generazione
@@ -525,11 +526,12 @@ Lo schema iniziale è in [supabase/migrations/20261019000000_init.sql](supabase/
 
 **13d. Preferenze del workspace (stile, carattere, dimensione, spaziatura)**
 - **Dove**: le opzioni sono in [styles.ts](src/config/styles.ts), la lettura con valori di riserva in [src/core/preferences.ts](src/core/preferences.ts), il pannello in [StyleSwitch.tsx](src/components/StyleSwitch.tsx).
-- **Come funziona**: la fonte vera è `profiles.preferences`. Il cookie `studymap-style` ne tiene una copia, così [layout.tsx](src/app/layout.tsx) mette subito `data-style`, `data-font`, `data-size` e `data-spacing` su `<html>`, senza lampo. Se apri l'app su un altro dispositivo, `PreferencesSync` riallinea il cookie al profilo.
-- **CSS**: `[data-font]` cambia `--body-font`; `[data-size]` ingrandisce i testi in `rem` e la classe `.reading` (appunti, testo dei documenti, flashcard); `[data-spacing="ampia"]` aumenta interlinea e spaziatura su `.reading`.
+- **Come funziona**: la fonte vera è `profiles.preferences`. Il cookie `studymap-style` ne tiene una copia, così [layout.tsx](src/app/layout.tsx) mette subito `data-style`, `data-font`, `data-size`, `data-spacing`, `data-paper` e `data-map-case` su `<html>`, senza lampo. Se apri l'app su un altro dispositivo, `PreferencesSync` riallinea il cookie al profilo.
+- **CSS**: `[data-font]` cambia `--body-font`; `[data-size]` ingrandisce i testi in `rem` e la classe `.reading` (appunti, testo dei documenti, flashcard); `[data-spacing="ampia"]` aumenta interlinea e spaziatura su `.reading`; `[data-paper]` tinge lo sfondo dei fogli (`--sheet`, `--raised`), anche in tema scuro; `[data-map-case="maiuscolo"]` scrive i nodi della mappa in maiuscolo, anche nell'export PNG.
 
-**13e. Export della mappa**
+**13e. Export della mappa e delle flashcard**
 - **Dove**: `renderPng` ed `exportPdf` in [MapEditor.tsx](src/components/MapEditor.tsx). `html-to-image` e `jspdf` si caricano solo quando premi l'export.
+- **Testo**: Markdown e OPML (per Obsidian, Notion, XMind, MindNode) e, nella pagina del mazzo, CSV (Excel) e TXT per Anki vengono da [export.ts](src/core/export.ts). Sono gratis per tutti i piani: i contenuti restano dello studente. La mappa diventa un elenco annidato seguendo le frecce, con i figli ordinati da sinistra a destra. Il file per Anki si importa da File → Importa; le righe `#separator:tab` e `#html:true` in testa dicono ad Anki come leggerlo.
 - **Attenzione**: `html-to-image` è fissata alla versione **1.11.11** (senza `^` in package.json). Le versioni successive non disegnano le linee della mappa, come avverte anche la documentazione di React Flow: prova del 20 ottobre, 946 pixel di linea con la 1.11.11 contro 126 con la 1.11.13. Non aggiornarla senza ripetere la prova.
 
 **14. Aggiornare gli screenshot della landing**

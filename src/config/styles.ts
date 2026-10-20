@@ -35,6 +35,18 @@ export const SPACINGS = [
   { id: "ampia", name: "Ampia" },
 ] as const;
 
+export const PAPERS = [
+  { id: "stile", name: "Quello del tema" },
+  { id: "crema", name: "Crema" },
+  { id: "azzurro", name: "Azzurro" },
+  { id: "verde", name: "Verde chiaro" },
+] as const;
+
+export const MAP_CASES = [
+  { id: "normale", name: "Come scritto" },
+  { id: "maiuscolo", name: "Tutto maiuscolo" },
+] as const;
+
 export const FOLDER_COLORS = ["folder-1", "folder-2", "folder-3", "folder-4", "folder-5", "folder-6"] as const;
 
 export const FOLDER_ICONS = [

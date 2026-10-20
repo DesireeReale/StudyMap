@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { APP_STYLES, FONTS, SPACINGS, TEXT_SIZES } from "@/config/styles";
+import { APP_STYLES, FONTS, MAP_CASES, PAPERS, SPACINGS, TEXT_SIZES } from "@/config/styles";
 
 const ids = <T extends readonly { id: string }[]>(list: T) => list.map((x) => x.id) as [T[number]["id"], ...T[number]["id"][]];
 
@@ -10,6 +10,8 @@ const Preferences = z.object({
   font: z.enum(ids(FONTS)).catch("stile"),
   size: z.enum(ids(TEXT_SIZES)).catch("normale"),
   spacing: z.enum(ids(SPACINGS)).catch("normale"),
+  paper: z.enum(ids(PAPERS)).catch("stile"),
+  mapCase: z.enum(ids(MAP_CASES)).catch("normale"),
   timerStudy: minutes(5, 120, 25),
   timerBreak: minutes(1, 30, 5),
   timerLong: minutes(5, 60, 15),

@@ -38,7 +38,7 @@ export default async function QuizPage({ params }: PageProps<"/quizzes/[id]">) {
       </div>
       <h1 className="text-[32px] leading-[1.05] font-bold tracking-[-0.025em] break-words md:text-[44px]">Quiz · {quiz.title}</h1>
       <div className="w-full max-w-[760px]">
-        <QuizRunner quizId={quiz.id} questions={quiz.questions} />
+        <QuizRunner quizId={quiz.id} questions={quiz.questions.map((q) => ({ ...q, type: q.type ?? "scelta", answer: q.answer ?? "" }))} />
       </div>
       {attempts && attempts.length > 0 && (
         <section aria-label="Tentativi precedenti" className="flex max-w-[760px] flex-col gap-2">

@@ -5,10 +5,14 @@ import { DeckEditor } from "@/components/DeckEditor";
 import { DeleteButton } from "@/components/DeleteButton";
 import { EditableTitle } from "@/components/EditableTitle";
 import { FlashcardReview } from "@/components/FlashcardReview";
+import { cardsToAnki, cardsToCsv } from "@/core/export";
 import { treeOptions } from "@/core/folders";
+import { Icon } from "@/components/icons";
 import { MoveToFolder } from "@/components/FolderControls";
 import { requireUser } from "@/lib/supabase/server";
 import { folderTrail, loadFolders, pageTitle } from "@/lib/workspace";
+
+const dataUrl = (type: string, text: string) => `data:${type};charset=utf-8,${encodeURIComponent(text)}`;
 
 export async function generateMetadata({ params }: PageProps<"/decks/[id]">): Promise<Metadata> {
   return pageTitle("decks", (await params).id);
@@ -48,7 +52,21 @@ export default async function DeckPage({ params }: PageProps<"/decks/[id]">) {
         </p>
       )}
       <DeckEditor deckId={deck.id} cards={cards ?? []} />
-      <div className="mt-6 flex justify-end border-t border-border pt-6">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6">
+        {cards?.length ? (
+          <span className="flex flex-wrap gap-2">
+            <a className="btn-secondary" download={`${deck.title}.csv`} href={dataUrl("text/csv", cardsToCsv(cards))}>
+              <Icon name="download" />
+              CSV
+            </a>
+            <a className="btn-secondary" download={`${deck.title}.txt`} href={dataUrl("text/plain", cardsToAnki(cards))}>
+              <Icon name="download" />
+              Anki
+            </a>
+          </span>
+        ) : (
+          <span />
+        )}
         <DeleteButton table="decks" id={deck.id} redirect={`/folders/${deck.folder_id}`} label="Elimina mazzo" confirm={`Eliminare il mazzo "${deck.title}"?`} />
       </div>
     </div>

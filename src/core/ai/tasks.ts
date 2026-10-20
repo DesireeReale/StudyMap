@@ -178,19 +178,21 @@ export async function generateQuiz(ctx: AiContext, input: { title: string; pages
 }
 
 export function balanceAnswers(questions: QuizQuestion[], random = Math.random): QuizQuestion[] {
-  const slots = questions.map((_, i) => i % 4);
+  const slots = questions.filter((q) => q.type === "scelta").map((_, i) => i % 4);
   for (let i = slots.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
     [slots[i], slots[j]] = [slots[j]!, slots[i]!];
   }
-  return questions.map((q, i) => {
+  let next = 0;
+  return questions.map((q) => {
+    if (q.type !== "scelta") return q;
     const right = q.options[q.correct]!;
     const wrong = q.options.filter((_, k) => k !== q.correct);
     for (let k = wrong.length - 1; k > 0; k--) {
       const j = Math.floor(random() * (k + 1));
       [wrong[k], wrong[j]] = [wrong[j]!, wrong[k]!];
     }
-    const target = slots[i]!;
+    const target = slots[next++]!;
     return { ...q, options: [...wrong.slice(0, target), right, ...wrong.slice(target)], correct: target };
   });
 }

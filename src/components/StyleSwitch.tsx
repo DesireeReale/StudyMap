@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useOptimistic, useRef, useTransition } from "react";
-import { APP_STYLES, FONTS, SPACINGS, STYLE_COOKIE, TEXT_SIZES, type AppStyle } from "@/config/styles";
+import { APP_STYLES, FONTS, MAP_CASES, PAPERS, SPACINGS, STYLE_COOKIE, TEXT_SIZES, type AppStyle } from "@/config/styles";
 import { parsePreferences, type Preferences } from "@/core/preferences";
 import { NODE_ROLES } from "@/core/roles";
 import { supabaseBrowser } from "@/lib/supabase/browser";
@@ -103,6 +103,8 @@ export function WorkspacePicker({ initial }: { initial: Preferences }) {
       <Choice label="Carattere" options={FONTS} value={prefs.font} onChange={(font) => choose({ font })} />
       <Choice label="Dimensione del testo" options={TEXT_SIZES} value={prefs.size} onChange={(size) => choose({ size })} />
       <Choice label="Spaziatura del testo" options={SPACINGS} value={prefs.spacing} onChange={(spacing) => choose({ spacing })} />
+      <Choice label="Sfondo dei fogli" options={PAPERS} value={prefs.paper} onChange={(paper) => choose({ paper })} />
+      <Choice label="Testo nelle mappe" options={MAP_CASES} value={prefs.mapCase} onChange={(mapCase) => choose({ mapCase })} />
       <p className="reading max-w-[60ch] rounded-row border border-border bg-raised p-4">
         Anteprima: così appaiono appunti, documenti e flashcard. Il giudice applica la legge; la derivata misura come
         cambia una funzione.
