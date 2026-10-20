@@ -116,6 +116,14 @@ Algor mostra **una cosa per volta, grande**. Studymap mostra **tutto insieme, pi
 4. **Domande frequenti:** dati e privacy (UE, niente pazienti), cosa è gratis, formati accettati, DSA e accessibilità, cosa succede ai miei contenuti se smetto di pagare. — Media, piccolo.
 5. **Niente numeri gonfiati.** Al posto dei "milioni di utenti", argomenti verificabili: fatto per infermieristica, dati in UE, contenuti sempre tuoi. — Bassa, piccolo.
 
+**Proposta visiva della nuova landing** (stile Classic, contenuti di esempio): https://claude.ai/artifact/9QziPBckpczq8pGeJ5Kk6r. Ha queste sezioni:
+1. **Primo schermo a due colonne**: a sinistra promessa, bottone "Inizia gratis" e tre garanzie (dati in UE, contenuti tuoi, pensata per DSA); a destra una mappa vera, disegnata a misura leggibile, con una flashcard e un esito di quiz in sovrimpressione.
+2. **Tre passi**: carichi, scegli cosa creare, studi.
+3. **Strumenti a schede**: Mappa, Flashcard, Quiz, Riassunto, Chiedi al documento, ognuna con una mini schermata leggibile.
+4. **Fascia "Leggi come ti viene meglio"**: si provano dal vivo maiuscolo, spaziatura, sfondo crema e testo grande.
+5. **Prezzi**: senza crediti nascosti, con la promessa che i contenuti restano tuoi.
+6. **Domande frequenti** e chiusura.
+
 ## Ordine consigliato
 
 1. Mappa leggibile: zoom minimo, colore per ramo, rami comprimibili.
