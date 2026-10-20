@@ -46,6 +46,11 @@
   --node-neutro-ink: #0f1b2d;
   --dock: #0f1b2d;
   --dock-line: #0f1b2d;
+  --band: #0f1b2d;
+  --on-band: #e6edf7;
+  --on-band-muted: #a9b6c8;
+  --band-control: #16233a;
+  --band-accent: #7fb0ff;
   --dock-tile-1: #1b2b45;
   --dock-tile-2: #16233a;
   --dock-tile-3: #1b2b45;
@@ -92,6 +97,11 @@
   --node-neutro-ink: #121212;
   --dock: #121212;
   --dock-line: #121212;
+  --band: #121212;
+  --on-band: #f4f2ea;
+  --on-band-muted: #c9c6bb;
+  --band-control: #2a2930;
+  --band-accent: #ffe45c;
   --dock-tile-1: #ffe45c;
   --dock-tile-2: #8ef0c4;
   --dock-tile-3: #c9b6ff;
@@ -150,6 +160,7 @@
     --node-neutro-ink: #e6edf7;
     --dock: #060b12;
     --dock-line: #24324a;
+    --band: #060b12;
   }
 
   [data-style="evidenziatore"] {
@@ -174,6 +185,7 @@
     --node-line: #f4f2ea;
     --dock: #0b0b0d;
     --dock-line: #f4f2ea;
+    --band: #0b0b0d;
   }
 }
 
@@ -194,6 +206,11 @@
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-on-accent: var(--on-accent);
+  --color-band: var(--band);
+  --color-on-band: var(--on-band);
+  --color-on-band-muted: var(--on-band-muted);
+  --color-band-control: var(--band-control);
+  --color-band-accent: var(--band-accent);
   --color-dock: var(--dock);
   --color-dock-line: var(--dock-line);
   --color-dock-ink: var(--dock-ink);
@@ -301,10 +318,6 @@ h3 {
   border: 2px solid var(--node-line);
   border-radius: 6px;
   box-shadow: 3px 3px 0 var(--node-line);
-}
-.map-art {
-  background-image: radial-gradient(var(--border) 1.5px, transparent 2px);
-  background-size: 24px 24px;
 }
 .map-art .edge-elbow,
 [data-style="evidenziatore"] .map-art .edge-curve {

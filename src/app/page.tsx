@@ -177,7 +177,7 @@ export default async function Home() {
       <header className="sticky top-0 z-20 border-b border-border bg-chrome/95 backdrop-blur-sm">
         <nav
           aria-label="Principale"
-          className="mx-auto flex h-16 max-w-[1180px] items-center gap-6 px-4 md:px-8"
+          className="mx-auto flex h-16 w-full max-w-[1196px] items-center gap-6 px-6"
         >
           <Link
             href="/"
@@ -186,7 +186,7 @@ export default async function Home() {
             <BrandMark size={30} />
             StudyMap
           </Link>
-          <ul className="ml-auto hidden items-center gap-6 md:flex">
+          <ul className="ml-auto hidden items-center gap-[22px] text-[16px] md:flex">
             {NAV.map((n) => (
               <li key={n.href}>
                 <a
@@ -197,18 +197,10 @@ export default async function Home() {
                 </a>
               </li>
             ))}
-            <li>
-              <Link
-                href="/login"
-                className="font-bold text-muted hover:text-ink"
-              >
-                Accedi
-              </Link>
-            </li>
           </ul>
           <Link
             href="/login"
-            className="btn-primary ml-auto h-11 px-5 text-[16px] md:ml-0"
+            className="btn-primary ml-auto h-[42px] px-[18px] text-[16px] md:ml-0"
           >
             Inizia gratis
           </Link>
@@ -218,9 +210,9 @@ export default async function Home() {
       <main id="main">
         <section
           aria-labelledby="hero-title"
-          className="px-4 py-14 md:px-8 md:py-24"
+          className="py-[clamp(56px,8vw,96px)]"
         >
-          <div className="mx-auto grid max-w-[1180px] items-center gap-12 lg:grid-cols-[5fr_6fr] lg:gap-16">
+          <div className="mx-auto grid w-full max-w-[1196px] px-6 items-center gap-12 lg:grid-cols-[5fr_6fr] lg:gap-16">
             <div className="flex flex-col gap-6">
               <Eyebrow>
                 Per chi studia all&apos;università · nata per infermieristica
@@ -274,7 +266,7 @@ export default async function Home() {
                   <b className="text-ink">Scompenso cardiaco</b> ·
                   Infermieristica clinica
                   <span className="num ml-auto rounded-md bg-accent-soft px-2 py-0.5 font-mono text-[12px] text-ink">
-                    10 concetti
+                    9 concetti
                   </span>
                 </figcaption>
                 <MapArt
@@ -314,9 +306,9 @@ export default async function Home() {
         <section
           id="come"
           aria-labelledby="come-title"
-          className="scroll-mt-16 px-4 py-14 md:px-8 md:py-24"
+          className="scroll-mt-16 py-[clamp(56px,8vw,96px)]"
         >
-          <div className="mx-auto flex max-w-[1180px] flex-col gap-10">
+          <div className="mx-auto flex w-full max-w-[1196px] px-6 flex-col gap-10">
             <SectionHead
               eyebrow="Come funziona"
               title="Tre passi, dal materiale al ripasso"
@@ -326,7 +318,7 @@ export default async function Home() {
               {STEPS.map((s, i) => (
                 <li
                   key={s.title}
-                  className="flex flex-col gap-3 rounded-card border border-border bg-sheet p-6"
+                  className="flex flex-col gap-3 rounded-card border border-border bg-sheet p-[22px]"
                 >
                   <span
                     className="grid size-9 place-items-center rounded-full bg-primary font-display font-bold text-on-primary"
@@ -340,7 +332,7 @@ export default async function Home() {
                   <p className="text-muted">{s.text}</p>
                   <div
                     aria-hidden="true"
-                    className="mt-auto flex flex-col gap-2 rounded-row border border-dashed border-border bg-chrome p-3.5 text-[14px]"
+                    className="flex flex-col gap-2 rounded-row border border-dashed border-border bg-chrome p-3.5 text-[14px]"
                   >
                     {s.mini}
                   </div>
@@ -353,9 +345,9 @@ export default async function Home() {
         <section
           id="strumenti"
           aria-labelledby="tools-title"
-          className="scroll-mt-16 px-4 pb-14 md:px-8 md:pb-24"
+          className="scroll-mt-16 pb-[clamp(56px,8vw,96px)]"
         >
-          <div className="mx-auto flex max-w-[1180px] flex-col gap-8">
+          <div className="mx-auto flex w-full max-w-[1196px] px-6 flex-col gap-8">
             <SectionHead
               eyebrow="Strumenti"
               title="Un materiale, cinque modi di studiarlo"
@@ -367,9 +359,9 @@ export default async function Home() {
 
         <section
           aria-label="Impostazioni di lettura"
-          className="bg-primary px-4 py-16 text-on-primary md:px-8 md:py-24"
+          className="bg-band py-[clamp(56px,8vw,96px)] text-on-band"
         >
-          <div className="mx-auto max-w-[1180px]">
+          <div className="mx-auto w-full max-w-[1196px] px-6">
             <ReadingDemo />
           </div>
         </section>
@@ -377,9 +369,9 @@ export default async function Home() {
         <section
           id="prezzi"
           aria-labelledby="prezzi-title"
-          className="scroll-mt-16 px-4 py-14 md:px-8 md:py-24"
+          className="scroll-mt-16 py-[clamp(56px,8vw,96px)]"
         >
-          <div className="mx-auto flex max-w-[1180px] flex-col gap-8">
+          <div className="mx-auto flex w-full max-w-[948px] px-6 flex-col gap-8">
             <SectionHead
               eyebrow="Prezzi"
               title="Gratis per iniziare, senza crediti nascosti"
@@ -390,7 +382,7 @@ export default async function Home() {
                 una generazione non riesce, non viene contata.
               </p>
             </SectionHead>
-            <div className="grid max-w-[900px] gap-5 md:grid-cols-2">
+            <div className="grid gap-5 md:grid-cols-2">
               <div className="flex flex-col gap-4 rounded-card border border-border bg-sheet p-6">
                 <h3 className="text-[20px] font-bold">Gratis</h3>
                 <p className="font-display text-[36px] leading-none font-bold">
@@ -434,10 +426,7 @@ export default async function Home() {
                   </Check>
                   <Check>Export PNG con marchio</Check>
                 </ul>
-                <Link
-                  href="/login"
-                  className={`${btnGhost} mt-auto self-start`}
-                >
+                <Link href="/login" className={`${btnGhost} mt-auto w-full`}>
                   Inizia gratis
                 </Link>
               </div>
@@ -487,7 +476,7 @@ export default async function Home() {
                 </p>
               </div>
             </div>
-            <p className="max-w-[900px] rounded-row bg-accent-soft px-5 py-4 font-bold">
+            <p className="rounded-row bg-accent-soft px-5 py-4 font-bold">
               Quello che crei resta tuo: se un limite finisce, mappe, flashcard
               e appunti restano lì e li apri quando vuoi.
             </p>
@@ -497,9 +486,9 @@ export default async function Home() {
         <section
           id="domande"
           aria-labelledby="domande-title"
-          className="scroll-mt-16 px-4 pb-14 md:px-8 md:pb-24"
+          className="scroll-mt-16 pb-[clamp(56px,8vw,96px)]"
         >
-          <div className="mx-auto grid max-w-[1180px] gap-10 lg:grid-cols-[2fr_3fr]">
+          <div className="mx-auto grid w-full max-w-[1196px] px-6 gap-10 lg:grid-cols-[2fr_3fr]">
             <SectionHead
               eyebrow="Domande"
               title="Le risposte prima di iscriverti"
@@ -535,9 +524,9 @@ export default async function Home() {
 
         <section
           aria-labelledby="final-title"
-          className="px-4 pb-20 text-center md:px-8 md:pb-28"
+          className="pb-[clamp(56px,8vw,96px)] text-center"
         >
-          <div className="mx-auto flex max-w-[1180px] flex-col items-center gap-4">
+          <div className="mx-auto flex w-full max-w-[1196px] px-6 flex-col items-center gap-4">
             <h2
               id="final-title"
               className="text-[clamp(28px,3.6vw,40px)] leading-tight font-bold tracking-[-0.02em]"
@@ -554,8 +543,8 @@ export default async function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-border px-4 py-7 text-[14px] text-muted md:px-8">
-        <div className="mx-auto flex max-w-[1180px] flex-wrap justify-between gap-x-6 gap-y-3">
+      <footer className="border-t border-border py-7 text-[14px] text-muted">
+        <div className="mx-auto flex w-full max-w-[1196px] px-6 flex-wrap justify-between gap-x-6 gap-y-3">
           <span>StudyMap · Italia, 2026</span>
           <span className="flex gap-4">
             <Link href="/privacy" className="hover:text-ink hover:underline">

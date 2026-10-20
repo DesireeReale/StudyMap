@@ -12,45 +12,47 @@ type Branch = Concept & {
 export type MapArtData = {
   width: number;
   height: number;
+  direction: "lr" | "tb";
   sizes: { root: number; branch: number; leaf: number };
   root: Concept;
   branches: Branch[];
 };
 
 export const HEART_FAILURE: MapArtData = {
-  width: 640,
-  height: 430,
-  sizes: { root: 17, branch: 15, leaf: 14 },
-  root: { x: 118, y: 190, label: "Scompenso cardiaco" },
+  width: 560,
+  height: 300,
+  direction: "tb",
+  sizes: { root: 16, branch: 15, leaf: 14 },
+  root: { x: 280, y: 42, label: "Scompenso cardiaco" },
   branches: [
     {
-      x: 318,
-      y: 70,
+      x: 105,
+      y: 148,
       label: "Segni e sintomi",
       role: "area-1",
+      relation: "si manifesta con",
       leaves: [
-        { x: 524, y: 42, label: "Dispnea da sforzo" },
-        { x: 524, y: 98, label: "Edemi declivi" },
+        { x: 52, y: 248, label: "Dispnea" },
+        { x: 152, y: 248, label: "Edemi" },
       ],
     },
     {
-      x: 318,
-      y: 190,
+      x: 280,
+      y: 148,
       label: "Farmaci",
       role: "area-2",
-      leaves: [
-        { x: 524, y: 162, label: "Diuretici" },
-        { x: 524, y: 218, label: "ACE-inibitori" },
-      ],
+      relation: "si tratta con",
+      leaves: [{ x: 280, y: 248, label: "Diuretici" }],
     },
     {
-      x: 318,
-      y: 310,
+      x: 455,
+      y: 148,
       label: "Assistenza",
       role: "area-3",
+      relation: "richiede",
       leaves: [
-        { x: 524, y: 282, label: "Peso ogni mattina" },
-        { x: 524, y: 338, label: "Bilancio idrico" },
+        { x: 403, y: 248, label: "Peso al giorno" },
+        { x: 513, y: 248, label: "Diuresi" },
       ],
     },
   ],
@@ -58,14 +60,20 @@ export const HEART_FAILURE: MapArtData = {
 
 const pct = (v: number, of: number) => `${(v / of) * 100}%`;
 
-function curve(a: Point, b: Point) {
+function curve(a: Point, b: Point, tb: boolean) {
   const mx = (a.x + b.x) / 2;
-  return `M${a.x},${a.y} C${mx},${a.y} ${mx},${b.y} ${b.x},${b.y}`;
+  const my = (a.y + b.y) / 2;
+  return tb
+    ? `M${a.x},${a.y} C${a.x},${my} ${b.x},${my} ${b.x},${b.y}`
+    : `M${a.x},${a.y} C${mx},${a.y} ${mx},${b.y} ${b.x},${b.y}`;
 }
 
-function elbow(a: Point, b: Point) {
+function elbow(a: Point, b: Point, tb: boolean) {
   const mx = (a.x + b.x) / 2;
-  return `M${a.x},${a.y} H${mx} V${b.y} H${b.x}`;
+  const my = (a.y + b.y) / 2;
+  return tb
+    ? `M${a.x},${a.y} V${my} H${b.x} V${b.y}`
+    : `M${a.x},${a.y} H${mx} V${b.y} H${b.x}`;
 }
 
 function Node({
@@ -112,6 +120,7 @@ export function MapArt({
   className?: string;
 }) {
   const { width: W, height: H, root, branches, sizes } = data;
+  const tb = data.direction === "tb";
   const cq = (px: number) => `${(px / W) * 100}cqw`;
   const edges = branches.flatMap((b) => [
     [root, b] as const,
@@ -133,8 +142,8 @@ export function MapArt({
             fill="none"
             style={{ stroke: "var(--edge)", strokeWidth: "var(--edge-width)" }}
           >
-            <path className="edge-curve" d={curve(a, b)} />
-            <path className="edge-elbow" d={elbow(a, b)} />
+            <path className="edge-curve" d={curve(a, b, tb)} />
+            <path className="edge-elbow" d={elbow(a, b, tb)} />
           </g>
         ))}
       </svg>
