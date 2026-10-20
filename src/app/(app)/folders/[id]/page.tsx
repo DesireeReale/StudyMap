@@ -32,25 +32,26 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
   const q = String(query.q ?? "").trim().slice(0, 100);
   const tipo = (MATERIAL_FILTERS.find((f) => f.id === query.tipo)?.id ?? null) as MaterialKind | null;
   const { supabase, profile } = await requireUser();
-  const folders = await loadFolders(supabase);
+  const foldersP = loadFolders(supabase);
+  const [folders, study, docs, maps, decks, notes] = await Promise.all([
+    foldersP,
+    loadStudy(supabase, profile, foldersP.then((f) => subtreeIds(f, id))),
+    supabase.from("documents").select("id, title, kind, page_count, created_at, folder_id"),
+    supabase.from("maps").select("id, title, graph, updated_at, folder_id"),
+    supabase.from("decks").select("id, title, created_at, folder_id"),
+    supabase.from("notes").select("id, title, updated_at, folder_id"),
+  ]);
   const folder = folders.find((f) => f.id === id);
   if (!folder) notFound();
 
   const depth = pathTo(folders, id).length;
-  const tree = subtreeIds(folders, id);
   const children = childrenOf(folders, id);
-  const [study, docs, maps, decks, notes] = await Promise.all([
-    depth === 1 ? loadStudy(supabase, profile, tree) : null,
-    supabase.from("documents").select("id, title, kind, page_count, created_at, folder_id").in("folder_id", tree),
-    supabase.from("maps").select("id, title, graph, updated_at, folder_id").in("folder_id", tree),
-    supabase.from("decks").select("id, title, created_at, folder_id").in("folder_id", tree),
-    supabase.from("notes").select("id, title, updated_at, folder_id").in("folder_id", tree),
-  ]);
+  const tree = subtreeIds(folders, id);
   const here = <T extends { folder_id: string }>(rows: T[] | null) => (rows ?? []).filter((r) => r.folder_id === id);
   const all = toMaterials(
     { documents: here(docs.data), notes: here(notes.data), maps: here(maps.data), decks: here(decks.data) },
     [],
-    study?.counts,
+    study.counts,
   );
   const items = tipo ? all.filter((m) => m.kind === tipo) : all;
   const stats = folderStats(folders, [docs.data ?? [], maps.data ?? [], decks.data ?? [], notes.data ?? []]);
@@ -97,7 +98,7 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
             </>
           }
         />
-        {study && <StudyDock data={study.dock} />}
+        {depth === 1 && <StudyDock data={study.dock} />}
         <SearchForm q={q} label={`Cerca in ${folder.name}`} />
       </div>
 

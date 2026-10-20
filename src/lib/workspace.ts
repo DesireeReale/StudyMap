@@ -54,20 +54,22 @@ export function folderStats(folders: FolderItem[], lists: { folder_id: string }[
   );
 }
 
-export async function loadStudy(supabase: Supabase, profile: Profile, folderIds?: string[]) {
-  const scoped = <Q extends { in: (column: string, values: string[]) => Q }>(q: Q) => (folderIds ? q.in("folder_id", folderIds) : q);
-  const [decks, maps, usage] = await Promise.all([
-    scoped(supabase.from("decks").select("id, title, folder_id, created_at").order("created_at", { ascending: false })),
-    scoped(supabase.from("maps").select("id, title, folder_id").order("updated_at", { ascending: false }).limit(1)),
+export async function loadStudy(supabase: Supabase, profile: Profile, scope?: Promise<string[]>) {
+  const [decks, maps, cards, usage, folderIds] = await Promise.all([
+    supabase.from("decks").select("id, title, folder_id, created_at").order("created_at", { ascending: false }),
+    supabase.from("maps").select("id, title, folder_id").order("updated_at", { ascending: false }),
+    supabase.from("flashcards").select("deck_id, last_result"),
     supabase.from("quota_counters").select("count").eq("period", monthPeriod()).eq("kind", "generation").maybeSingle(),
+    scope,
   ]);
-  const deckList = decks.data ?? [];
-  const cards = deckList.length
-    ? (await supabase.from("flashcards").select("deck_id, last_result").in("deck_id", deckList.map((d) => d.id))).data ?? []
-    : [];
+  const inScope = (row: { folder_id: string }) => !folderIds || folderIds.includes(row.folder_id);
+  const deckList = (decks.data ?? []).filter(inScope);
+  const deckIds = new Set(deckList.map((d) => d.id));
+  const mapList = (maps.data ?? []).filter(inScope);
 
   const counts = new Map<string, DeckCounts>();
-  for (const c of cards) {
+  for (const c of cards.data ?? []) {
+    if (!deckIds.has(c.deck_id)) continue;
     const k = counts.get(c.deck_id) ?? { known: 0, unknown: 0, fresh: 0 };
     if (c.last_result === "known") k.known++;
     else if (c.last_result === "unknown") k.unknown++;
@@ -79,7 +81,7 @@ export async function loadStudy(supabase: Supabase, profile: Profile, folderIds?
   const focus = [...deckList].sort((a, b) => pending(counts.get(b.id)) - pending(counts.get(a.id)))[0];
   const focusCounts = focus ? counts.get(focus.id) : undefined;
   const used = usage.data?.count ?? 0;
-  const lastMap = maps.data?.[0];
+  const lastMap = mapList[0];
 
   const dock: DockData = {
     deck:
