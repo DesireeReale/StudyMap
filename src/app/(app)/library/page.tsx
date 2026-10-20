@@ -17,7 +17,7 @@ const fmt = (n: number) => (Number.isFinite(n) ? n : "∞");
 export default async function LibraryPage({ searchParams }: PageProps<"/library">) {
   const q = String((await searchParams).q ?? "").trim().slice(0, 100);
   const { supabase, profile } = await requireUser();
-  const [folders, study, docs, mapFolders, recentMaps, decks, notes] = await Promise.all([
+  const [folders, study, docs, mapFolders, recentMaps, decks, notes, quizzes] = await Promise.all([
     loadFolders(supabase),
     loadStudy(supabase, profile),
     supabase.from("documents").select("id, title, kind, page_count, created_at, folder_id").order("created_at", { ascending: false }),
@@ -25,14 +25,15 @@ export default async function LibraryPage({ searchParams }: PageProps<"/library"
     supabase.from("maps").select("id, title, graph, updated_at, folder_id").order("updated_at", { ascending: false }).limit(3),
     supabase.from("decks").select("id, title, created_at, folder_id").order("created_at", { ascending: false }),
     supabase.from("notes").select("id, title, updated_at, folder_id").order("updated_at", { ascending: false }),
+    supabase.from("quizzes").select("id, title, created_at, folder_id").order("created_at", { ascending: false }),
   ]);
 
   const plan = PLANS[profile.plan];
   const subjects = childrenOf(folders, null);
   const docList = docs.data ?? [];
-  const stats = folderStats(folders, [docList, mapFolders.data ?? [], decks.data ?? [], notes.data ?? []]);
+  const stats = folderStats(folders, [docList, mapFolders.data ?? [], decks.data ?? [], notes.data ?? [], quizzes.data ?? []]);
   const recent = toMaterials(
-    { documents: docList.slice(0, 3), notes: (notes.data ?? []).slice(0, 3), maps: recentMaps.data ?? [], decks: (decks.data ?? []).slice(0, 3) },
+    { documents: docList.slice(0, 3), notes: (notes.data ?? []).slice(0, 3), maps: recentMaps.data ?? [], decks: (decks.data ?? []).slice(0, 3), quizzes: (quizzes.data ?? []).slice(0, 3) },
     folders,
     study.counts,
   ).slice(0, 4);

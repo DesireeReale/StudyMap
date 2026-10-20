@@ -1,4 +1,5 @@
 import type { FolderColor, FolderIcon } from "@/config/styles";
+import type { QuizQuestion } from "@/core/ai/schemas";
 import type { Graph } from "@/core/graph";
 
 type Table<Row, Required extends keyof Row = never> = {
@@ -102,6 +103,18 @@ export type AiUsageRow = {
   created_at: string;
 };
 
+export type QuizRow = {
+  id: string;
+  user_id: string;
+  folder_id: string;
+  document_id: string | null;
+  title: string;
+  questions: QuizQuestion[];
+  created_at: string;
+};
+
+export type QuizAttemptRow = { id: number; quiz_id: string; user_id: string; score: number; total: number; created_at: string };
+
 export type StudySessionRow = { id: number; user_id: string; minutes: number; ended_at: string };
 
 export type QuotaCounterRow = { user_id: string; period: string; kind: string; count: number };
@@ -119,6 +132,8 @@ export type Database = {
       ai_usage: Table<AiUsageRow, "user_id" | "task" | "provider" | "model" | "ok">;
       quota_counters: Table<QuotaCounterRow, "user_id" | "period" | "kind">;
       study_sessions: Table<StudySessionRow, "minutes">;
+      quizzes: Table<QuizRow, "title" | "questions">;
+      quiz_attempts: Table<QuizAttemptRow, "quiz_id" | "score" | "total">;
     };
     Views: { [_ in never]: never };
     Functions: {

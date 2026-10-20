@@ -22,6 +22,34 @@ export const MOCK_OUTPUTS: Record<TaskId, unknown> = {
     ],
   },
   transcribe: { markdown: "# Appunti\nTesto trascritto di prova." },
+  summary: {
+    sections: [
+      { heading: "Che cos'è", points: ["Lo scompenso cardiaco è l'incapacità del cuore di garantire una gittata adeguata."] },
+      { heading: "Segni e sintomi", points: ["Dispnea da sforzo e ortopnea.", "Edemi declivi e turgore giugulare."] },
+    ],
+  },
+  quiz: {
+    questions: [
+      {
+        question: "Quale segno è tipico dello scompenso destro?",
+        options: ["Edemi declivi", "Febbre", "Ipoglicemia", "Rash cutaneo"],
+        correct: 0,
+        explanation: "Nello scompenso destro il ristagno venoso causa edemi declivi.",
+      },
+      {
+        question: "Perché si pesa ogni giorno il paziente con scompenso?",
+        options: ["Per la dieta", "Per rilevare la ritenzione idrica", "Per la terapia del dolore", "Per l'ansia"],
+        correct: 1,
+        explanation: "Un aumento rapido del peso indica ritenzione di liquidi.",
+      },
+      {
+        question: "Quale posizione facilita la respirazione?",
+        options: ["Prona", "Trendelenburg", "Semi-Fowler", "Laterale sinistra"],
+        correct: 2,
+        explanation: "La semi-Fowler, con il busto sollevato, riduce la dispnea.",
+      },
+    ],
+  },
 };
 
 export const mockChat: ChatFn = async ({ task, messages }) => ({

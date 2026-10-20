@@ -384,7 +384,7 @@ export function MoveToFolder({
   current,
   options,
 }: {
-  table: "documents" | "maps" | "decks" | "notes";
+  table: "documents" | "maps" | "decks" | "notes" | "quizzes";
   id: string;
   current: string;
   options: Option[];

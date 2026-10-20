@@ -216,7 +216,7 @@ Risultato oggi:
 
 Il consenso è la colonna `profiles.ai_data_sharing_consent_at`, che l'utente attiva o revoca in `/settings` ([AccountActions.tsx](src/components/AccountActions.tsx)).
 
-### 3.3 Le tre chiamate al modello
+### 3.3 Le chiamate al modello
 
 #### a) Mappa concettuale: `generateMindMap`
 - **Dove**: [tasks.ts:23](src/core/ai/tasks.ts:23), chiamata da [generate/route.ts:40](src/app/api/generate/route.ts:40).
@@ -242,6 +242,17 @@ Il consenso è la colonna `profiles.ai_data_sharing_consent_at`, che l'utente at
 - **Modello**: la catena *visione* (`vision: true`).
 - **Costi**: registra `ocr_pages = 1` per pagina trascritta.
 - *Perché non Mistral OCR?* È a pagamento (circa 4 $ ogni 1000 pagine) e ha un endpoint diverso. Con un modello multimodale gratuito il costo è zero; Mistral OCR si può aggiungere se la qualità non basta.
+
+#### d) Riassunto: `generateSummary`
+- **Dove**: [tasks.ts](src/core/ai/tasks.ts), chiamata da [generate/route.ts](src/app/api/generate/route.ts) con `type: "summary"`.
+- **Prompt**: [summary.v1.md](prompts/summary.v1.md): sezioni con titolo breve e da 1 a 8 punti, solo dal materiale.
+- **Output**: `SummarySchema`, cioè `{sections: [{heading, points}]}`. `summaryToText` lo trasforma in testo (`## titolo` e `- punto`) e la route lo salva come **appunto** nella stessa cartella ("Riassunto · titolo"), quindi si modifica come gli altri appunti e da lì si possono generare mappe e flashcard.
+
+#### e) Quiz: `generateQuiz`
+- **Dove**: [tasks.ts](src/core/ai/tasks.ts), con `type: "quiz"`; salvato nella tabella `quizzes` (domande in `questions`, jsonb) e giocato in [/quizzes/[id]](src/app/(app)/quizzes/[id]/page.tsx) con [QuizRunner.tsx](src/components/QuizRunner.tsx); ogni partita finita va in `quiz_attempts`.
+- **Prompt**: [quiz.v1.md](prompts/quiz.v1.md): 4 opzioni, una sola giusta, distrattori plausibili, spiegazione di 1-3 frasi, tra 5 e 15 domande.
+- **Post-elaborazione**: domande deduplicate (`dedupeBy`) e tagliate a 20; poi `balanceAnswers` rimescola le opzioni in modo che la risposta giusta cada in modo uniforme su A, B, C e D (i modelli tendono a metterla sempre nella stessa posizione).
+- **Limiti**: oltre alla generazione mensile, il Free ha `quizzesPerWeek` quiz a settimana ([plans.ts](src/config/plans.ts)), contati in `quota_counters` con `kind = "quiz"` e periodo ISO (`2026-W43`, `weekPeriod` in [entitlements.ts](src/core/entitlements.ts)). Se la generazione fallisce, la quota viene restituita.
 
 ### 3.4 Parametri di generazione
 

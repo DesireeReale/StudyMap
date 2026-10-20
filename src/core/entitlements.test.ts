@@ -10,6 +10,7 @@ import {
   modelChain,
   monthPeriod,
   quotaLimit,
+  weekPeriod,
 } from "./entitlements";
 
 describe("modelChain", () => {
@@ -70,5 +71,13 @@ describe("canCreateSubject", () => {
 
   it("never stops pro", () => {
     expect(canCreateSubject("pro", 500).ok).toBe(true);
+  });
+});
+
+describe("weekPeriod", () => {
+  it("uses ISO weeks, which can belong to the previous year", () => {
+    expect(weekPeriod(new Date("2026-01-01T12:00:00Z"))).toBe("2026-W01");
+    expect(weekPeriod(new Date("2026-10-20T12:00:00Z"))).toBe("2026-W43");
+    expect(weekPeriod(new Date("2027-01-01T12:00:00Z"))).toBe("2026-W53");
   });
 });

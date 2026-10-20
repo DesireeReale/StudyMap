@@ -12,7 +12,7 @@ import type { FolderRow, Profile } from "./supabase/types";
 type Supabase = Awaited<ReturnType<typeof supabaseServer>>;
 export type FolderItem = Pick<FolderRow, "id" | "parent_id" | "name" | "color" | "icon" | "position" | "created_at" | "exam_date">;
 
-export async function pageTitle(table: "folders" | "documents" | "maps" | "decks" | "notes", id: string) {
+export async function pageTitle(table: "folders" | "documents" | "maps" | "decks" | "notes" | "quizzes", id: string) {
   const supabase = await supabaseServer();
   const column = table === "folders" ? "name" : "title";
   const { data } = await supabase.from(table).select(column).eq("id", id).maybeSingle();
@@ -33,6 +33,7 @@ const STAT_LABELS = [
   ["mappa", "mappe"],
   ["mazzo", "mazzi"],
   ["appunto", "appunti"],
+  ["quiz", "quiz"],
 ] as const;
 
 export function folderStats(folders: FolderItem[], lists: { folder_id: string }[][]): Record<string, string> {
@@ -40,7 +41,7 @@ export function folderStats(folders: FolderItem[], lists: { folder_id: string }[
   lists.forEach((list, k) => {
     for (const row of list) {
       for (const f of pathTo(folders, row.folder_id)) {
-        const t = totals.get(f.id) ?? [0, 0, 0, 0];
+        const t = totals.get(f.id) ?? [0, 0, 0, 0, 0];
         t[k]!++;
         totals.set(f.id, t);
       }
@@ -100,13 +101,14 @@ export async function searchWorkspace(supabase: Supabase, q: string, folderIds?:
   const like = pattern(q);
   const scoped = <Q extends { in: (column: string, values: string[]) => Q }>(q: Q) => (folderIds ? q.in("folder_id", folderIds) : q);
   const folderQuery = supabase.from("folders").select("id, parent_id, name, color, icon, position, created_at, exam_date").ilike("name", like);
-  const [folders, documents, maps, decks, noteTitles, noteBodies] = await Promise.all([
+  const [folders, documents, maps, decks, noteTitles, noteBodies, quizzes] = await Promise.all([
     folderIds ? folderQuery.in("id", folderIds) : folderQuery,
     scoped(supabase.from("documents").select("id, title, kind, page_count, created_at, folder_id").ilike("title", like)).limit(30),
     scoped(supabase.from("maps").select("id, title, graph, updated_at, folder_id").ilike("title", like)).limit(30),
     scoped(supabase.from("decks").select("id, title, created_at, folder_id").ilike("title", like)).limit(30),
     scoped(supabase.from("notes").select("id, title, body, updated_at, folder_id").ilike("title", like)).limit(30),
     scoped(supabase.from("notes").select("id, title, body, updated_at, folder_id").ilike("body", like)).limit(30),
+    scoped(supabase.from("quizzes").select("id, title, created_at, folder_id").ilike("title", like)).limit(30),
   ]);
   const notes = [...(noteTitles.data ?? []), ...(noteBodies.data ?? [])].filter(
     (n, i, all) => all.findIndex((m) => m.id === n.id) === i,
@@ -117,6 +119,7 @@ export async function searchWorkspace(supabase: Supabase, q: string, folderIds?:
     maps: maps.data ?? [],
     decks: decks.data ?? [],
     notes,
+    quizzes: quizzes.data ?? [],
   };
 }
 
@@ -135,6 +138,7 @@ export function toMaterials(
     notes?: { id: string; title: string; updated_at: string; folder_id: string }[];
     maps?: { id: string; title: string; graph: { nodes: unknown[] }; updated_at: string; folder_id: string }[];
     decks?: { id: string; title: string; created_at: string; folder_id: string }[];
+    quizzes?: { id: string; title: string; created_at: string; folder_id: string }[];
   },
   folders: FolderItem[] = [],
   counts?: Map<string, { due: number }>,
@@ -163,5 +167,6 @@ export function toMaterials(
       place: place(m.folder_id),
     })),
     ...(rows.decks ?? []).map((d) => ({ kind: "flashcard" as const, id: d.id, title: d.title, detail: pending(d.id), date: d.created_at, place: place(d.folder_id) })),
+    ...(rows.quizzes ?? []).map((z) => ({ kind: "quiz" as const, id: z.id, title: z.title, detail: "", date: z.created_at, place: place(z.folder_id) })),
   ].sort((a, b) => b.date.localeCompare(a.date));
 }

@@ -14,7 +14,7 @@ const LINKS: { href: string; label: string; icon: IconName; match: (p: string) =
     href: "/library",
     label: "Libreria",
     icon: "library",
-    match: (p) => ["/library", "/folders", "/notes", "/documents", "/maps", "/decks"].some((s) => p.startsWith(s)),
+    match: (p) => ["/library", "/folders", "/notes", "/documents", "/maps", "/decks", "/quizzes"].some((s) => p.startsWith(s)),
   },
   { href: "/upload", label: "Carica materiale", icon: "upload", match: (p) => p.startsWith("/upload") },
   { href: "/settings", label: "Impostazioni", icon: "settings", match: (p) => p.startsWith("/settings") },

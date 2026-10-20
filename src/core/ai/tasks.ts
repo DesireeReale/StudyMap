@@ -1,19 +1,23 @@
 import { z } from "zod";
-import { CHUNK_INPUT_TOKENS, TASKS } from "@/config/ai";
+import { CHUNK_INPUT_TOKENS, TASKS, type TaskId } from "@/config/ai";
 import { chunkPages } from "./chunk";
 import { complete, type AiContext } from "./client";
 import { loadPrompt } from "./prompts";
 import {
   FlashcardsSchema,
   MindMapSchema,
+  QuizSchema,
+  SummarySchema,
   TranscriptionSchema,
   type Flashcards,
   type MindMap,
+  type QuizQuestion,
+  type Summary,
 } from "./schemas";
 
 type MindMapNode = MindMap["nodes"][number];
 
-async function systemPrompt(task: "mindmap" | "flashcards" | "transcribe", schema: z.ZodType, title = "") {
+async function systemPrompt(task: TaskId, schema: z.ZodType, title = "") {
   return loadPrompt(task, TASKS[task].promptVersion, {
     title,
     schema: JSON.stringify(z.toJSONSchema(schema)),
@@ -108,15 +112,17 @@ export async function generateFlashcards(
   return dedupeCards(cards).slice(0, 60);
 }
 
-export function dedupeCards<T extends { front: string }>(cards: T[]): T[] {
+export function dedupeBy<T>(items: T[], text: (item: T) => string): T[] {
   const seen = new Set<string>();
-  return cards.filter((c) => {
-    const key = c.front.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  return items.filter((item) => {
+    const key = text(item).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
 }
+
+export const dedupeCards = <T extends { front: string }>(cards: T[]) => dedupeBy(cards, (c) => c.front);
 
 export async function transcribeImage(ctx: AiContext, dataUrl: string): Promise<string> {
   const system = await systemPrompt("transcribe", TranscriptionSchema);
@@ -131,4 +137,60 @@ export async function transcribeImage(ctx: AiContext, dataUrl: string): Promise<
     ],
   });
   return data.markdown;
+}
+
+export async function generateSummary(ctx: AiContext, input: { title: string; pages: string[] }): Promise<Summary> {
+  const system = await systemPrompt("summary", SummarySchema, input.title);
+  const sections: Summary["sections"] = [];
+  for (const chunk of chunkPages(input.pages, CHUNK_INPUT_TOKENS)) {
+    const { data } = await complete(ctx, {
+      task: "summary",
+      schema: SummarySchema,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: chunk },
+      ],
+    });
+    sections.push(...data.sections);
+  }
+  return { sections };
+}
+
+export function summaryToText(summary: Summary): string {
+  return summary.sections.map((s) => `## ${s.heading}\n${s.points.map((p) => `- ${p}`).join("\n")}`).join("\n\n");
+}
+
+export async function generateQuiz(ctx: AiContext, input: { title: string; pages: string[] }): Promise<QuizQuestion[]> {
+  const system = await systemPrompt("quiz", QuizSchema, input.title);
+  const questions: QuizQuestion[] = [];
+  for (const chunk of chunkPages(input.pages, CHUNK_INPUT_TOKENS)) {
+    const { data } = await complete(ctx, {
+      task: "quiz",
+      schema: QuizSchema,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: chunk },
+      ],
+    });
+    questions.push(...data.questions);
+  }
+  return balanceAnswers(dedupeBy(questions, (q) => q.question).slice(0, 20));
+}
+
+export function balanceAnswers(questions: QuizQuestion[], random = Math.random): QuizQuestion[] {
+  const slots = questions.map((_, i) => i % 4);
+  for (let i = slots.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [slots[i], slots[j]] = [slots[j]!, slots[i]!];
+  }
+  return questions.map((q, i) => {
+    const right = q.options[q.correct]!;
+    const wrong = q.options.filter((_, k) => k !== q.correct);
+    for (let k = wrong.length - 1; k > 0; k--) {
+      const j = Math.floor(random() * (k + 1));
+      [wrong[k], wrong[j]] = [wrong[j]!, wrong[k]!];
+    }
+    const target = slots[i]!;
+    return { ...q, options: [...wrong.slice(0, target), right, ...wrong.slice(target)], correct: target };
+  });
 }

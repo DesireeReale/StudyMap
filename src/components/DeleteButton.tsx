@@ -13,7 +13,7 @@ export function DeleteButton({
   confirm: question,
   redirect = "/library",
 }: {
-  table: "documents" | "maps" | "decks" | "notes";
+  table: "documents" | "maps" | "decks" | "notes" | "quizzes";
   id: string;
   storagePath?: string | null;
   label: string;

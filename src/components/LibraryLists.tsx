@@ -62,7 +62,7 @@ export function FolderBadge({ color, icon, size = 40 }: { color: FolderColor; ic
   );
 }
 
-export type MaterialKind = "documento" | "appunto" | "mappa" | "flashcard";
+export type MaterialKind = "documento" | "appunto" | "mappa" | "flashcard" | "quiz";
 
 export type Material = { kind: MaterialKind; id: string; title: string; detail: string; date: string; place?: string };
 
@@ -71,6 +71,7 @@ const KINDS: Record<MaterialKind, { label: string; icon: IconName; href: string;
   appunto: { label: "Appunto", icon: "note", href: "/notes", chip: "bg-pill-positive text-pill-positive-ink" },
   mappa: { label: "Mappa", icon: "map", href: "/maps", chip: "bg-accent-soft text-ink" },
   flashcard: { label: "Flashcard", icon: "cards", href: "/decks", chip: "bg-notice text-notice-ink" },
+  quiz: { label: "Quiz", icon: "check", href: "/quizzes", chip: "bg-pill-negative text-pill-negative-ink" },
 };
 
 export const MATERIAL_FILTERS: { id: MaterialKind | null; name: string }[] = [
@@ -79,6 +80,7 @@ export const MATERIAL_FILTERS: { id: MaterialKind | null; name: string }[] = [
   { id: "appunto", name: "Appunti" },
   { id: "mappa", name: "Mappe" },
   { id: "flashcard", name: "Flashcard" },
+  { id: "quiz", name: "Quiz" },
 ];
 
 export function MaterialList({ items }: { items: Material[] }) {

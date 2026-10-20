@@ -28,16 +28,16 @@
 - [ ] Completare l'informativa privacy (titolare del trattamento)
 
 ## Fase 2
-- [ ] Quiz a scelta multipla con spiegazioni
+- [x] Quiz a scelta multipla con spiegazioni
 - [ ] Simulazione d'esame a tempo
 - [x] Ripetizione dilazionata delle flashcard (SM-2 o FSRS) — fatta con SM-2; FSRS più avanti
 - [ ] Chat con il documento, con riferimenti alle pagine
 - [ ] Abbonamento Stripe e pagina di gestione del piano
 - [ ] Disdetta in un clic e fatture automatiche (nuovo)
-- [ ] Riassunto del documento (nuovo)
+- [x] Riassunto del documento (nuovo)
 - [x] Modifica a mano delle flashcard (nuovo)
 - [ ] Pagina di provenienza su nodi e flashcard (nuovo)
-- [ ] Risposte giuste dei quiz distribuite tra le opzioni (nuovo)
+- [x] Risposte giuste dei quiz distribuite tra le opzioni (nuovo)
 - [ ] Prima rigenerazione di una mappa gratuita (nuovo)
 
 ## Fase 3

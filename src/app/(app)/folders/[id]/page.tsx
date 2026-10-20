@@ -23,13 +23,14 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
   const q = String(query.q ?? "").trim().slice(0, 100);
   const { supabase, profile } = await requireUser();
   const foldersP = loadFolders(supabase);
-  const [folders, study, docs, maps, decks, notes] = await Promise.all([
+  const [folders, study, docs, maps, decks, notes, quizzes] = await Promise.all([
     foldersP,
     loadStudy(supabase, profile, foldersP.then((f) => subtreeIds(f, id))),
     supabase.from("documents").select("id, title, kind, page_count, created_at, folder_id"),
     supabase.from("maps").select("id, title, graph, updated_at, folder_id"),
     supabase.from("decks").select("id, title, created_at, folder_id"),
     supabase.from("notes").select("id, title, updated_at, folder_id"),
+    supabase.from("quizzes").select("id, title, created_at, folder_id"),
   ]);
   const folder = folders.find((f) => f.id === id);
   if (!folder) notFound();
@@ -39,11 +40,11 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
   const tree = subtreeIds(folders, id);
   const here = <T extends { folder_id: string }>(rows: T[] | null) => (rows ?? []).filter((r) => r.folder_id === id);
   const all = toMaterials(
-    { documents: here(docs.data), notes: here(notes.data), maps: here(maps.data), decks: here(decks.data) },
+    { documents: here(docs.data), notes: here(notes.data), maps: here(maps.data), decks: here(decks.data), quizzes: here(quizzes.data) },
     [],
     study.counts,
   );
-  const stats = folderStats(folders, [docs.data ?? [], maps.data ?? [], decks.data ?? [], notes.data ?? []]);
+  const stats = folderStats(folders, [docs.data ?? [], maps.data ?? [], decks.data ?? [], notes.data ?? [], quizzes.data ?? []]);
   const isEmpty = children.length + all.length === 0;
   const rootCount = childrenOf(folders, null).length;
   const kind = depth === 1 ? "materia" : "cartella";

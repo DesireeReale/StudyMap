@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { PLANS } from "@/config/plans";
 import { AiUnavailableError } from "@/core/ai/client";
-import { generateFlashcards, generateMindMap } from "@/core/ai/tasks";
-import { generationLimitReached, monthPeriod, quotaLimit } from "@/core/entitlements";
+import { generateFlashcards, generateMindMap, generateQuiz, generateSummary, summaryToText } from "@/core/ai/tasks";
+import { generationLimitReached, monthPeriod, quizLimitReached, quotaLimit, weekPeriod } from "@/core/entitlements";
 import { mindMapToGraph } from "@/core/graph";
 import { textToPages } from "@/core/ingest";
 import { aiContextFor, consumeQuota, guardAi } from "@/lib/ai";
@@ -11,7 +11,7 @@ import { apiUser, denied, fail } from "@/lib/api";
 
 export const maxDuration = 300;
 
-const type = z.enum(["mindmap", "flashcards"]);
+const type = z.enum(["mindmap", "flashcards", "summary", "quiz"]);
 const Body = z.union([z.object({ documentId: z.uuid(), type }), z.object({ noteId: z.uuid(), type })]);
 
 export async function POST(request: Request) {
@@ -38,9 +38,16 @@ export async function POST(request: Request) {
   const guard = await guardAi(profile);
   if (!guard.ok) return denied(guard, 429);
 
+  const week = weekPeriod();
+  if (body.type === "quiz" && !(await consumeQuota(profile.id, "quiz", week, 1, quotaLimit(PLANS[profile.plan].quizzesPerWeek)))) {
+    return denied(quizLimitReached(profile.plan), 402);
+  }
+  const refundQuiz = () => (body.type === "quiz" ? consumeQuota(profile.id, "quiz", week, -1, null) : null);
+
   const period = monthPeriod();
   const limit = quotaLimit(PLANS[profile.plan].generationsPerMonth);
   if (!(await consumeQuota(profile.id, "generation", period, 1, limit))) {
+    await refundQuiz();
     return denied(generationLimitReached(profile.plan), 402);
   }
 
@@ -56,6 +63,28 @@ export async function POST(request: Request) {
         .single();
       if (error) throw error;
       return NextResponse.json({ id: data.id, href: `/maps/${data.id}` });
+    }
+
+    if (body.type === "summary") {
+      const text = summaryToText(await generateSummary(ctx, input));
+      const { data, error } = await supabase
+        .from("notes")
+        .insert({ title: `Riassunto · ${doc.title}`.slice(0, 200), body: text.slice(0, 100_000), folder_id: doc.folder_id })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return NextResponse.json({ id: data.id, href: `/notes/${data.id}` });
+    }
+
+    if (body.type === "quiz") {
+      const questions = await generateQuiz(ctx, input);
+      const { data, error } = await supabase
+        .from("quizzes")
+        .insert({ title: doc.title, document_id: doc.id, folder_id: doc.folder_id, questions })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return NextResponse.json({ id: data.id, href: `/quizzes/${data.id}` });
     }
 
     const cards = await generateFlashcards(ctx, input);
@@ -75,6 +104,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ id: deck.id, href: `/decks/${deck.id}` });
   } catch (e) {
     await consumeQuota(profile.id, "generation", period, -1, null);
+    await refundQuiz();
     if (e instanceof AiUnavailableError) return fail(e.message, 503);
     console.error("generation failed", e);
     return fail("La generazione non è riuscita. Riprova.", 500);

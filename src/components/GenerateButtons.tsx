@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Icon } from "./icons";
 import { UpgradeNotice } from "./UpgradeNotice";
 
-type Kind = "mindmap" | "flashcards";
+type Kind = "mindmap" | "flashcards" | "summary" | "quiz";
 
 export function GenerateButtons({ source }: { source: { documentId: string } | { noteId: string } }) {
   const router = useRouter();
@@ -33,7 +33,15 @@ export function GenerateButtons({ source }: { source: { documentId: string } | {
 
   return (
     <div className="flex max-w-md flex-col items-start gap-2 sm:items-end">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 sm:justify-end">
+        <button type="button" className="btn-secondary" disabled={!!busy} onClick={() => generate("summary")}>
+          <Icon name="note" />
+          {busy === "summary" ? "Scrivo il riassunto…" : "Riassunto"}
+        </button>
+        <button type="button" className="btn-secondary" disabled={!!busy} onClick={() => generate("quiz")}>
+          <Icon name="check" />
+          {busy === "quiz" ? "Preparo il quiz…" : "Quiz"}
+        </button>
         <button type="button" className="btn-secondary" disabled={!!busy} onClick={() => generate("flashcards")}>
           <Icon name="cards" />
           {busy === "flashcards" ? "Creo le flashcard…" : "Genera flashcard"}
