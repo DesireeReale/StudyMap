@@ -114,28 +114,6 @@ export function MaterialList({ items }: { items: Material[] }) {
   );
 }
 
-export function FilterLinks({ base, current }: { base: string; current: MaterialKind | null }) {
-  return (
-    <nav aria-label="Filtra per tipo" className="flex flex-wrap gap-1 rounded-full bg-sheet p-1 text-[13px]">
-      {MATERIAL_FILTERS.map((f) => {
-        const href = f.id ? `${base}?tipo=${f.id}` : base;
-        const on = current === f.id;
-        return (
-          <Link
-            key={f.name}
-            href={href}
-            scroll={false}
-            aria-current={on ? "page" : undefined}
-            className={`flex min-h-8 items-center rounded-full px-3 ${on ? "bg-raised font-bold text-ink" : "text-muted hover:text-ink"}`}
-          >
-            {f.name}
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
-
 export function SearchForm({ q, label }: { q: string; label: string }) {
   return (
     <form role="search" className="flex items-center gap-2 border-b border-control focus-within:border-accent has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--focus)]">

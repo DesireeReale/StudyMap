@@ -5,18 +5,8 @@ import { childrenOf, MAX_FOLDER_DEPTH, moveTargets, pathTo, subtreeIds } from "@
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { FolderGrid, FolderSettings } from "@/components/FolderControls";
 import { Icon } from "@/components/icons";
-import {
-  Empty,
-  EmptyAction,
-  FilterLinks,
-  FolderBadge,
-  MATERIAL_FILTERS,
-  MaterialList,
-  PageHeader,
-  SearchForm,
-  Section,
-  type MaterialKind,
-} from "@/components/LibraryLists";
+import { EmptyAction, FolderBadge, PageHeader, SearchForm, Section } from "@/components/LibraryLists";
+import { MaterialBrowser } from "@/components/MaterialBrowser";
 import { SearchResults } from "@/components/SearchResults";
 import { StudyDock } from "@/components/StudyDock";
 import { requireUser } from "@/lib/supabase/server";
@@ -30,7 +20,6 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
   const { id } = await params;
   const query = await searchParams;
   const q = String(query.q ?? "").trim().slice(0, 100);
-  const tipo = (MATERIAL_FILTERS.find((f) => f.id === query.tipo)?.id ?? null) as MaterialKind | null;
   const { supabase, profile } = await requireUser();
   const foldersP = loadFolders(supabase);
   const [folders, study, docs, maps, decks, notes] = await Promise.all([
@@ -53,7 +42,6 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
     [],
     study.counts,
   );
-  const items = tipo ? all.filter((m) => m.kind === tipo) : all;
   const stats = folderStats(folders, [docs.data ?? [], maps.data ?? [], decks.data ?? [], notes.data ?? []]);
   const isEmpty = children.length + all.length === 0;
   const rootCount = childrenOf(folders, null).length;
@@ -108,8 +96,11 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
         <>
           {children.length > 0 && subfolders}
 
-          <Section title="Materiale" aside={all.length > 0 && <FilterLinks base={base} current={tipo} />}>
-            {all.length === 0 ? (
+          {all.length ? (
+            <MaterialBrowser items={all} emptyText={`Niente di questo tipo in questa ${kind}.`} />
+          ) : (
+          <Section title="Materiale">
+            {
               <EmptyAction
                 actions={
                   <>
@@ -127,12 +118,9 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
                 Questa {kind} è vuota. Carica il materiale dell&apos;esame o scrivi i tuoi appunti: da qui generi mappe e
                 flashcard.
               </EmptyAction>
-            ) : items.length ? (
-              <MaterialList items={items} />
-            ) : (
-              <Empty>Niente di questo tipo in questa {kind}.</Empty>
-            )}
+            }
           </Section>
+          )}
 
           {children.length === 0 && subfolders}
         </>
