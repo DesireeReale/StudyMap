@@ -10,7 +10,7 @@ const TOOLS: { id: string; tab: string; title: string; text: string; points: str
     title: "Mappe che si leggono",
     text: "Un ramo, un colore. I concetti sono collegati da relazioni scritte e puoi riordinarli come vuoi.",
     points: ["Concetti e relazioni in italiano", "Rinomini, sposti, colori e colleghi", "Export PNG, Markdown e OPML"],
-    shot: <MapArt data={HEART_FAILURE} className="rounded-row" />,
+    shot: <MapArt data={HEART_FAILURE} className="bg-transparent!" />,
   },
   {
     id: "flashcard",
@@ -143,15 +143,15 @@ export function ToolTabs() {
         className="grid items-center gap-8 rounded-card border border-border bg-sheet p-5 md:p-9 lg:grid-cols-[2fr_3fr]"
       >
         <div className="flex flex-col gap-3">
-          <h3 className="text-[24px] leading-tight font-bold">{tool.title}</h3>
-          <p className="text-[17px] text-muted">{tool.text}</p>
+          <h3 className="text-[26px] leading-tight font-semibold">{tool.title}</h3>
+          <p className="text-[clamp(18px,1.6vw,20px)] text-muted">{tool.text}</p>
           <ul className="flex list-disc flex-col gap-1 pl-5">
             {tool.points.map((p) => (
               <li key={p}>{p}</li>
             ))}
           </ul>
         </div>
-        <div className="flex min-h-[280px] min-w-0 flex-col justify-center rounded-row border border-border bg-chrome p-4 md:p-5">
+        <div className="flex min-h-[280px] min-w-0 flex-col justify-center rounded-row border border-border bg-chrome p-[18px]">
           {tool.shot}
         </div>
       </div>

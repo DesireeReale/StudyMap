@@ -127,9 +127,9 @@
 - [x] Landing: prezzi Gratis/Pro dai dati di plans.ts e promessa "i contenuti restano tuoi"
 - [x] Landing: togliere Showcase, LiveCard e animazioni di comparsa rimasti dalla versione precedente
 - [x] Landing: verifica in Classic chiaro/scuro e su telefono
-- [ ] Landing: rifare il confronto affiancato con l'artifact (1280 e 375 px) dopo le correzioni di allineamento
-- [ ] Landing: verifica nel tema Vivid
-- [ ] Landing: togliere le etichette di garanzia del primo schermo ("Archivio in Unione Europea", "I tuoi contenuti restano tuoi", "Pensata per DSA")
+- [x] Landing: rifare il confronto affiancato con l'artifact (1280 e 375 px) dopo le correzioni di allineamento
+- [x] Landing: verifica nel tema Vivid
+- [x] Landing: togliere le etichette di garanzia del primo schermo ("Archivio in Unione Europea", "I tuoi contenuti restano tuoi", "Pensata per DSA")
 
 ## Modelli AI
 - [x] Nemotron VL e Gemma 4 gratuiti (OpenRouter) nella catena, solo con consenso

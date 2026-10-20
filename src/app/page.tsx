@@ -44,7 +44,7 @@ const STEPS: { title: string; text: string; mini: ReactNode }[] = [
         {["Mappa", "Flashcard", "Quiz", "Riassunto"].map((t) => (
           <span
             key={t}
-            className="rounded-field border border-border bg-sheet px-2 py-1.5 font-bold"
+            className="rounded-field border border-border bg-sheet px-2 py-1.5 font-semibold"
           >
             <span className="text-positive" aria-hidden="true">
               ✓{" "}
@@ -116,7 +116,7 @@ const FAQ = [
 
 function Eyebrow({ children }: { children: ReactNode }) {
   return (
-    <span className="font-mono text-[13px] tracking-[0.06em] text-accent uppercase">
+    <span className="font-mono text-[13px] leading-none tracking-[0.06em] text-accent uppercase">
       {children}
     </span>
   );
@@ -148,7 +148,7 @@ function SectionHead({
 }
 
 const btnGhost =
-  "btn h-12 px-6 text-[17px] text-ink ring-2 ring-border ring-inset hover:bg-active";
+  "btn h-[50px] px-6 text-[17px] text-ink ring-2 ring-border ring-inset hover:bg-active";
 
 function Check({ children }: { children: ReactNode }) {
   return (
@@ -166,7 +166,7 @@ export default async function Home() {
   if (user) redirect("/library");
 
   return (
-    <div className="bg-chrome text-[17px] leading-relaxed text-ink">
+    <div className="bg-chrome font-sans text-[17px] leading-[1.6] text-ink [--body-font:var(--font-atkinson-next),system-ui,sans-serif]">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-field focus:bg-sheet focus:p-3"
@@ -191,7 +191,7 @@ export default async function Home() {
               <li key={n.href}>
                 <a
                   href={n.href}
-                  className="font-bold text-muted hover:text-ink"
+                  className="font-semibold text-muted hover:text-ink"
                 >
                   {n.label}
                 </a>
@@ -212,8 +212,8 @@ export default async function Home() {
           aria-labelledby="hero-title"
           className="py-[clamp(56px,8vw,96px)]"
         >
-          <div className="mx-auto grid w-full max-w-[1196px] px-6 items-center gap-12 lg:grid-cols-[5fr_6fr] lg:gap-16">
-            <div className="flex flex-col gap-6">
+          <div className="mx-auto grid w-full max-w-[1180px] items-center gap-[clamp(32px,5vw,64px)] px-4 min-[901px]:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+            <div className="flex flex-col gap-[22px]">
               <Eyebrow>
                 Per chi studia all&apos;università · nata per infermieristica
               </Eyebrow>
@@ -232,7 +232,7 @@ export default async function Home() {
               <div className="flex flex-wrap items-center gap-3">
                 <Link
                   href="/login"
-                  className="btn-primary h-12 px-6 text-[17px]"
+                  className="btn-primary h-[50px] px-6 text-[17px]"
                 >
                   Inizia gratis
                 </Link>
@@ -240,27 +240,9 @@ export default async function Home() {
                   Guarda come funziona
                 </a>
               </div>
-              <ul aria-label="Garanzie" className="flex flex-wrap gap-2">
-                {[
-                  "Archivio in Unione Europea",
-                  "I tuoi contenuti restano tuoi",
-                  "Pensata per DSA",
-                ].map((t) => (
-                  <li
-                    key={t}
-                    className="flex items-center gap-2 rounded-full border border-border bg-sheet px-3 py-1.5 text-[14px] font-bold"
-                  >
-                    <span
-                      className="size-2 rounded-full bg-positive"
-                      aria-hidden="true"
-                    />
-                    {t}
-                  </li>
-                ))}
-              </ul>
             </div>
 
-            <div className="relative pb-4 sm:pb-16">
+            <div className="relative">
               <figure className="overflow-hidden rounded-card border border-border bg-sheet shadow-[0_24px_60px_-30px_rgb(15_27_45/0.35)]">
                 <figcaption className="flex items-center gap-2.5 border-b border-border px-4 py-2.5 text-[14px] text-muted">
                   <b className="text-ink">Scompenso cardiaco</b> ·
@@ -276,7 +258,7 @@ export default async function Home() {
               </figure>
               <div
                 aria-hidden="true"
-                className="mt-3 flex flex-col gap-1.5 rounded-row border border-border bg-sheet p-3.5 shadow-[0_16px_40px_-24px_rgb(15_27_45/0.45)] sm:absolute sm:right-[-14px] sm:bottom-[-8px] sm:mt-0 sm:max-w-[240px]"
+                className="mt-3 flex flex-col gap-1.5 rounded-row border border-border bg-sheet px-3.5 py-3 shadow-[0_16px_40px_-24px_rgb(15_27_45/0.45)] min-[561px]:absolute min-[561px]:right-2 min-[561px]:bottom-[-26px] min-[561px]:mt-0 min-[561px]:max-w-[230px] min-[901px]:right-[-14px]"
               >
                 <span className="font-mono text-[11px] tracking-[0.05em] text-muted uppercase">
                   Flashcard · da ripassare
@@ -290,7 +272,7 @@ export default async function Home() {
               </div>
               <div
                 aria-hidden="true"
-                className="absolute bottom-[-12px] left-[-14px] hidden max-w-[230px] flex-col gap-1.5 rounded-row border border-border bg-sheet p-3.5 shadow-[0_16px_40px_-24px_rgb(15_27_45/0.45)] sm:flex"
+                className="absolute bottom-[-40px] left-2 hidden max-w-[230px] flex-col gap-1.5 rounded-row border border-border bg-sheet px-3.5 py-3 shadow-[0_16px_40px_-24px_rgb(15_27_45/0.45)] min-[561px]:flex min-[901px]:left-[-14px]"
               >
                 <span className="font-mono text-[11px] tracking-[0.05em] text-muted uppercase">
                   Quiz · 8 su 10
@@ -308,7 +290,7 @@ export default async function Home() {
           aria-labelledby="come-title"
           className="scroll-mt-16 py-[clamp(56px,8vw,96px)]"
         >
-          <div className="mx-auto flex w-full max-w-[1196px] px-6 flex-col gap-10">
+          <div className="mx-auto flex w-full max-w-[1180px] px-4 flex-col gap-10">
             <SectionHead
               eyebrow="Come funziona"
               title="Tre passi, dal materiale al ripasso"
@@ -321,12 +303,12 @@ export default async function Home() {
                   className="flex flex-col gap-3 rounded-card border border-border bg-sheet p-[22px]"
                 >
                   <span
-                    className="grid size-9 place-items-center rounded-full bg-primary font-display font-bold text-on-primary"
+                    className="grid size-[34px] place-items-center rounded-full bg-primary font-display font-bold text-on-primary"
                     aria-hidden="true"
                   >
                     {i + 1}
                   </span>
-                  <h3 className="text-[20px] leading-tight font-bold">
+                  <h3 className="text-[20px] leading-tight font-semibold">
                     {s.title}
                   </h3>
                   <p className="text-muted">{s.text}</p>
@@ -347,7 +329,7 @@ export default async function Home() {
           aria-labelledby="tools-title"
           className="scroll-mt-16 pb-[clamp(56px,8vw,96px)]"
         >
-          <div className="mx-auto flex w-full max-w-[1196px] px-6 flex-col gap-8">
+          <div className="mx-auto flex w-full max-w-[1180px] px-4 flex-col gap-8">
             <SectionHead
               eyebrow="Strumenti"
               title="Un materiale, cinque modi di studiarlo"
@@ -361,7 +343,7 @@ export default async function Home() {
           aria-label="Impostazioni di lettura"
           className="bg-band py-[clamp(56px,8vw,96px)] text-on-band"
         >
-          <div className="mx-auto w-full max-w-[1196px] px-6">
+          <div className="mx-auto w-full max-w-[1180px] px-4">
             <ReadingDemo />
           </div>
         </section>
@@ -371,7 +353,7 @@ export default async function Home() {
           aria-labelledby="prezzi-title"
           className="scroll-mt-16 py-[clamp(56px,8vw,96px)]"
         >
-          <div className="mx-auto flex w-full max-w-[948px] px-6 flex-col gap-8">
+          <div className="mx-auto flex w-full max-w-[786px] px-4 flex-col gap-8">
             <SectionHead
               eyebrow="Prezzi"
               title="Gratis per iniziare, senza crediti nascosti"
@@ -384,7 +366,7 @@ export default async function Home() {
             </SectionHead>
             <div className="grid gap-5 md:grid-cols-2">
               <div className="flex flex-col gap-4 rounded-card border border-border bg-sheet p-6">
-                <h3 className="text-[20px] font-bold">Gratis</h3>
+                <h3 className="text-[20px] leading-tight font-semibold">Gratis</h3>
                 <p className="font-display text-[36px] leading-none font-bold">
                   0 €{" "}
                   <small className="font-sans text-[16px] font-normal text-muted">
@@ -431,7 +413,7 @@ export default async function Home() {
                 </Link>
               </div>
               <div className="flex flex-col gap-4 rounded-card border-2 border-accent bg-sheet p-6">
-                <h3 className="text-[20px] font-bold">Pro</h3>
+                <h3 className="text-[20px] leading-tight font-semibold">Pro</h3>
                 <p className="font-display text-[36px] leading-none font-bold">
                   In arrivo
                 </p>
@@ -488,7 +470,7 @@ export default async function Home() {
           aria-labelledby="domande-title"
           className="scroll-mt-16 pb-[clamp(56px,8vw,96px)]"
         >
-          <div className="mx-auto grid w-full max-w-[1196px] px-6 gap-10 lg:grid-cols-[2fr_3fr]">
+          <div className="mx-auto grid w-full max-w-[1180px] px-4 gap-10 lg:grid-cols-[2fr_3fr]">
             <SectionHead
               eyebrow="Domande"
               title="Le risposte prima di iscriverti"
@@ -500,7 +482,7 @@ export default async function Home() {
                   key={f.q}
                   className="group border-b border-border py-4"
                 >
-                  <summary className="flex cursor-pointer list-none justify-between gap-4 font-display text-[18px] font-bold [&::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none justify-between gap-4 font-display text-[18px] font-semibold [&::-webkit-details-marker]:hidden">
                     {f.q}
                     <span
                       className="text-[22px] leading-none text-accent group-open:hidden"
@@ -526,17 +508,17 @@ export default async function Home() {
           aria-labelledby="final-title"
           className="pb-[clamp(56px,8vw,96px)] text-center"
         >
-          <div className="mx-auto flex w-full max-w-[1196px] px-6 flex-col items-center gap-4">
+          <div className="mx-auto flex w-full max-w-[1180px] px-4 flex-col items-center gap-4">
             <h2
               id="final-title"
-              className="text-[clamp(28px,3.6vw,40px)] leading-tight font-bold tracking-[-0.02em]"
+              className="text-[clamp(28px,3.6vw,40px)] leading-[1.12] font-bold tracking-[-0.02em] text-balance"
             >
               La prossima lezione, già in mappa
             </h2>
             <p className="text-[clamp(18px,1.6vw,20px)] text-muted">
               Ti bastano un PDF e due minuti.
             </p>
-            <Link href="/login" className="btn-primary h-12 px-6 text-[17px]">
+            <Link href="/login" className="btn-primary h-[50px] px-6 text-[17px]">
               Inizia gratis
             </Link>
           </div>
@@ -544,7 +526,7 @@ export default async function Home() {
       </main>
 
       <footer className="border-t border-border py-7 text-[14px] text-muted">
-        <div className="mx-auto flex w-full max-w-[1196px] px-6 flex-wrap justify-between gap-x-6 gap-y-3">
+        <div className="mx-auto flex w-full max-w-[1180px] px-4 flex-wrap justify-between gap-x-6 gap-y-3">
           <span>StudyMap · Italia, 2026</span>
           <span className="flex gap-4">
             <Link href="/privacy" className="hover:text-ink hover:underline">

@@ -27,10 +27,10 @@ export function ReadingDemo() {
   return (
     <div className="grid items-center gap-10 lg:grid-cols-2">
       <div className="flex flex-col gap-3.5">
-        <span className="font-mono text-[13px] tracking-[0.06em] text-band-accent uppercase">
+        <span className="font-mono text-[13px] leading-none tracking-[0.06em] text-band-accent uppercase">
           Accessibilità
         </span>
-        <h2 className="text-[clamp(28px,3.6vw,40px)] leading-tight font-bold">
+        <h2 className="text-[clamp(28px,3.6vw,40px)] leading-[1.12] font-bold tracking-[-0.02em] text-balance">
           Leggi come ti viene meglio
         </h2>
         <p className="max-w-[46ch] text-[clamp(18px,1.6vw,20px)] text-on-band-muted">
@@ -41,7 +41,7 @@ export function ReadingDemo() {
         <div
           role="group"
           aria-label="Prova le impostazioni di lettura"
-          className="mt-1 flex flex-wrap gap-2"
+          className="mt-[18px] flex flex-wrap gap-2"
         >
           {OPTIONS.map((o) => (
             <button

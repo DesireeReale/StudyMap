@@ -20,7 +20,7 @@ export type MapArtData = {
 
 export const HEART_FAILURE: MapArtData = {
   width: 560,
-  height: 300,
+  height: 330,
   direction: "tb",
   sizes: { root: 16, branch: 15, leaf: 14 },
   root: { x: 280, y: 42, label: "Scompenso cardiaco" },
@@ -32,8 +32,8 @@ export const HEART_FAILURE: MapArtData = {
       role: "area-1",
       relation: "si manifesta con",
       leaves: [
-        { x: 52, y: 248, label: "Dispnea" },
-        { x: 152, y: 248, label: "Edemi" },
+        { x: 52, y: 245, label: "Dispnea" },
+        { x: 152, y: 245, label: "Edemi" },
       ],
     },
     {
@@ -42,7 +42,7 @@ export const HEART_FAILURE: MapArtData = {
       label: "Farmaci",
       role: "area-2",
       relation: "si tratta con",
-      leaves: [{ x: 280, y: 248, label: "Diuretici" }],
+      leaves: [{ x: 280, y: 245, label: "Diuretici" }],
     },
     {
       x: 455,
@@ -51,8 +51,8 @@ export const HEART_FAILURE: MapArtData = {
       role: "area-3",
       relation: "richiede",
       leaves: [
-        { x: 403, y: 248, label: "Peso al giorno" },
-        { x: 513, y: 248, label: "Diuresi" },
+        { x: 403, y: 245, label: "Peso al giorno" },
+        { x: 513, y: 245, label: "Diuresi" },
       ],
     },
   ],
@@ -82,18 +82,20 @@ function Node({
   size,
   W,
   H,
+  className = "",
 }: {
   at: Concept;
   role: NodeRole;
   size: number;
   W: number;
   H: number;
+  className?: string;
 }) {
   const cq = (px: number) => `${(px / W) * 100}cqw`;
   return (
     <span
       data-role={role}
-      className="concept-node absolute -translate-x-1/2 -translate-y-1/2 text-center leading-tight font-bold whitespace-nowrap"
+      className={`concept-node absolute -translate-x-1/2 -translate-y-1/2 text-center leading-tight font-bold whitespace-nowrap ${className}`}
       style={
         {
           left: pct(at.x, W),
@@ -140,6 +142,7 @@ export function MapArt({
           <g
             key={`${a.label}-${b.label}`}
             fill="none"
+            className={a === root ? undefined : "max-[560px]:hidden"}
             style={{ stroke: "var(--edge)", strokeWidth: "var(--edge-width)" }}
           >
             <path className="edge-curve" d={curve(a, b, tb)} />
@@ -152,9 +155,9 @@ export function MapArt({
           b.relation && (
             <span
               key={b.relation}
-              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-sheet px-[0.5em] text-muted"
+              className={`absolute -translate-y-1/2 rounded-full bg-sheet px-[0.5em] text-muted ${b.x < root.x ? "-translate-x-1/2" : ""}`}
               style={{
-                left: pct((root.x + b.x) / 2, W),
+                left: pct((root.x + b.x) / 2 + (b.x < root.x ? 0 : 4), W),
                 top: pct((root.y + b.y) / 2, H),
                 fontSize: cq(sizes.leaf - 2),
               }}
@@ -172,6 +175,7 @@ export function MapArt({
             size={sizes.leaf}
             W={W}
             H={H}
+            className="max-[560px]:hidden"
           />
         )),
       )}
