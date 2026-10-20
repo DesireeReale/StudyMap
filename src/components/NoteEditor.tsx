@@ -91,7 +91,7 @@ export function NoteEditor({ noteId, title, body }: { noteId: string; title: str
           </nav>
         )}
         {reading ? (
-          <div className="min-h-[60vh] rounded-[4px] border border-border bg-raised px-[clamp(20px,7%,72px)] py-[clamp(24px,6%,64px)] shadow-[0_2px_12px_-4px_rgb(15_27_45/0.25)] lg:aspect-[210/297]">
+          <div className="min-h-[60vh] rounded-[4px] border border-border bg-raised px-[clamp(20px,7%,72px)] py-[clamp(24px,6%,64px)] shadow-[0_2px_12px_-4px_rgb(15_27_45/0.25)] lg:min-h-auto lg:aspect-[210/297]">
             <SummaryView body={draft.body} />
           </div>
         ) : (
