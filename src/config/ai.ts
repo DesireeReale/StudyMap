@@ -111,7 +111,7 @@ export const TASKS: Record<TaskId, { promptVersion: string; maxTokens: number }>
   mindmap: { promptVersion: "v2", maxTokens: 4000 },
   flashcards: { promptVersion: "v2", maxTokens: 4000 },
   transcribe: { promptVersion: "v1", maxTokens: 3000 },
-  figure: { promptVersion: "v1", maxTokens: 800 },
+  figure: { promptVersion: "v1", maxTokens: 2000 },
   summary: { promptVersion: "v1", maxTokens: 3000 },
   quiz: { promptVersion: "v2", maxTokens: 4000 },
 };

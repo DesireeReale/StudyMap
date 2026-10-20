@@ -260,7 +260,7 @@ Il consenso è la colonna `profiles.ai_data_sharing_consent_at`, che l'utente at
 - **Dove**: [tasks.ts](src/core/ai/tasks.ts), chiamata durante l'ingestione solo con l'opzione delle figure.
 - **Input**: il testo della pagina o slide (massimo 2000 caratteri, come contesto) e l'immagine.
 - **Prompt**: [figure.v1.md](prompts/figure.v1.md): descrive solo ciò che non è già nel testo (assi e andamento dei grafici, formule riscritte in testo, frecce degli schemi, molecole), massimo 120 parole, stringa vuota per loghi e decorazioni. Vale per qualsiasi materia.
-- **Modello**: la catena *visione*, `max_tokens` 800; registra `ocr_pages = 1` per figura.
+- **Modello**: la catena *visione*, `max_tokens` 2000 (con 800 Gemini Flash ha troncato il JSON nella prova del 20 ottobre, probabilmente perché il ragionamento interno consuma parte del limite: NON VERIFICATO); registra `ocr_pages = 1` per figura.
 
 #### d) Riassunto: `generateSummary`
 - **Dove**: [tasks.ts](src/core/ai/tasks.ts), chiamata da [generate/route.ts](src/app/api/generate/route.ts) con `type: "summary"`.
