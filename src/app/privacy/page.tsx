@@ -19,10 +19,10 @@ export default function PrivacyPage() {
         <li>Dati di utilizzo del servizio AI (numero di richieste e token) per gestire i limiti del piano.</li>
       </ul>
 
-      <h2>Non caricare dati di pazienti</h2>
+      <h2>Non caricare dati di altre persone</h2>
       <p>
-        StudyMap è uno strumento di studio. Non caricare dati personali o sanitari di pazienti reali (nomi, cartelle
-        cliniche, referti, foto).
+        StudyMap è uno strumento di studio. Non caricare dati personali di persone reali: per esempio
+        cartelle cliniche e referti di pazienti, atti di cause, dati di clienti, foto.
       </p>
 
       <h2>Dove sono conservati</h2>

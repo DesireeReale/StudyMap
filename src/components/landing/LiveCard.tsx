@@ -4,12 +4,12 @@ import { useState } from "react";
 
 const CARDS = [
   {
-    front: "Che cos'è la posizione semi-Fowler?",
-    back: "Paziente supino con il busto sollevato di 30-45°: facilita la respirazione, per esempio nello scompenso cardiaco.",
+    front: "Quali sono i requisiti del contratto?",
+    back: "L'accordo delle parti, la causa, l'oggetto e la forma, quando la legge la prescrive a pena di nullità (art. 1325 c.c.).",
   },
   {
-    front: "Perché si pesa ogni giorno il paziente con scompenso?",
-    back: "Un aumento rapido del peso indica ritenzione idrica: va rilevato alla stessa ora, con la stessa bilancia.",
+    front: "Che cosa misura la derivata di una funzione in un punto?",
+    back: "Il tasso di variazione istantaneo della funzione in quel punto, cioè la pendenza della retta tangente al grafico.",
   },
 ];
 

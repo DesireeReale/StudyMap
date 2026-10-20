@@ -8,7 +8,7 @@ Questo manuale spiega come è fatto il progetto e soprattutto come usa l'LLM, co
 
 ## 0. In una pagina
 
-**Che cos'è.** Una web app (PWA) per studenti di infermieristica. Carichi un PDF, una foto degli appunti o del testo e ottieni:
+**Che cos'è.** Una web app (PWA) per chi studia all'università, in qualsiasi corso di laurea. Carichi un PDF, una foto degli appunti o del testo e ottieni:
 - una **mappa concettuale** modificabile;
 - un **mazzo di flashcard** da ripassare.
 
@@ -74,8 +74,8 @@ studymap/
 |---|---|---|
 | [src/config/plans.ts](src/config/plans.ts) | **Tutti** i limiti free/pro e il rate limit | 🟢 |
 | [src/config/ai.ts](src/config/ai.ts) | Provider, modelli, prezzi, catene di fallback, `max_tokens`, dimensione dei chunk | 🟢 |
-| [prompts/mindmap.v1.md](prompts/mindmap.v1.md) | Prompt della mappa | 🟢 |
-| [prompts/flashcards.v1.md](prompts/flashcards.v1.md) | Prompt delle flashcard | 🟢 |
+| [prompts/mindmap.v2.md](prompts/mindmap.v2.md) | Prompt della mappa (la v1 era solo per infermieristica) | 🟢 |
+| [prompts/flashcards.v2.md](prompts/flashcards.v2.md) | Prompt delle flashcard (la v1 era solo per infermieristica) | 🟢 |
 | [prompts/transcribe.v1.md](prompts/transcribe.v1.md) | Prompt di trascrizione di immagini e scansioni | 🟢 |
 | [src/core/ai/client.ts](src/core/ai/client.ts) | `complete()`: chiamata al modello, fallback, validazione, retry, costi | 🔴 |
 | [src/core/ai/tasks.ts](src/core/ai/tasks.ts) | I tre task AI e il merge delle mappe | 🟡 |
@@ -143,7 +143,7 @@ Le parentesi in `(app)` raggruppano delle pagine senza comparire nella URL. Prim
 11. **Contesto AI.** `aiContextFor(profile)` ([lib/ai.ts:20](src/lib/ai.ts:20)) sceglie i modelli in base a piano e consenso e prepara la funzione che registra i consumi.
 12. **Generazione.** `generateMindMap` ([tasks.ts:23](src/core/ai/tasks.ts:23)):
     - divide le pagine in chunk (`chunkPages`);
-    - per ogni chunk chiama `complete()` con il prompt `mindmap.v1.md`;
+    - per ogni chunk chiama `complete()` con il prompt `mindmap.v2.md`;
     - unisce i risultati con `mergeMindMaps`.
 13. **Dall'output dell'LLM al grafo.** `mindMapToGraph` ([graph.ts:34](src/core/graph.ts:34)) trasforma l'elenco dei nodi `{id,label,parentId,relation}` in nodi e archi di React Flow, con colori per livello e posizioni calcolate da dagre.
 14. **Salvataggio della mappa.** Il grafo va in `maps.graph` ([route.ts:43](src/app/api/generate/route.ts:43)). Se qualcosa fallisce, la generazione viene **restituita** alla quota ([:66](src/app/api/generate/route.ts:66)).
@@ -223,7 +223,7 @@ Il consenso è la colonna `profiles.ai_data_sharing_consent_at`, che l'utente at
 - **Scopo**: estrarre concetti e relazioni dal testo e organizzarli in un albero.
 - **Modello**: la catena del §3.2.
 - **Prompt**:
-  - *system* = [mindmap.v1.md](prompts/mindmap.v1.md): ruolo di tutor di infermieristica, regole (italiano, terminologia corretta, niente dati inventati, una sola radice, massimo 40 nodi e 4 livelli, etichette brevi), `{{title}}` e `{{schema}}` (lo schema JSON generato da Zod);
+  - *system* = [mindmap.v2.md](prompts/mindmap.v2.md): ruolo di tutor universitario per qualsiasi corso di laurea, regole (italiano, terminologia della disciplina riconosciuta dal materiale, termini e formule lasciati com'erano, niente dati inventati, una sola radice, massimo 40 nodi e 4 livelli, etichette brevi), `{{title}}` e `{{schema}}` (lo schema JSON generato da Zod);
   - *user* = il testo del chunk, con i marcatori `[Pagina N]`.
 - **Output**: `MindMapSchema` ([schemas.ts:3](src/core/ai/schemas.ts:3)), cioè un elenco **piatto** di nodi `{id, label, parentId, relation}`.
   *Perché piatto e non ad albero annidato?* Gli schemi ricorsivi non sono accettati da tutti i provider (Meta li vieta) e confondono di più il modello. `parentId` basta a ricostruire l'albero.
@@ -231,7 +231,7 @@ Il consenso è la colonna `profiles.ai_data_sharing_consent_at`, che l'utente at
 
 #### b) Flashcard: `generateFlashcards`
 - **Dove**: [tasks.ts:91](src/core/ai/tasks.ts:91).
-- **Prompt**: [flashcards.v1.md](prompts/flashcards.v1.md), con domanda su un solo concetto, risposta in massimo 3 frasi e tra 8 e 25 carte per chunk.
+- **Prompt**: [flashcards.v2.md](prompts/flashcards.v2.md), con domanda su un solo concetto, risposta in massimo 3 frasi e tra 8 e 25 carte per chunk.
 - **Output**: `FlashcardsSchema` ([schemas.ts:18](src/core/ai/schemas.ts:18)), cioè `{cards: [{front, back}]}`.
 - **Post-elaborazione**: le carte di tutti i chunk vengono concatenate, deduplicate con `dedupeCards` (confronto sulla domanda normalizzata: minuscole, senza punteggiatura) e tagliate a 60.
 

@@ -29,10 +29,10 @@ const STEPS: { line: string; text: string; proof?: ReactNode; accent?: boolean }
   },
   {
     line: "Poi l'AI lo scompone in concetti.",
-    text: "Ne esce una mappa in italiano, con la terminologia infermieristica e le relazioni scritte tra i concetti.",
+    text: "Ne esce una mappa in italiano, con i termini tecnici della tua materia e le relazioni scritte tra i concetti.",
     proof: (
       <MapArt
-        label="Mappa concettuale sullo scompenso cardiaco: cause, segni e sintomi, interventi infermieristici ed educazione del paziente"
+        label="Mappa concettuale sul contratto: requisiti, effetti, patologie e scioglimento"
         className="rounded-row border-8 border-surface"
       />
     ),
@@ -43,7 +43,7 @@ const STEPS: { line: string; text: string; proof?: ReactNode; accent?: boolean }
     proof: (
       <Image
         src="/landing/library.png"
-        alt="Home di StudyMap con il mazzo da ripassare oggi, il conto alla rovescia dell'esame, il timer di studio, le mappe e i documenti"
+        alt="Home di StudyMap con il mazzo da ripassare oggi, il conto alla rovescia dell'esame, il timer di studio, le materie e le ultime mappe"
         width={1208}
         height={905}
         sizes="(min-width: 1024px) 40vw, 100vw"
@@ -61,8 +61,8 @@ const STEPS: { line: string; text: string; proof?: ReactNode; accent?: boolean }
 
 const FAQ = [
   {
-    q: "Posso caricare documenti di pazienti?",
-    a: "No. Carica solo materiale di studio: dispense, slide, appunti. Niente nomi, cartelle cliniche, referti o foto di pazienti.",
+    q: "Posso caricare documenti con dati di altre persone?",
+    a: "No. Carica solo materiale di studio: dispense, slide, appunti. Niente dati personali di persone reali, come cartelle cliniche, atti di cause, dati di clienti o di pazienti.",
   },
   {
     q: "Quanto sono affidabili le mappe?",
@@ -81,8 +81,8 @@ const FAQ = [
     a: "No. Il piano Free è gratuito e non chiede dati di pagamento.",
   },
   {
-    q: "Va bene solo per Infermieristica?",
-    a: "È pensato per Infermieristica e per la sua terminologia, ma funziona con il materiale di qualsiasi esame.",
+    q: "Va bene per il mio corso di laurea?",
+    a: "Sì. Funziona con il materiale di qualsiasi esame, da Analisi a Diritto privato, da Anatomia a Storia: la mappa usa i termini della tua materia. Puoi dividere tutto in materie e cartelle.",
   },
 ];
 
@@ -112,22 +112,14 @@ export default async function Home() {
             </span>
             <span className="mask-line">
               <span className="mask-inner" style={{ animationDelay: "60ms" }}>
-                alla{" "}
-                <span className="sr-only">mappa</span>
-                <span
-                  aria-hidden="true"
-                  className="relative inline-block h-[0.8em] w-[2.4em] translate-y-[0.06em] overflow-hidden rounded-[0.14em] bg-accent-soft align-baseline"
-                >
-                  <MapArt className="absolute top-1/2 left-1/2 w-[280%]! -translate-x-1/2 -translate-y-1/2" />
-                </span>
-                .
+                alla mappa.
               </span>
             </span>
           </h1>
           <div className="hero-after mx-auto mt-10 flex w-full max-w-[1376px] flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <p className="max-w-[44ch] text-[17px] leading-relaxed md:text-[20px]">
               Carica PDF, slide o foto degli appunti: StudyMap ne ricava una mappa concettuale da modificare e le
-              flashcard per ripassare. Pensato per Infermieristica.
+              flashcard per ripassare. Per qualsiasi corso di laurea.
             </p>
             <div className="flex items-center gap-3">
               <Link href="/login" className="btn-primary h-12 px-6 text-[17px]">
@@ -208,7 +200,7 @@ export default async function Home() {
         <div className="mx-auto flex w-full max-w-[1376px] flex-wrap items-start justify-between gap-6 text-[17px]">
           <div className="flex flex-col gap-1">
             <p className="flex items-center gap-2 font-bold">StudyMap</p>
-            <p className="max-w-[40ch] text-on-accent/90">Mappe concettuali e flashcard dai tuoi appunti, per chi studia Infermieristica.</p>
+            <p className="max-w-[40ch] text-on-accent/90">Mappe concettuali e flashcard dai tuoi appunti, per chi studia all&apos;università.</p>
           </div>
           <a href="#" className="font-bold underline-offset-4 hover:underline">
             Torna su

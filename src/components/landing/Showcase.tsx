@@ -46,7 +46,7 @@ export function Showcase() {
               className="size-full transition-transform duration-700 ease-out motion-reduce:transition-none"
               style={{ transform: `scale(${s.scale})`, transformOrigin: s.origin }}
             >
-              <MapArt label="Mappa concettuale sullo scompenso cardiaco: cause, segni e sintomi, interventi infermieristici ed educazione del paziente" />
+              <MapArt label="Mappa concettuale sul contratto: requisiti, effetti, patologie e scioglimento" />
             </div>
           </div>
           <p

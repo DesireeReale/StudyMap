@@ -108,8 +108,8 @@ export const CHAINS: Record<PlanId, string[]> = {
 export type TaskId = "mindmap" | "flashcards" | "transcribe";
 
 export const TASKS: Record<TaskId, { promptVersion: string; maxTokens: number }> = {
-  mindmap: { promptVersion: "v1", maxTokens: 4000 },
-  flashcards: { promptVersion: "v1", maxTokens: 4000 },
+  mindmap: { promptVersion: "v2", maxTokens: 4000 },
+  flashcards: { promptVersion: "v2", maxTokens: 4000 },
   transcribe: { promptVersion: "v1", maxTokens: 3000 },
 };
 

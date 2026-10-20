@@ -2,7 +2,7 @@
 
 ## Contesto
 
-Voglio costruire una web app di studio con AI, pensata prima di tutto per studenti di infermieristica (ma utilizzabile per qualsiasi materia). L'utente carica i suoi materiali (PDF, foto di appunti, slide, testo) e l'app li trasforma in strumenti di studio: mappe concettuali, mappe mentali, flashcard, quiz e riassunti.
+Voglio costruire una web app di studio con AI, pensata per chi studia all'università, in qualsiasi corso di laurea (è nata per studenti di infermieristica). L'utente carica i suoi materiali (PDF, foto di appunti, slide, testo) e l'app li trasforma in strumenti di studio: mappe concettuali, mappe mentali, flashcard, quiz e riassunti.
 
 Prendo come riferimento funzionale due prodotti esistenti, **Algor Education** e **GitMind**, con l'obiettivo di fare una versione migliore e più economica. Dobbiamo ispirarci alle loro funzionalità, **non copiare** codice, grafica, testi, nomi o asset. Interfaccia e brand devono essere originali.
 
@@ -50,7 +50,7 @@ Il modello deve essere **multimodale** (testo + immagini + PDF) e intercambiabil
 - **Chunking** dei documenti lunghi: dividi per sezioni/pagine, genera per parti e unisci.
 - **Prompt in file separati e versionati** (es. `/prompts/mindmap.v1.md`), non hardcoded nel codice.
 - **Tracciamento dei costi**: salva per ogni chiamata i token in input/output, le pagine OCR, il modello usato e il costo stimato, collegati all'utente. Mi serve per calcolare il margine per utente.
-- Lingua predefinita dell'output: italiano, con terminologia medico-infermieristica corretta.
+- Lingua predefinita dell'output: italiano, con la terminologia corretta della disciplina del materiale.
 
 ## Funzionalità
 
@@ -73,7 +73,7 @@ Il modello deve essere **multimodale** (testo + immagini + PDF) e intercambiabil
 - Diagrammi di flusso e lavagna libera (stile GitMind), oltre alle mappe.
 - Lettura ad alta voce (text-to-speech) delle mappe e dei riassunti.
 - Mappe che si collegano tra loro (es. "Apparato cardiovascolare" collegato a "Farmacologia").
-- Modalità esame infermieristico: domande stile concorso, casi clinici simulati.
+- Modalità esame per area di studio: per esempio domande stile concorso e casi clinici per le professioni sanitarie, casi pratici per giurisprudenza, esercizi per le materie scientifiche.
 - Condivisione delle mappe con compagni di corso (sola lettura o collaborazione).
 - Funzionamento offline per ripassare mappe e flashcard già scaricate.
 
@@ -98,7 +98,7 @@ Implementa i limiti lato server, con un modulo `entitlements` centralizzato e co
 
 ## Requisiti non funzionali
 
-- **Privacy e GDPR:** dati in UE dove possibile, cancellazione account e dati da parte dell'utente, informativa privacy. Aggiungi un avviso nell'app di non caricare dati di pazienti reali. Se si usa la variante `contributor` di Muse Spark, l'informativa deve dire chiaramente che i contenuti caricati vengono condivisi con Meta e usati per migliorare i suoi modelli; serve un consenso separato, revocabile, e chi non accetta deve poter usare comunque l'app con il modello che non usa i dati.
+- **Privacy e GDPR:** dati in UE dove possibile, cancellazione account e dati da parte dell'utente, informativa privacy. Aggiungi un avviso nell'app di non caricare dati personali di persone reali (pazienti, clienti, parti di una causa). Se si usa la variante `contributor` di Muse Spark, l'informativa deve dire chiaramente che i contenuti caricati vengono condivisi con Meta e usati per migliorare i suoi modelli; serve un consenso separato, revocabile, e chi non accetta deve poter usare comunque l'app con il modello che non usa i dati.
 - **Sicurezza:** Row Level Security su tutte le tabelle, validazione dei file caricati (tipo e dimensione), nessun segreto esposto al client.
 - **Accessibilità:** contrasto adeguato, navigazione da tastiera, font leggibili (molti studenti con DSA usano questo tipo di app).
 - **Qualità:** TypeScript strict, lint, test unitari per il layer AI e per le quote, test end-to-end del flusso "carico PDF → ottengo mappa".

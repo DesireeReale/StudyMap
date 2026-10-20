@@ -29,9 +29,9 @@ export default async function UploadPage({ searchParams }: PageProps<"/upload">)
         </div>
         <aside className="flex flex-col gap-4 lg:col-span-4">
           <div role="note" className="rounded-row border border-notice-border bg-notice p-4 text-sm text-notice-ink">
-            <p className="font-bold">Niente dati di pazienti reali</p>
+            <p className="font-bold">Niente dati di persone reali</p>
             <p className="mt-1">
-              Carica solo materiale di studio: niente nomi, cartelle cliniche, referti o foto di pazienti.
+              Carica solo materiale di studio: niente dati personali di altre persone, come cartelle cliniche, atti di cause, dati di clienti o di pazienti.
             </p>
           </div>
           <div className="panel text-sm text-muted">

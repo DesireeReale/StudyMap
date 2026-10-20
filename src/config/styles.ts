@@ -4,7 +4,7 @@ export const APP_STYLES = [
   {
     id: "corsia",
     name: "Corsia",
-    description: "Blu ospedaliero, superfici chiare e concetti a capsula.",
+    description: "Blu calmo, superfici chiare e concetti a capsula.",
     colors: ["blu", "pesca", "azzurro", "menta", "grigio"],
   },
   {

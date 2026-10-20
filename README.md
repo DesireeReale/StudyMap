@@ -1,6 +1,6 @@
 # StudyMap
 
-AI study companion for nursing students (and any subject): upload PDFs, photos of notes, slides or plain text and get an editable concept map and a flashcard deck.
+AI study companion for university students in any degree course: upload PDFs, photos of notes, slides or plain text and get an editable concept map and a flashcard deck.
 
 Phase 1 (MVP) features: email + Google auth, upload (PDF / PNG / JPEG / WebP / text), AI concept map with editor (add, move, rename, delete, color, auto-layout), flashcards with "know / don't know" review, library, PNG/PDF export, server-side plans and quotas.
 
@@ -211,7 +211,7 @@ Free Supabase projects are paused after about a week without activity; restore t
 
 The UI follows the "tasteskill" app-screen and page rules (style `editorial-greeting` for the app, `sentence-as-layout` for the landing page). Research and palettes: `docs/direzione-grafica.md`.
 
-- **Two user-selectable styles.** Corsia (default: hospital blue, Lexend, soft capsule nodes, straight edges) and Evidenziatore (highlighter colours, Bricolage Grotesque headings with Atkinson Hyperlegible Next body text, ink outlines, offset shadows, elbow edges). Each has a light and a dark variant that follows the system setting. Users pick one in Settings or in the sidebar.
+- **Two user-selectable styles.** Corsia (default: calm blue, Lexend, soft capsule nodes, straight edges) and Evidenziatore (highlighter colours, Bricolage Grotesque headings with Atkinson Hyperlegible Next body text, ink outlines, offset shadows, elbow edges). Each has a light and a dark variant that follows the system setting. Users pick one in Settings or in the sidebar.
 - **How it works.** The choice is stored in the `studymap-style` cookie. The root layout reads it and renders `<html data-style="…">`, so the first paint already uses the right style. Styles are listed in `src/config/styles.ts`.
 - **Colour and type tokens.** They live in `src/app/globals.css`, in one `[data-style="…"]` block per style plus its dark variant. The same file holds the shared `btn-*`, `panel`, `row-card` and `field` utilities. Components use the tokens, never raw hex values. `src/app/tokens.test.ts` checks WCAG AA contrast for every style and theme.
 - **Study dock.** The library home opens with a large title naming the deck to review and a dark dock of six compact tiles (`src/components/StudyDock.tsx`): deck progress ring, cards to review (cards marked "don't know" plus cards never reviewed, until spaced repetition lands in phase 2), days until the exam (`profiles.exam_date`, set in Settings), a 25-minute study timer, the last edited map and AI generations used. Its colours are the `--dock-*` tokens of the active style.

@@ -53,6 +53,13 @@ test("capture product screenshots for the landing page", async ({ page }) => {
   await page.waitForTimeout(800);
   await page.locator(".react-flow").screenshot({ path: `${OUT}/map.png` });
 
+  for (const name of ["Diritto privato", "Analisi 1"]) {
+    await page.goto("/library");
+    await page.getByLabel("Nuova materia").fill(name);
+    await page.getByRole("button", { name: "Crea" }).click();
+    await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
+  }
+
   await page.goto("/library");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await page.locator("main").screenshot({ path: `${OUT}/library.png` });

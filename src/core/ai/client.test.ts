@@ -40,7 +40,7 @@ describe("complete", () => {
     const { c, usage } = ctx(async () => ok('{"answer":"sì"}'));
     await expect(run(c)).resolves.toEqual({ data: { answer: "sì" }, inputTokens: 1000 });
     expect(usage).toHaveLength(1);
-    expect(usage[0]).toMatchObject({ model: "model-a", ok: true, costUsd: 0.002, promptVersion: "v1" });
+    expect(usage[0]).toMatchObject({ model: "model-a", ok: true, costUsd: 0.002, promptVersion: TASKS.mindmap.promptVersion });
   });
 
   it("always sends max_tokens from the task config", async () => {

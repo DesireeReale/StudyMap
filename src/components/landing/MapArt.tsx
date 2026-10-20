@@ -8,55 +8,55 @@ type Point = { x: number; y: number };
 type Concept = Point & { label: string };
 type Branch = Concept & { role: NodeRole; relation: string; leaves: Concept[] };
 
-const ROOT: Concept = { x: 600, y: 338, label: "Scompenso cardiaco" };
+const ROOT: Concept = { x: 600, y: 338, label: "Il contratto" };
 
 const BRANCHES: Branch[] = [
   {
     x: 390,
     y: 165,
-    label: "Cause",
+    label: "Requisiti",
     role: "area-1",
-    relation: "causato da",
+    relation: "richiede",
     leaves: [
-      { x: 125, y: 80, label: "Cardiopatia ischemica" },
-      { x: 125, y: 165, label: "Ipertensione arteriosa" },
-      { x: 125, y: 250, label: "Valvulopatie" },
+      { x: 125, y: 80, label: "Accordo delle parti" },
+      { x: 125, y: 165, label: "Causa" },
+      { x: 125, y: 250, label: "Oggetto" },
     ],
   },
   {
     x: 810,
     y: 165,
-    label: "Segni e sintomi",
+    label: "Effetti",
     role: "area-2",
-    relation: "si manifesta con",
+    relation: "produce",
     leaves: [
-      { x: 1075, y: 80, label: "Dispnea e ortopnea" },
-      { x: 1075, y: 165, label: "Edemi declivi" },
-      { x: 1075, y: 250, label: "Turgore giugulare" },
+      { x: 1075, y: 80, label: "Forza di legge tra le parti" },
+      { x: 1075, y: 165, label: "Effetti obbligatori" },
+      { x: 1075, y: 250, label: "Effetti reali" },
     ],
   },
   {
     x: 790,
     y: 510,
-    label: "Interventi infermieristici",
+    label: "Scioglimento",
     role: "area-3",
-    relation: "richiede",
+    relation: "si scioglie per",
     leaves: [
-      { x: 1075, y: 425, label: "Peso ogni mattina" },
-      { x: 1075, y: 510, label: "Bilancio idrico" },
-      { x: 1075, y: 595, label: "Posizione semi-Fowler" },
+      { x: 1075, y: 425, label: "Mutuo dissenso" },
+      { x: 1075, y: 510, label: "Recesso" },
+      { x: 1075, y: 595, label: "Risoluzione" },
     ],
   },
   {
     x: 390,
     y: 510,
-    label: "Educazione",
+    label: "Patologie",
     role: "neutro",
-    relation: "prevede",
+    relation: "può presentare",
     leaves: [
-      { x: 125, y: 425, label: "Meno sodio a tavola" },
-      { x: 125, y: 510, label: "Aderenza alla terapia" },
-      { x: 125, y: 595, label: "Segni di peggioramento" },
+      { x: 125, y: 425, label: "Nullità" },
+      { x: 125, y: 510, label: "Annullabilità" },
+      { x: 125, y: 595, label: "Rescissione" },
     ],
   },
 ];

@@ -2,7 +2,7 @@
 
 # studymap
 
-PWA di studio con AI per studenti di infermieristica. Specifiche in `docs/SPEC.md`, codice spiegato in `MANUALE.md`, obiettivi in `OBIETTIVI.md` (caselle `- [ ]` / `- [x]` sotto titoli `##`: spuntale man mano).
+PWA di studio con AI per studenti universitari di qualsiasi corso di laurea (nata per infermieristica). Specifiche in `docs/SPEC.md`, codice spiegato in `MANUALE.md`, obiettivi in `OBIETTIVI.md` (caselle `- [ ]` / `- [x]` sotto titoli `##`: spuntale man mano).
 
 ## Regole (valgono anche per ogni subagent: copiale nel loro prompt)
 1. Quello che inventi o supponi senza averlo verificato (API, nomi di modelli, prezzi, comportamento di librerie) va segnalato all'utente come **NON VERIFICATO**.
