@@ -61,7 +61,7 @@
 - [ ] Modifica della mappa con un comando AI (nuovo)
 - [ ] Spiegazione semplificata di un passaggio (nuovo)
 - [ ] Registro del testo: semplice o tecnico (nuovo)
-- [ ] Input da Word e PowerPoint (nuovo)
+- [x] Input da Word e PowerPoint (nuovo) — con lettura di immagini, schemi e formule anche nei PDF
 - [ ] Input da link web e YouTube (nuovo)
 - [ ] Input da registrazione audio della lezione (nuovo) — rimandato. Idea: tasto "Registra lezione" nella materia, audio a pezzi da 10 minuti, scaricato sul dispositivo e non salvato su Storage (1 GB gratuiti in tutto), su Supabase solo trascrizione e riassunto; prima verificare un provider gratuito di trascrizione utilizzabile in UE; avviso di registrare solo col permesso del docente
 - [ ] Altri tipi di domanda: vero/falso, completamento, aperta (nuovo) — fatti vero/falso e completamento; manca la domanda aperta

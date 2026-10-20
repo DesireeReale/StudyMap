@@ -48,7 +48,7 @@ export function checkPdfPages(plan: PlanId, pages: number): Decision {
   if (pages <= max) return allow;
   return {
     ok: false,
-    reason: `Il PDF ha ${pages} pagine: il piano ${plan} ne consente al massimo ${max}.`,
+    reason: `Il file ha ${pages} pagine o slide: il piano ${plan} ne consente al massimo ${max}.`,
     upgrade: plan === "free",
   };
 }

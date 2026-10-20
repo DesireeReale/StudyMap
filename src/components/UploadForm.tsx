@@ -11,7 +11,19 @@ const ACCEPT: Record<string, string> = {
   "image/png": "png",
   "image/jpeg": "jpg",
   "image/webp": "webp",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
 };
+const EXTENSIONS = new Set(Object.values(ACCEPT));
+const LEGACY = /\.(doc|ppt)$/i;
+const UNSUPPORTED = "Formato non supportato: carica PDF, Word (.docx), PowerPoint (.pptx), PNG, JPEG o WebP.";
+
+function fileExtension(file: File): string | undefined {
+  const fromName = file.name.split(".").pop()?.toLowerCase();
+  return ACCEPT[file.type] ?? (fromName && EXTENSIONS.has(fromName) ? fromName : undefined);
+}
+
+const MIME_OF = Object.fromEntries(Object.entries(ACCEPT).map(([mime, ext]) => [ext, mime]));
 
 type Problem = { message: string; upgrade: boolean };
 
@@ -32,8 +44,10 @@ export function UploadForm({
   const [mode, setMode] = useState<"file" | "text">(initialMode);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<Problem | null>(null);
+  const [ext, setExt] = useState<string>();
+  const [figures, setFigures] = useState(false);
 
-  async function submit(body: Record<string, string>) {
+  async function submit(body: Record<string, string | boolean>) {
     const res = await fetch("/api/documents", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -58,8 +72,11 @@ export function UploadForm({
       }
       const file = form.get("file");
       if (!(file instanceof File) || !file.size) return setProblem({ message: "Scegli un file.", upgrade: false });
-      const ext = ACCEPT[file.type];
-      if (!ext) return setProblem({ message: "Formato non supportato: carica PDF, PNG, JPEG o WebP.", upgrade: false });
+      const ext = fileExtension(file);
+      if (!ext) {
+        const message = LEGACY.test(file.name) ? "Questo è un vecchio file .doc o .ppt: aprilo e salvalo come .docx, .pptx oppure PDF." : UNSUPPORTED;
+        return setProblem({ message, upgrade: false });
+      }
       if (file.size > maxUploadBytes) {
         return setProblem({
           message: `Il file supera ${Math.round(maxUploadBytes / 1024 / 1024)} MB.`,
@@ -69,9 +86,9 @@ export function UploadForm({
       const storagePath = `${userId}/${crypto.randomUUID()}.${ext}`;
       const { error } = await supabaseBrowser()
         .storage.from("documents")
-        .upload(storagePath, file, { contentType: file.type });
+        .upload(storagePath, file, { contentType: MIME_OF[ext] });
       if (error) return setProblem({ message: "Caricamento non riuscito. Riprova.", upgrade: false });
-      await submit({ kind: "file", title: title || file.name.replace(/\.[^.]+$/, ""), storagePath, folderId });
+      await submit({ kind: "file", title: title || file.name.replace(/\.[^.]+$/, ""), storagePath, folderId, figures: ext !== "png" && ext !== "jpg" && ext !== "webp" && figures });
     } catch {
       setProblem({ message: "Errore di rete. Riprova.", upgrade: false });
     } finally {
@@ -98,7 +115,7 @@ export function UploadForm({
               onChange={() => setMode(m)}
               className="sr-only"
             />
-            {m === "file" ? "PDF o immagine" : "Testo o appunti"}
+            {m === "file" ? "File" : "Testo o appunti"}
           </label>
         ))}
       </fieldset>
@@ -133,14 +150,41 @@ export function UploadForm({
             name="file"
             type="file"
             required
-            accept={Object.keys(ACCEPT).join(",")}
+            accept={[...Object.keys(ACCEPT), ".docx", ".pptx"].join(",")}
+            onChange={(e) => {
+              const file = e.currentTarget.files?.[0];
+              const chosen = file ? fileExtension(file) : undefined;
+              setExt(chosen);
+              setFigures(chosen === "pptx" || chosen === "docx");
+            }}
             aria-describedby="upload-file-help"
             className="field h-auto py-2 file:mr-3 file:h-8 file:cursor-pointer file:rounded-full file:border-0 file:bg-secondary file:px-4 file:font-bold file:text-ink"
             data-testid="file-input"
           />
           <p id="upload-file-help" className="text-[13px] text-muted">
-            PDF, PNG, JPEG o WebP, fino a {Math.round(maxUploadBytes / 1024 / 1024)} MB.
+            PDF, Word, PowerPoint, PNG, JPEG o WebP, fino a {Math.round(maxUploadBytes / 1024 / 1024)} MB.
           </p>
+          {(ext === "pdf" || ext === "docx" || ext === "pptx") && (
+            <label className="mt-2 flex cursor-pointer items-start gap-3 rounded-row border border-border bg-sheet p-3">
+              <input
+                type="checkbox"
+                name="figures"
+                checked={figures}
+                onChange={(e) => setFigures(e.currentTarget.checked)}
+                className="mt-1 size-5 shrink-0 accent-[var(--accent)]"
+                aria-describedby="upload-figures-help"
+              />
+              <span>
+                <span className="block font-bold">Leggi anche immagini, schemi e formule</span>
+                <span id="upload-figures-help" className="block text-[13px] text-muted">
+                  L&apos;AI descrive grafici, formule e disegni, così finiscono anche in riassunto, flashcard e quiz. Il
+                  caricamento richiede più tempo.
+                  {ext === "pptx" &&
+                    " Le forme disegnate direttamente in PowerPoint non si leggono: per quelle esporta le slide in PDF e carica il PDF."}
+                </span>
+              </span>
+            </label>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-2">

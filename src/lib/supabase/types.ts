@@ -45,7 +45,7 @@ export type DocumentRow = {
   user_id: string;
   folder_id: string;
   title: string;
-  kind: "pdf" | "image" | "text";
+  kind: "pdf" | "image" | "text" | "docx" | "pptx";
   storage_path: string | null;
   page_count: number;
   pages: string[];

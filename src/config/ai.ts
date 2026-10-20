@@ -105,12 +105,13 @@ export const CHAINS: Record<PlanId, string[]> = {
   pro: ["muse-spark", "mistral-small", "gemini-flash", "gemini-flash-lite", "openrouter-free"],
 };
 
-export type TaskId = "mindmap" | "flashcards" | "transcribe" | "summary" | "quiz";
+export type TaskId = "mindmap" | "flashcards" | "transcribe" | "figure" | "summary" | "quiz";
 
 export const TASKS: Record<TaskId, { promptVersion: string; maxTokens: number }> = {
   mindmap: { promptVersion: "v2", maxTokens: 4000 },
   flashcards: { promptVersion: "v2", maxTokens: 4000 },
   transcribe: { promptVersion: "v1", maxTokens: 3000 },
+  figure: { promptVersion: "v1", maxTokens: 800 },
   summary: { promptVersion: "v1", maxTokens: 3000 },
   quiz: { promptVersion: "v2", maxTokens: 4000 },
 };

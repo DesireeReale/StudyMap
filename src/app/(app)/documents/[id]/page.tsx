@@ -10,10 +10,11 @@ import { EditableTitle } from "@/components/EditableTitle";
 import { GenerateButtons } from "@/components/GenerateButtons";
 import { Icon } from "@/components/icons";
 import { MapThumb } from "@/components/StudyMarks";
+import { pageCount } from "@/core/files";
 import { requireUser } from "@/lib/supabase/server";
 import { folderTrail, loadFolders, pageTitle } from "@/lib/workspace";
 
-const KIND_LABEL = { pdf: "PDF", image: "Immagine", text: "Testo incollato" } as const;
+const KIND_LABEL = { pdf: "PDF", image: "Immagine", text: "Testo incollato", docx: "Word", pptx: "PowerPoint" } as const;
 
 export async function generateMetadata({ params }: PageProps<"/documents/[id]">): Promise<Metadata> {
   return pageTitle("documents", (await params).id);
@@ -47,7 +48,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
         <div className="min-w-0">
           <EditableTitle table="documents" id={doc.id} title={doc.title} label="Titolo del documento" />
           <p className="num mt-1 text-[15px] text-muted">
-            {KIND_LABEL[doc.kind]} · {doc.page_count} {doc.page_count === 1 ? "pagina" : "pagine"} · caricato il{" "}
+            {KIND_LABEL[doc.kind]} · {pageCount(doc.kind, doc.page_count)} · caricato il{" "}
             {shortDate(doc.created_at)}
           </p>
         </div>

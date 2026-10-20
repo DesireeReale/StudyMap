@@ -1,5 +1,6 @@
 import "server-only";
 import { daysUntil } from "@/core/dates";
+import { pageCount } from "@/core/files";
 import { isDue } from "@/core/srs";
 import { monthPeriod } from "@/core/entitlements";
 import { pathTo } from "@/core/folders";
@@ -130,7 +131,7 @@ export function snippet(body: string, q: string, size = 140): string {
   return `${start > 0 ? "…" : ""}${text}${start + size < body.length ? "…" : ""}`;
 }
 
-const DOC_LABEL = { pdf: "PDF", image: "Immagine", text: "Testo" } as const;
+const DOC_LABEL = { pdf: "PDF", image: "Immagine", text: "Testo", docx: "Word", pptx: "PowerPoint" } as const;
 
 export function toMaterials(
   rows: {
@@ -153,7 +154,7 @@ export function toMaterials(
       kind: "documento" as const,
       id: d.id,
       title: d.title,
-      detail: `${DOC_LABEL[d.kind]} · ${d.page_count} ${d.page_count === 1 ? "pagina" : "pagine"}`,
+      detail: `${DOC_LABEL[d.kind]} · ${pageCount(d.kind, d.page_count)}`,
       date: d.created_at,
       place: place(d.folder_id),
     })),

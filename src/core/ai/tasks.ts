@@ -139,6 +139,27 @@ export async function transcribeImage(ctx: AiContext, dataUrl: string): Promise<
   return data.markdown;
 }
 
+export async function describeFigure(ctx: AiContext, dataUrl: string, context: string): Promise<string> {
+  const system = await systemPrompt("figure", TranscriptionSchema);
+  const { data } = await complete(ctx, {
+    task: "figure",
+    schema: TranscriptionSchema,
+    vision: true,
+    ocrPages: 1,
+    messages: [
+      { role: "system", content: system },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: `Testo che accompagna la figura:\n${context.slice(0, 2000) || "(nessuno)"}` },
+          { type: "image_url", image_url: { url: dataUrl } },
+        ],
+      },
+    ],
+  });
+  return data.markdown;
+}
+
 export async function generateSummary(ctx: AiContext, input: { title: string; pages: string[] }): Promise<Summary> {
   const system = await systemPrompt("summary", SummarySchema, input.title);
   const sections: Summary["sections"] = [];

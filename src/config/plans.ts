@@ -4,6 +4,7 @@ export type Plan = {
   generationsPerMonth: number;
   inputTokensPerMonth: number;
   maxPdfPages: number;
+  maxFigures: number;
   maxDocuments: number;
   maxSubjects: number;
   maxUploadBytes: number;
@@ -20,6 +21,7 @@ export const PLANS: Record<PlanId, Plan> = {
     generationsPerMonth: 5,
     inputTokensPerMonth: 1_000_000,
     maxPdfPages: 20,
+    maxFigures: 20,
     maxDocuments: 10,
     maxSubjects: 3,
     maxUploadBytes: 10 * MB,
@@ -32,6 +34,7 @@ export const PLANS: Record<PlanId, Plan> = {
     generationsPerMonth: 150,
     inputTokensPerMonth: 5_000_000,
     maxPdfPages: 200,
+    maxFigures: 200,
     maxDocuments: Infinity,
     maxSubjects: Infinity,
     maxUploadBytes: 25 * MB,

@@ -22,6 +22,14 @@ describe("ingestPdf", () => {
     expect(transcribe).toHaveBeenCalledTimes(1);
   });
 
+  it("describes the figures of pages with text when asked", async () => {
+    const transcribe = vi.fn(async () => "pagina scansionata");
+    const describe = vi.fn(async () => "grafico pressione-volume");
+    const pages = await ingestPdf(samplePdf(), { maxPages: 5, transcribe, figures: { describe, max: 10 } });
+    expect(pages[0]).toMatch(/^Lo scompenso[^\n]+\n\nFigura: grafico pressione-volume$/);
+    expect(describe).toHaveBeenCalledTimes(1);
+  });
+
   it("rejects PDFs over the page limit before extracting", async () => {
     const transcribe = vi.fn();
     await expect(ingestPdf(samplePdf(), { maxPages: 1, transcribe })).rejects.toBeInstanceOf(PageLimitError);

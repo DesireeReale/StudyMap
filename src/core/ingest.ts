@@ -1,4 +1,5 @@
 import { extractText, getDocumentProxy, renderPageAsImage } from "unpdf";
+import { figureMarker, type SourcePage } from "./office";
 
 export const MIN_PAGE_CHARS = 50;
 
@@ -9,30 +10,77 @@ export class PageLimitError extends Error {
 }
 
 export type Transcribe = (dataUrl: string) => Promise<string>;
+export type Describe = (dataUrl: string, context: string) => Promise<string>;
+export type Figures = { describe: Describe; max: number };
+
+const CONCURRENCY = 4;
+
+async function inParallel<T>(jobs: (() => Promise<T>)[]): Promise<T[]> {
+  const results: T[] = new Array(jobs.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < jobs.length) {
+      const i = next++;
+      results[i] = await jobs[i]!();
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, jobs.length) }, worker));
+  return results;
+}
+
+const withFigure = (text: string, description: string) => (description.trim() ? `${text}\n\nFigura: ${description.trim()}` : text);
+
+async function describeSafely(figures: Figures, dataUrl: string, context: string): Promise<string> {
+  try {
+    return await figures.describe(dataUrl, context);
+  } catch (e) {
+    console.error("figure description failed", e);
+    return "";
+  }
+}
 
 export async function ingestPdf(
   bytes: Uint8Array,
-  opts: { maxPages: number; transcribe: Transcribe },
+  opts: { maxPages: number; transcribe: Transcribe; figures?: Figures },
 ): Promise<string[]> {
   const pdf = await getDocumentProxy(new Uint8Array(bytes));
   if (pdf.numPages > opts.maxPages) throw new PageLimitError(pdf.numPages);
   const { text } = await extractText(pdf, { mergePages: false });
+  const render = (page: number) =>
+    renderPageAsImage(pdf, page, { canvasImport: () => import("@napi-rs/canvas"), scale: 1.5, toDataURL: true });
 
-  const pages: string[] = [];
-  for (let i = 0; i < text.length; i++) {
-    const pageText = text[i]!.trim();
-    if (pageText.length >= MIN_PAGE_CHARS) {
-      pages.push(pageText);
-      continue;
-    }
-    const image = await renderPageAsImage(pdf, i + 1, {
-      canvasImport: () => import("@napi-rs/canvas"),
-      scale: 1.5,
-      toDataURL: true,
-    });
-    pages.push((await opts.transcribe(image)).trim() || pageText);
-  }
-  return pages;
+  let budget = opts.figures?.max ?? 0;
+  return inParallel(
+    text.map((raw, i) => {
+      const pageText = raw.trim();
+      if (pageText.length < MIN_PAGE_CHARS) return async () => (await opts.transcribe(await render(i + 1))).trim() || pageText;
+      if (!opts.figures || budget <= 0) return async () => pageText;
+      budget--;
+      const figures = opts.figures;
+      return async () => withFigure(pageText, await describeSafely(figures, await render(i + 1), pageText));
+    }),
+  );
+}
+
+export async function ingestOffice(pages: SourcePage[], opts: { maxPages: number; figures?: Figures }): Promise<string[]> {
+  if (pages.length > opts.maxPages) throw new PageLimitError(pages.length);
+  let budget = opts.figures?.max ?? 0;
+  return inParallel(
+    pages.map((page) => {
+      const chosen = opts.figures ? page.figures.slice(0, Math.max(0, budget)) : [];
+      budget -= chosen.length;
+      return async () => {
+        let text = page.text;
+        for (const f of chosen) {
+          const description = await describeSafely(opts.figures!, `data:${f.mime};base64,${Buffer.from(f.bytes).toString("base64")}`, page.text);
+          text = text.includes(figureMarker(f.id))
+            ? text.replace(figureMarker(f.id), description.trim() ? `Figura: ${description.trim()}` : "")
+            : withFigure(text, description);
+        }
+        return text.replace(/\[\[figura:[^\]]+\]\]/g, "").replace(/\n{3,}/g, "\n\n").trim();
+      };
+    }),
+  );
 }
 
 export function textToPages(text: string, pageChars = 3000): string[] {

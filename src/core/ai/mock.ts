@@ -22,6 +22,7 @@ export const MOCK_OUTPUTS: Record<TaskId, unknown> = {
     ],
   },
   transcribe: { markdown: "# Appunti\nTesto trascritto di prova." },
+  figure: { markdown: "Grafico velocità-tempo: retta orizzontale, la velocità resta costante." },
   summary: {
     sections: [
       { heading: "Che cos'è", points: ["Lo scompenso cardiaco è l'incapacità del cuore di garantire una gittata adeguata."] },

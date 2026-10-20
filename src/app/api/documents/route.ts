@@ -2,19 +2,23 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { PLANS } from "@/config/plans";
 import { AiUnavailableError } from "@/core/ai/client";
-import { transcribeImage } from "@/core/ai/tasks";
+import { describeFigure, transcribeImage } from "@/core/ai/tasks";
 import { canSaveDocument, checkPdfPages, checkUploadSize } from "@/core/entitlements";
 import { MAX_NOTE_CHARS, MIME, detectFileKind } from "@/core/files";
-import { PageLimitError, ingestPdf } from "@/core/ingest";
+import { PageLimitError, ingestOffice, ingestPdf } from "@/core/ingest";
+import { officeKind, readDocx, readPptx } from "@/core/office";
+import { readZip } from "@/core/zip";
 import { aiContextFor, guardAi } from "@/lib/ai";
 import { apiUser, denied, fail } from "@/lib/api";
 
 export const maxDuration = 300;
 
+const UNSUPPORTED = "Formato non supportato: carica PDF, Word (.docx), PowerPoint (.pptx), PNG, JPEG o WebP.";
+
 const folderId = z.uuid().optional();
 const Body = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("text"), title: z.string().trim().min(1).max(200), text: z.string().trim().min(20), folderId }),
-  z.object({ kind: z.literal("file"), title: z.string().trim().min(1).max(200), storagePath: z.string().min(1), folderId }),
+  z.object({ kind: z.literal("file"), title: z.string().trim().min(1).max(200), storagePath: z.string().min(1), folderId, figures: z.boolean().default(false) }),
 ]);
 
 export async function POST(request: Request) {
@@ -52,10 +56,25 @@ export async function POST(request: Request) {
 
   const size = checkUploadSize(profile.plan, blob.size);
   const bytes = new Uint8Array(await blob.arrayBuffer());
-  const kind = detectFileKind(bytes);
-  if (!size.ok || !kind) {
+  const detected = detectFileKind(bytes);
+  if (!size.ok) {
     await removeUpload();
-    return size.ok ? fail("Formato non supportato: carica PDF, PNG, JPEG o WebP.", 415) : denied(size, 413);
+    return denied(size, 413);
+  }
+  if (detected === "legacy-office") {
+    await removeUpload();
+    return fail("Questo è un vecchio file .doc o .ppt: aprilo e salvalo come .docx, .pptx oppure PDF.", 415);
+  }
+  let zip: ReturnType<typeof readZip> | null = null;
+  try {
+    zip = detected === "zip" ? readZip(bytes) : null;
+  } catch {
+    zip = null;
+  }
+  const kind = zip ? officeKind(zip) : detected === "zip" ? null : detected;
+  if (!kind) {
+    await removeUpload();
+    return fail(UNSUPPORTED, 415);
   }
 
   const guard = await guardAi(profile);
@@ -65,13 +84,15 @@ export async function POST(request: Request) {
   }
 
   const ctx = aiContextFor(profile);
+  const plan = PLANS[profile.plan];
   const transcribe = (dataUrl: string) => transcribeImage(ctx, dataUrl);
+  const figures = body.figures ? { describe: (dataUrl: string, context: string) => describeFigure(ctx, dataUrl, context), max: plan.maxFigures } : undefined;
   let pages: string[];
   try {
-    pages =
-      kind === "pdf"
-        ? await ingestPdf(bytes, { maxPages: PLANS[profile.plan].maxPdfPages, transcribe })
-        : [await transcribe(`data:${MIME[kind]};base64,${Buffer.from(bytes).toString("base64")}`)];
+    if (kind === "pdf") pages = await ingestPdf(bytes, { maxPages: plan.maxPdfPages, transcribe, figures });
+    else if (kind === "docx") pages = await ingestOffice(readDocx(zip!), { maxPages: plan.maxPdfPages, figures });
+    else if (kind === "pptx") pages = await ingestOffice(readPptx(zip!), { maxPages: plan.maxPdfPages, figures });
+    else pages = [await transcribe(`data:${MIME[kind]};base64,${Buffer.from(bytes).toString("base64")}`)];
   } catch (e) {
     await removeUpload();
     if (e instanceof PageLimitError) {
@@ -93,7 +114,7 @@ export async function POST(request: Request) {
     .insert({
       title: body.title,
       folder_id: body.folderId,
-      kind: kind === "pdf" ? "pdf" : "image",
+      kind: kind === "png" || kind === "jpeg" || kind === "webp" ? "image" : kind,
       storage_path: body.storagePath,
       pages,
       page_count: pages.length,

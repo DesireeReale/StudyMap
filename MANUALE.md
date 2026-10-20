@@ -84,7 +84,8 @@ studymap/
 | [src/core/ai/prompts.ts](src/core/ai/prompts.ts) | Carica i prompt da file e sostituisce `{{variabili}}` | 🟡 |
 | [src/core/ai/mock.ts](src/core/ai/mock.ts) | Risposte finte per test e sviluppo (`AI_MOCK=1`) | 🟢 |
 | [src/core/entitlements.ts](src/core/entitlements.ts) | Scelta dei modelli per piano e consenso, controlli sui limiti, messaggi | 🟡 |
-| [src/core/ingest.ts](src/core/ingest.ts) | PDF o testo → array di pagine | 🟡 |
+| [src/core/ingest.ts](src/core/ingest.ts) | PDF, Word, PowerPoint o testo → array di pagine, con le figure descritte | 🟡 |
+| [src/core/office.ts](src/core/office.ts), [zip.ts](src/core/zip.ts) | Legge testo, note e immagini da .docx e .pptx (sono archivi zip di XML) | 🟡 |
 | [src/core/files.ts](src/core/files.ts) | Riconosce il tipo di file dai "magic bytes" | 🟡 |
 | [src/core/graph.ts](src/core/graph.ts) | Mappa dell'LLM → grafo React Flow, layout dagre, colori | 🟢 |
 | [src/lib/ai.ts](src/lib/ai.ts) | Crea il contesto AI per l'utente; quote e rate limit sul DB | 🟡 |
@@ -130,7 +131,19 @@ Le parentesi in `(app)` raggruppano delle pagine senza comparire nella URL. Prim
    - estrae il testo pagina per pagina con `unpdf`;
    - le pagine con meno di 50 caratteri (`MIN_PAGE_CHARS`) sono probabilmente scansioni: vengono trasformate in immagine PNG e trascritte dall'LLM con `transcribeImage`.
 
-   Le immagini caricate vanno direttamente alla trascrizione ([route.ts:75](src/app/api/documents/route.ts:75)).
+   Le immagini caricate vanno direttamente alla trascrizione.
+
+   **Word e PowerPoint.** `detectFileKind` riconosce lo zip, [zip.ts](src/core/zip.ts) lo apre con `node:zlib` (nessuna libreria) e `officeKind` capisce se è un .docx o un .pptx. [office.ts](src/core/office.ts) legge il testo:
+   - **PowerPoint:** una pagina per slide, nell'ordine di `presentation.xml`, con le note del relatore in fondo ("Note del relatore:");
+   - **Word:** paragrafi divisi in pagine con `textToPages`; dove c'è un'immagine resta un segnaposto `[[figura:N]]`.
+
+   I vecchi .doc e .ppt (formato binario, riconosciuto dai primi byte) vengono rifiutati con l'invito a salvarli come .docx, .pptx o PDF.
+
+   **Figure (opzione "Leggi anche immagini, schemi e formule").** Se lo studente la spunta (per Word e PowerPoint è già spuntata), `describeFigure` fa descrivere all'AI:
+   - nei PDF, la foto dell'intera pagina, insieme al suo testo;
+   - in Word e PowerPoint, ogni immagine inserita (PNG, JPEG, WebP, GIF di almeno 1 KB; la stessa immagine ripetuta si descrive una volta sola).
+
+   La descrizione si aggiunge alla pagina come "Figura: …", al posto del segnaposto nei .docx. Al massimo `maxFigures` figure per documento ([plans.ts](src/config/plans.ts): Free 20, Pro 200), 4 alla volta (`CONCURRENCY` in ingest.ts). Se una descrizione fallisce, la figura viene saltata e il documento si salva lo stesso. Le forme disegnate direttamente in PowerPoint non sono immagini e non si leggono: per quelle serve caricare il PDF delle slide.
 8. **Salvataggio.** Il documento viene salvato in `documents` con `pages` (array di testi, uno per pagina). Il browser va su `/documents/{id}`.
 
 ### Fase B: generazione della mappa
@@ -242,6 +255,12 @@ Il consenso è la colonna `profiles.ai_data_sharing_consent_at`, che l'utente at
 - **Modello**: la catena *visione* (`vision: true`).
 - **Costi**: registra `ocr_pages = 1` per pagina trascritta.
 - *Perché non Mistral OCR?* È a pagamento (circa 4 $ ogni 1000 pagine) e ha un endpoint diverso. Con un modello multimodale gratuito il costo è zero; Mistral OCR si può aggiungere se la qualità non basta.
+
+#### c2) Descrizione delle figure: `describeFigure`
+- **Dove**: [tasks.ts](src/core/ai/tasks.ts), chiamata durante l'ingestione solo con l'opzione delle figure.
+- **Input**: il testo della pagina o slide (massimo 2000 caratteri, come contesto) e l'immagine.
+- **Prompt**: [figure.v1.md](prompts/figure.v1.md): descrive solo ciò che non è già nel testo (assi e andamento dei grafici, formule riscritte in testo, frecce degli schemi, molecole), massimo 120 parole, stringa vuota per loghi e decorazioni. Vale per qualsiasi materia.
+- **Modello**: la catena *visione*, `max_tokens` 800; registra `ocr_pages = 1` per figura.
 
 #### d) Riassunto: `generateSummary`
 - **Dove**: [tasks.ts](src/core/ai/tasks.ts), chiamata da [generate/route.ts](src/app/api/generate/route.ts) con `type: "summary"`.
