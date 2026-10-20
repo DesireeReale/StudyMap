@@ -215,7 +215,7 @@ export default async function Home() {
           <div className="mx-auto grid w-full max-w-[1180px] items-center gap-[clamp(32px,5vw,64px)] px-4 min-[901px]:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
             <div className="flex flex-col gap-[22px]">
               <Eyebrow>
-                Per chi studia all&apos;università · nata per infermieristica
+                Per studiare meglio, qualsiasi materia
               </Eyebrow>
               <h1
                 id="hero-title"
