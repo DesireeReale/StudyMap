@@ -137,6 +137,21 @@ export type FeatureRequestRow = {
   created_at: string;
 };
 
+export type AiJobRow = {
+  id: string;
+  user_id: string;
+  type: "mindmap" | "flashcards" | "summary" | "quiz";
+  document_id: string | null;
+  note_id: string | null;
+  status: "queued" | "running" | "done" | "error";
+  href: string | null;
+  error: string | null;
+  quota_period: string;
+  quiz_period: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type QuotaCounterRow = { user_id: string; period: string; kind: string; count: number };
 
 export type Database = {
@@ -156,6 +171,7 @@ export type Database = {
       quiz_attempts: Table<QuizAttemptRow, "quiz_id" | "score" | "total">;
       chat_messages: Table<ChatMessageRow, "role" | "content">;
       feature_requests: Table<FeatureRequestRow, "kind" | "message">;
+      ai_jobs: Table<AiJobRow, "user_id" | "type" | "quota_period">;
     };
     Views: { [_ in never]: never };
     Functions: {

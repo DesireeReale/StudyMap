@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MOCK_OUTPUTS } from "./ai/mock";
 import { MindMapSchema } from "./ai/schemas";
-import { childRole, mindMapToGraph, nodeRole } from "./graph";
+import { childRole, type Graph, mindMapToGraph, nodeRole, openingNodes } from "./graph";
 
 describe("mindMapToGraph", () => {
   it("creates one edge per non-root node and lays out ranks top-down", () => {
@@ -33,5 +33,20 @@ describe("node roles", () => {
     expect(nodeRole("#123456")).toBe("neutro");
     expect(childRole(undefined, 0)).toBe("radice");
     expect(childRole("radice", 4)).toBe("area-2");
+  });
+});
+
+describe("openingNodes", () => {
+  it("keeps the root and the first two levels", () => {
+    const graph = {
+      nodes: ["r", "a", "b", "a1", "a1x"].map((id) => ({ id, position: { x: 0, y: 0 }, data: { label: id, color: "neutro" } })),
+      edges: [
+        { id: "1", source: "r", target: "a" },
+        { id: "2", source: "r", target: "b" },
+        { id: "3", source: "a", target: "a1" },
+        { id: "4", source: "a1", target: "a1x" },
+      ],
+    };
+    expect(openingNodes(graph satisfies Graph)).toEqual([{ id: "r" }, { id: "a" }, { id: "b" }, { id: "a1" }]);
   });
 });

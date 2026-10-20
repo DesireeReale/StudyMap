@@ -6,6 +6,25 @@ import { Icon } from "./icons";
 import { UpgradeNotice } from "./UpgradeNotice";
 
 type Kind = "mindmap" | "flashcards" | "summary" | "quiz";
+type JobState = { status: "queued" | "running" | "done" | "error"; href: string | null; error: string | null };
+
+const POLL_MS = 2000;
+const PROGRESS: Record<Kind, string> = {
+  mindmap: "Sto creando la mappa…",
+  flashcards: "Sto creando le flashcard…",
+  summary: "Sto scrivendo il riassunto…",
+  quiz: "Sto preparando il quiz…",
+};
+
+async function waitForJob(jobId: string): Promise<JobState> {
+  for (;;) {
+    await new Promise((r) => setTimeout(r, POLL_MS));
+    const res = await fetch(`/api/jobs/${jobId}`, { cache: "no-store" });
+    if (!res.ok) return { status: "error", href: null, error: "Non riesco a leggere lo stato della generazione. Ricarica la pagina." };
+    const job = (await res.json()) as JobState;
+    if (job.status === "done" || job.status === "error") return job;
+  }
+}
 
 export function GenerateButtons({ source }: { source: { documentId: string } | { noteId: string } }) {
   const router = useRouter();
@@ -23,7 +42,11 @@ export function GenerateButtons({ source }: { source: { documentId: string } | {
       });
       const json = await res.json();
       if (!res.ok) return setProblem({ message: json.error, upgrade: json.upgrade });
-      router.push(json.href);
+      const job = await waitForJob(json.jobId);
+      if (job.status === "error" || !job.href) {
+        return setProblem({ message: job.error ?? "La generazione non è riuscita. Riprova.", upgrade: false });
+      }
+      router.push(job.href);
     } catch {
       setProblem({ message: "Errore di rete. Riprova.", upgrade: false });
     } finally {
@@ -36,23 +59,23 @@ export function GenerateButtons({ source }: { source: { documentId: string } | {
       <div className="flex flex-wrap gap-2 sm:justify-end">
         <button type="button" className="btn-secondary" disabled={!!busy} onClick={() => generate("summary")}>
           <Icon name="note" />
-          {busy === "summary" ? "Scrivo il riassunto…" : "Riassunto"}
+          {busy === "summary" ? PROGRESS.summary : "Riassunto"}
         </button>
         <button type="button" className="btn-secondary" disabled={!!busy} onClick={() => generate("quiz")}>
           <Icon name="check" />
-          {busy === "quiz" ? "Preparo il quiz…" : "Quiz"}
+          {busy === "quiz" ? PROGRESS.quiz : "Quiz"}
         </button>
         <button type="button" className="btn-secondary" disabled={!!busy} onClick={() => generate("flashcards")}>
           <Icon name="cards" />
-          {busy === "flashcards" ? "Creo le flashcard…" : "Genera flashcard"}
+          {busy === "flashcards" ? PROGRESS.flashcards : "Genera flashcard"}
         </button>
         <button type="button" className="btn-primary" disabled={!!busy} onClick={() => generate("mindmap")}>
           <Icon name="map" />
-          {busy === "mindmap" ? "Creo la mappa…" : "Genera mappa concettuale"}
+          {busy === "mindmap" ? PROGRESS.mindmap : "Genera mappa concettuale"}
         </button>
       </div>
       <p aria-live="polite" className="text-sm text-muted empty:hidden">
-        {busy ? "Può richiedere fino a un minuto per i documenti lunghi." : ""}
+        {busy ? `${PROGRESS[busy]} Con i documenti lunghi può servire qualche minuto. Se cambi pagina il lavoro continua e il risultato compare nella cartella della materia.` : ""}
       </p>
       {problem && <UpgradeNotice message={problem.message} upgrade={problem.upgrade} />}
     </div>

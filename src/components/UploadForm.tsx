@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MAX_NOTE_CHARS } from "@/core/files";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import { Icon } from "./icons";
 import { UpgradeNotice } from "./UpgradeNotice";
 
 const ACCEPT: Record<string, string> = {
@@ -45,6 +46,7 @@ export function UploadForm({
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<Problem | null>(null);
   const [ext, setExt] = useState<string>();
+  const [fileName, setFileName] = useState<string>();
   const [figures, setFigures] = useState(false);
 
   async function submit(body: Record<string, string | boolean>) {
@@ -145,22 +147,32 @@ export function UploadForm({
           <label htmlFor="upload-file" className="label">
             File
           </label>
-          <input
-            id="upload-file"
-            name="file"
-            type="file"
-            required
-            accept={[...Object.keys(ACCEPT), ".docx", ".pptx"].join(",")}
-            onChange={(e) => {
-              const file = e.currentTarget.files?.[0];
-              const chosen = file ? fileExtension(file) : undefined;
-              setExt(chosen);
-              setFigures(chosen === "pptx" || chosen === "docx");
-            }}
-            aria-describedby="upload-file-help"
-            className="field h-auto py-2 file:mr-3 file:h-8 file:cursor-pointer file:rounded-full file:border-0 file:bg-secondary file:px-4 file:font-bold file:text-ink"
-            data-testid="file-input"
-          />
+          <div className="relative flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-card border-2 border-dashed border-accent bg-accent-soft p-6 text-center transition-colors duration-150 hover:bg-active has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--focus)]">
+            <Icon name="upload" size={32} className="text-accent" />
+            <span className="text-[17px] font-bold text-ink">
+              {fileName ?? "Trascina qui il file, oppure fai clic per sceglierlo"}
+            </span>
+            <span className="text-[13px] text-muted">
+              {fileName ? "Fai clic per cambiarlo" : "Funziona anche con le foto degli appunti"}
+            </span>
+            <input
+              id="upload-file"
+              name="file"
+              type="file"
+              required
+              accept={[...Object.keys(ACCEPT), ".docx", ".pptx"].join(",")}
+              onChange={(e) => {
+                const file = e.currentTarget.files?.[0];
+                const chosen = file ? fileExtension(file) : undefined;
+                setFileName(file?.name);
+                setExt(chosen);
+                setFigures(chosen === "pptx" || chosen === "docx");
+              }}
+              aria-describedby="upload-file-help"
+              className="absolute inset-0 size-full cursor-pointer opacity-0"
+              data-testid="file-input"
+            />
+          </div>
           <p id="upload-file-help" className="text-[13px] text-muted">
             PDF, Word, PowerPoint, PNG, JPEG o WebP, fino a {Math.round(maxUploadBytes / 1024 / 1024)} MB.
           </p>

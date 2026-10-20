@@ -21,7 +21,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { APP_STYLES, type AppStyle } from "@/config/styles";
-import { NODE_ROLES, childRole, layoutGraph, nodeRole, type Graph, type NodeRole } from "@/core/graph";
+import { NODE_ROLES, childRole, layoutGraph, nodeRole, openingNodes, type Graph, type NodeRole } from "@/core/graph";
 import { graphToMarkdown, graphToOpml } from "@/core/export";
 import { Icon } from "./icons";
 import { supabaseBrowser } from "@/lib/supabase/browser";
@@ -151,6 +151,7 @@ function Editor({
     graph.nodes.map((n) => ({ ...n, type: "concept" as const, data: { ...n.data, color: nodeRole(n.data.color) } })),
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(graph.edges);
+  const [openingView] = useState(() => ({ nodes: openingNodes(graph), padding: 0.15, minZoom: 0.6, maxZoom: 1.25 }));
   const [mapTitle, setMapTitle] = useState(title);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [status, setStatus] = useState<"saved" | "saving" | "error">("saved");
@@ -365,6 +366,7 @@ function Editor({
               labelBgPadding: [4, 2],
             }}
             fitView
+            fitViewOptions={openingView}
             minZoom={0.1}
             ariaLabelConfig={{ "node.a11yDescription.default": "Premi Invio o F2 per rinominare, Canc per eliminare, frecce per spostare." }}
           >

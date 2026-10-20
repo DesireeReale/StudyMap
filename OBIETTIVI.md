@@ -39,6 +39,7 @@
 - [ ] Pagina di provenienza su nodi e flashcard (nuovo)
 - [x] Risposte giuste dei quiz distribuite tra le opzioni (nuovo)
 - [ ] Prima rigenerazione di una mappa gratuita (nuovo)
+- [x] Generazione AI in background: job su Supabase, risposta immediata, stato aggiornato nella pagina, quote restituite in caso di errore (nuovo)
 - [x] Impostazioni: "Suggerisci un'idea" per idee e segnalazioni, salvate su Supabase (nuovo)
 - [ ] Email di avviso per i nuovi suggerimenti: impostare FEEDBACK_EMAIL_TO e RESEND_API_KEY
 
@@ -97,7 +98,7 @@
 - [x] Timer di studio nel dock (nuovo)
 
 ## Miglioramenti UX
-- [ ] Mappa: zoom minimo leggibile all'apertura (alta, piccolo)
+- [x] Mappa: zoom minimo leggibile all'apertura (alta, piccolo)
 - [ ] Mappa: colore per ramo ereditato dai figli (alta, medio)
 - [ ] Mappa: comprimi ed espandi i rami (alta, medio)
 - [ ] Mappa: barra contestuale e schermo intero (media, medio)
@@ -106,16 +107,16 @@
 - [ ] Quiz: barra di avanzamento e tasti 1-4 (media, piccolo)
 - [ ] Quiz: riepilogo sbagliate e "rifai le sbagliate" (alta, medio)
 - [ ] Quiz: esito per argomento (media, grande)
-- [ ] Upload: area di trascinamento grande (alta, piccolo)
+- [x] Upload: area di trascinamento grande (alta, piccolo)
 - [ ] Upload: scelta della fonte a riquadri (alta, medio)
 - [ ] Upload: "cosa vuoi creare" già nel caricamento (alta, medio)
 - [ ] Upload: avanzamento a passi con stato (media, medio)
-- [ ] Riassunti: indice laterale delle sezioni (alta, piccolo)
+- [x] Riassunti: indice laterale delle sezioni (alta, piccolo)
 - [ ] Riassunti: lunghezza e registro prima di generare (media, medio)
 - [ ] Riassunti: pagina di provenienza per paragrafo (alta, medio)
 - [ ] Riassunti: azioni sul testo selezionato (media, medio)
 - [ ] Riassunti: lettura ad alta voce del browser (media, medio)
-- [ ] Flashcard: carta grande con fronte e retro distinti (alta, piccolo)
+- [x] Flashcard: carta grande con fronte e retro distinti (alta, piccolo)
 - [ ] Flashcard: stato del mazzo sempre visibile (media, piccolo)
 - [ ] Flashcard: scorrimento su mobile (media, medio)
 - [ ] Flashcard: export ed elimina in un menu (bassa, piccolo)

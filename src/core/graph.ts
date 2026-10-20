@@ -87,3 +87,14 @@ export function mindMapToGraph(map: MindMap): Graph {
       })),
   });
 }
+
+export function openingNodes(graph: Graph, depth = 2): { id: string }[] {
+  const targets = new Set(graph.edges.map((e) => e.target));
+  const ids = new Set(graph.nodes.filter((n) => !targets.has(n.id)).map((n) => n.id));
+  let level = new Set(ids);
+  for (let d = 0; d < depth; d++) {
+    level = new Set(graph.edges.filter((e) => level.has(e.source) && !ids.has(e.target)).map((e) => e.target));
+    for (const id of level) ids.add(id);
+  }
+  return [...ids].map((id) => ({ id }));
+}

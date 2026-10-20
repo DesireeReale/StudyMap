@@ -1,13 +1,12 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { z } from "zod";
 import { PLANS } from "@/config/plans";
-import { AiUnavailableError } from "@/core/ai/client";
-import { generateFlashcards, generateMindMap, generateQuiz, generateSummary, summaryToText } from "@/core/ai/tasks";
 import { generationLimitReached, monthPeriod, quizLimitReached, quotaLimit, weekPeriod } from "@/core/entitlements";
-import { mindMapToGraph } from "@/core/graph";
 import { textToPages } from "@/core/ingest";
-import { aiContextFor, consumeQuota, guardAi } from "@/lib/ai";
+import { consumeQuota, guardAi } from "@/lib/ai";
 import { apiUser, denied, fail } from "@/lib/api";
+import { failJob, runJob, type Source } from "@/lib/jobs";
+import { supabaseAdmin } from "@/lib/supabase/server";
 
 export const maxDuration = 300;
 
@@ -23,7 +22,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return fail("Richiesta non valida", 400);
   const body = parsed.data;
 
-  let doc: { id: string | null; title: string; pages: string[]; folder_id: string };
+  let doc: Source;
   if ("noteId" in body) {
     const { data: note } = await supabase.from("notes").select("title, body, folder_id").eq("id", body.noteId).single();
     if (!note) return fail("Appunto non trovato", 404);
@@ -38,75 +37,36 @@ export async function POST(request: Request) {
   const guard = await guardAi(profile);
   if (!guard.ok) return denied(guard, 429);
 
-  const week = weekPeriod();
-  if (body.type === "quiz" && !(await consumeQuota(profile.id, "quiz", week, 1, quotaLimit(PLANS[profile.plan].quizzesPerWeek)))) {
+  const week = body.type === "quiz" ? weekPeriod() : null;
+  if (week && !(await consumeQuota(profile.id, "quiz", week, 1, quotaLimit(PLANS[profile.plan].quizzesPerWeek)))) {
     return denied(quizLimitReached(profile.plan), 402);
   }
-  const refundQuiz = () => (body.type === "quiz" ? consumeQuota(profile.id, "quiz", week, -1, null) : null);
+  const refundQuiz = () => (week ? consumeQuota(profile.id, "quiz", week, -1, null) : null);
 
   const period = monthPeriod();
-  const limit = quotaLimit(PLANS[profile.plan].generationsPerMonth);
-  if (!(await consumeQuota(profile.id, "generation", period, 1, limit))) {
+  if (!(await consumeQuota(profile.id, "generation", period, 1, quotaLimit(PLANS[profile.plan].generationsPerMonth)))) {
     await refundQuiz();
     return denied(generationLimitReached(profile.plan), 402);
   }
 
-  const ctx = aiContextFor(profile);
-  const input = { title: doc.title, pages: doc.pages };
-  try {
-    if (body.type === "mindmap") {
-      const graph = mindMapToGraph(await generateMindMap(ctx, input));
-      const { data, error } = await supabase
-        .from("maps")
-        .insert({ title: doc.title, document_id: doc.id, folder_id: doc.folder_id, graph })
-        .select("id")
-        .single();
-      if (error) throw error;
-      return NextResponse.json({ id: data.id, href: `/maps/${data.id}` });
-    }
-
-    if (body.type === "summary") {
-      const text = summaryToText(await generateSummary(ctx, input));
-      const { data, error } = await supabase
-        .from("notes")
-        .insert({ title: `Riassunto · ${doc.title}`.slice(0, 200), body: text.slice(0, 100_000), folder_id: doc.folder_id })
-        .select("id")
-        .single();
-      if (error) throw error;
-      return NextResponse.json({ id: data.id, href: `/notes/${data.id}` });
-    }
-
-    if (body.type === "quiz") {
-      const questions = await generateQuiz(ctx, input);
-      const { data, error } = await supabase
-        .from("quizzes")
-        .insert({ title: doc.title, document_id: doc.id, folder_id: doc.folder_id, questions })
-        .select("id")
-        .single();
-      if (error) throw error;
-      return NextResponse.json({ id: data.id, href: `/quizzes/${data.id}` });
-    }
-
-    const cards = await generateFlashcards(ctx, input);
-    const { data: deck, error } = await supabase
-      .from("decks")
-      .insert({ title: doc.title, document_id: doc.id, folder_id: doc.folder_id })
-      .select("id")
-      .single();
-    if (error) throw error;
-    const { error: cardsError } = await supabase
-      .from("flashcards")
-      .insert(cards.map((c, position) => ({ deck_id: deck.id, front: c.front, back: c.back, position })));
-    if (cardsError) {
-      await supabase.from("decks").delete().eq("id", deck.id);
-      throw cardsError;
-    }
-    return NextResponse.json({ id: deck.id, href: `/decks/${deck.id}` });
-  } catch (e) {
+  const { data: job, error } = await supabaseAdmin()
+    .from("ai_jobs")
+    .insert({
+      user_id: profile.id,
+      type: body.type,
+      document_id: "documentId" in body ? body.documentId : null,
+      note_id: "noteId" in body ? body.noteId : null,
+      quota_period: period,
+      quiz_period: week,
+    })
+    .select("*")
+    .single();
+  if (error) {
     await consumeQuota(profile.id, "generation", period, -1, null);
     await refundQuiz();
-    if (e instanceof AiUnavailableError) return fail(e.message, 503);
-    console.error("generation failed", e);
     return fail("La generazione non è riuscita. Riprova.", 500);
   }
+
+  after(() => runJob(job, supabase, profile, doc).catch((e) => failJob(job, String(e))));
+  return NextResponse.json({ jobId: job.id }, { status: 202 });
 }

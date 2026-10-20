@@ -107,15 +107,28 @@ export function FlashcardReview({ cards: initial }: { cards: Card[] }) {
         type="button"
         onClick={() => setFlipped((f) => !f)}
         aria-label={flipped ? "Mostra la domanda" : "Mostra la risposta"}
-        className={`flex min-h-64 cursor-pointer flex-col justify-between gap-6 rounded-card border p-6 text-left transition-colors duration-150 md:p-8 ${
-          flipped ? "border-accent bg-accent-soft" : "border-border bg-surface hover:border-control"
+        className={`flex min-h-[22rem] w-full cursor-pointer flex-col items-center justify-center gap-5 rounded-card border-2 bg-sheet p-6 text-center transition-colors duration-150 md:min-h-[26rem] md:p-10 ${
+          flipped ? "border-accent" : "border-border hover:border-control"
         }`}
       >
-        <span className="text-sm text-muted">{flipped ? "Risposta" : "Domanda"}</span>
-        <span aria-live="polite" className="reading text-[22px] leading-snug md:text-[24px]">
-          {flipped ? card!.back : card!.front}
+        <span
+          className={`rounded-full px-3 py-1 font-mono text-[12px] tracking-[0.06em] uppercase ${
+            flipped ? "bg-pill-positive text-pill-positive-ink" : "bg-accent-soft text-ink"
+          }`}
+        >
+          {flipped ? "Risposta" : "Domanda"}
         </span>
-        <span className="text-sm text-muted">{flipped ? "Tocca per rivedere la domanda" : "Tocca o premi Spazio per la risposta"}</span>
+        <span aria-live="polite" className="flex w-full max-w-[40ch] flex-col items-center gap-5">
+          <span className={`reading font-display leading-snug ${flipped ? "text-[18px] text-muted" : "text-[26px] md:text-[30px]"}`}>
+            {card!.front}
+          </span>
+          {flipped && (
+            <span className="reading w-full border-t-2 border-accent-soft pt-5 text-[24px] leading-snug md:text-[28px]">
+              {card!.back}
+            </span>
+          )}
+        </span>
+        <span className="text-sm text-muted">{flipped ? "Tocca per nascondere la risposta" : "Tocca o premi Spazio per la risposta"}</span>
       </button>
       {flipped && (
         <div className="grid grid-cols-2 gap-2">

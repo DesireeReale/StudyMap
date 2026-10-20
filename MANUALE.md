@@ -148,19 +148,22 @@ Le parentesi in `(app)` raggruppano delle pagine senza comparire nella URL. Prim
 
 ### Fase B: generazione della mappa
 
-9. **Clic.** Premi "Genera mappa concettuale" in [GenerateButtons.tsx:18](src/components/GenerateButtons.tsx:18), che chiama `POST /api/generate` con `{documentId, type:"mindmap"}`.
-10. **Controlli.** In [generate/route.ts:15](src/app/api/generate/route.ts:15):
+9. **Clic.** Premi "Genera mappa concettuale" in [GenerateButtons.tsx](src/components/GenerateButtons.tsx), che chiama `POST /api/generate` con `{documentId, type:"mindmap"}`.
+10. **Controlli e job.** In [generate/route.ts](src/app/api/generate/route.ts):
     - carica il documento (la RLS garantisce che sia tuo);
     - `guardAi` controlla il rate limit e il tetto di token;
-    - `consumeQuota(..., "generation", ...)` ([:32](src/app/api/generate/route.ts:32)) consuma una generazione del mese. Se sei al limite risponde 402 con `upgrade: true` e la UI mostra `UpgradeNotice`.
+    - `consumeQuota(..., "generation", ...)` consuma una generazione del mese (e per i quiz una della settimana). Se sei al limite risponde 402 con `upgrade: true` e la UI mostra `UpgradeNotice`;
+    - crea una riga nella tabella `ai_jobs` (stato `queued`) e **risponde subito** con `jobId`. Il lavoro vero parte con `after()` di Next, nella stessa funzione ma dopo la risposta: la richiesta del browser non resta aperta.
+    - Il browser chiede lo stato ogni 2 secondi a `GET /api/jobs/{id}` ([jobs/[id]/route.ts](src/app/api/jobs/[id]/route.ts)) e, a stato `done`, apre il risultato.
+    - **Limite:** `after()` ha la stessa durata massima della funzione (`maxDuration = 300`, il massimo del piano Hobby di Vercel). Se la funzione viene interrotta, il job resta fermo: dopo 6 minuti (`JOB_STALE_MS` in [core/jobs.ts](src/core/jobs.ts)) la lettura dello stato lo segna come errore e restituisce le quote. Per generazioni più lunghe servirà una coda vera (per esempio Vercel Workflows o una Edge Function).
 11. **Contesto AI.** `aiContextFor(profile)` ([lib/ai.ts:20](src/lib/ai.ts:20)) sceglie i modelli in base a piano e consenso e prepara la funzione che registra i consumi.
 12. **Generazione.** `generateMindMap` ([tasks.ts:23](src/core/ai/tasks.ts:23)):
     - divide le pagine in chunk (`chunkPages`);
     - per ogni chunk chiama `complete()` con il prompt `mindmap.v2.md`;
     - unisce i risultati con `mergeMindMaps`.
 13. **Dall'output dell'LLM al grafo.** `mindMapToGraph` ([graph.ts:34](src/core/graph.ts:34)) trasforma l'elenco dei nodi `{id,label,parentId,relation}` in nodi e archi di React Flow, con colori per livello e posizioni calcolate da dagre.
-14. **Salvataggio della mappa.** Il grafo va in `maps.graph` ([route.ts:43](src/app/api/generate/route.ts:43)). Se qualcosa fallisce, la generazione viene **restituita** alla quota ([:66](src/app/api/generate/route.ts:66)).
-15. **Editor.** Il browser va su `/maps/{id}`, dove [MapEditor.tsx](src/components/MapEditor.tsx) mostra il grafo. Ogni modifica viene salvata direttamente sul DB dopo 800 ms di inattività ([MapEditor.tsx:147](src/components/MapEditor.tsx:147)), protetta dalla RLS.
+14. **Salvataggio della mappa.** `runJob` in [lib/jobs.ts](src/lib/jobs.ts) salva il grafo in `maps.graph` e segna il job `done` con il link. Se qualcosa fallisce, `failJob` segna il job `error` e **restituisce** le quote, una sola volta anche se viene chiamato due volte.
+15. **Editor.** Il browser va su `/maps/{id}`, dove [MapEditor.tsx](src/components/MapEditor.tsx) mostra il grafo, inquadrando all'apertura la radice e i primi due livelli con uno zoom minimo di 0,6 (`openingNodes` in [graph.ts](src/core/graph.ts)). Ogni modifica viene salvata direttamente sul DB dopo 800 ms di inattività ([MapEditor.tsx:147](src/components/MapEditor.tsx:147)), protetta dalla RLS.
 
 ```mermaid
 sequenceDiagram
