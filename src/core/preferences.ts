@@ -3,11 +3,17 @@ import { APP_STYLES, FONTS, SPACINGS, TEXT_SIZES } from "@/config/styles";
 
 const ids = <T extends readonly { id: string }[]>(list: T) => list.map((x) => x.id) as [T[number]["id"], ...T[number]["id"][]];
 
+const minutes = (min: number, max: number, fallback: number) => z.coerce.number().int().min(min).max(max).catch(fallback);
+
 const Preferences = z.object({
   style: z.enum(ids(APP_STYLES)).catch(APP_STYLES[0].id),
   font: z.enum(ids(FONTS)).catch("stile"),
   size: z.enum(ids(TEXT_SIZES)).catch("normale"),
   spacing: z.enum(ids(SPACINGS)).catch("normale"),
+  timerStudy: minutes(5, 120, 25),
+  timerBreak: minutes(1, 30, 5),
+  timerLong: minutes(5, 60, 15),
+  timerSessions: minutes(1, 8, 4),
 });
 
 export type Preferences = z.infer<typeof Preferences>;

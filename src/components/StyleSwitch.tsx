@@ -14,7 +14,7 @@ export function applyPreferences(prefs: Preferences) {
 
 let saving = Promise.resolve();
 
-function savePreferences(prefs: Preferences) {
+export function savePreferences(prefs: Preferences) {
   saving = saving.then(async () => {
     const supabase = supabaseBrowser();
     const { data } = await supabase.auth.getSession();

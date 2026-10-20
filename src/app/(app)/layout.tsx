@@ -1,5 +1,6 @@
 import { AppNav } from "@/components/AppNav";
 import { PreferencesSync } from "@/components/StyleSwitch";
+import { StudyTimerProvider } from "@/components/StudyTimer";
 import { aiMockEnabled } from "@/lib/ai";
 import { getWorkspace } from "@/lib/app-style";
 import { requireUser } from "@/lib/supabase/server";
@@ -9,6 +10,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const { prefs, stale } = await getWorkspace(profile.preferences);
 
   return (
+    <StudyTimerProvider prefs={prefs}>
     <div className="flex min-h-dvh flex-col md:flex-row">
       <a
         href="#contenuto"
@@ -33,5 +35,6 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         </main>
       </div>
     </div>
+    </StudyTimerProvider>
   );
 }

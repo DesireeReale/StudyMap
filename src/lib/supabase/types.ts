@@ -97,6 +97,8 @@ export type AiUsageRow = {
   created_at: string;
 };
 
+export type StudySessionRow = { id: number; user_id: string; minutes: number; ended_at: string };
+
 export type QuotaCounterRow = { user_id: string; period: string; kind: string; count: number };
 
 export type Database = {
@@ -111,6 +113,7 @@ export type Database = {
       flashcards: Table<FlashcardRow, "deck_id" | "front" | "back">;
       ai_usage: Table<AiUsageRow, "user_id" | "task" | "provider" | "model" | "ok">;
       quota_counters: Table<QuotaCounterRow, "user_id" | "period" | "kind">;
+      study_sessions: Table<StudySessionRow, "minutes">;
     };
     Views: { [_ in never]: never };
     Functions: {

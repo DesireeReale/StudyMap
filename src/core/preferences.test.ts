@@ -12,7 +12,16 @@ describe("preferences", () => {
       font: "atkinson",
       size: "normale",
       spacing: "ampia",
+      timerStudy: 25,
+      timerBreak: 5,
+      timerLong: 15,
+      timerSessions: 4,
     });
+  });
+
+  it("reads timer lengths from strings and clamps bad ones", () => {
+    const p = parsePreferences({ timerStudy: "50", timerBreak: "0", timerSessions: 99 });
+    expect([p.timerStudy, p.timerBreak, p.timerSessions]).toEqual([50, 5, 4]);
   });
 
   it("falls back to defaults on junk", () => {

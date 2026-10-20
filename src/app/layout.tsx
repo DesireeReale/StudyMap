@@ -36,6 +36,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       data-font={prefs.font}
       data-size={prefs.size}
       data-spacing={prefs.spacing}
+      data-timer-study={prefs.timerStudy}
+      data-timer-break={prefs.timerBreak}
+      data-timer-long={prefs.timerLong}
+      data-timer-sessions={prefs.timerSessions}
       className={`${fonts} h-full antialiased`}>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>

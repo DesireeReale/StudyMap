@@ -7,6 +7,7 @@ import type { Preferences } from "@/core/preferences";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { BrandMark, Icon, type IconName } from "./icons";
 import { StyleToggle } from "./StyleSwitch";
+import { MiniTimer } from "./StudyTimer";
 
 const LINKS: { href: string; label: string; icon: IconName; match: (p: string) => boolean }[] = [
   {
@@ -56,6 +57,7 @@ function Account({ email, plan, prefs }: { email: string; plan: "free" | "pro"; 
   const router = useRouter();
   return (
     <div className="flex flex-col gap-2 border-t border-border pt-4">
+      <MiniTimer />
       <p className="flex items-center gap-1.5 px-3 text-[13px] text-muted" aria-hidden="true">
         <Icon name="layout" size={14} />
         Cambia tema

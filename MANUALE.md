@@ -398,6 +398,7 @@ npm run typecheck
 |---|---|---|
 | `profiles` | piano (`free`/`pro`), consenso AI, data dell'esame, `preferences` (stile, carattere, dimensione, spaziatura) | si ricrea solo con un nuovo login |
 | `folders` | materie (cartelle senza `parent_id`) e sottocartelle, con colore, icona, ordine | si elimina solo se vuota |
+| `study_sessions` | minuti di studio completati con il timer | perdi lo storico dei minuti |
 | `notes` | appunti dell'utente (testo semplice, max 100.000 caratteri) dentro una cartella | perdi l'appunto |
 | `documents` | titolo, tipo, `pages` (testo estratto), percorso del file | perdi il documento; mappe e flashcard restano (`document_id` diventa null) |
 | Storage `documents/{uid}/` | il file originale | il documento resta, il file no |
@@ -491,11 +492,13 @@ Lo schema iniziale è in [supabase/migrations/20261019000000_init.sql](supabase/
 - **Verifica**: `npm test` esegue `tokens.test.ts`, che controlla il contrasto WCAG AA (almeno 4,5:1) di testo, pulsanti e nodi in tutti gli stili, chiari e scuri.
 - **Cosa può rompersi**: un token mancante in un blocco (il test lo segnala) o un colore con contrasto troppo basso.
 
-**13b. Cambiare il dock della home**
-- **Dove**: i riquadri sono in [StudyDock.tsx](src/components/StudyDock.tsx), il timer in [StudyTimer.tsx](src/components/StudyTimer.tsx) (durata in `SESSION_SECONDS`), i dati si calcolano in `loadStudy` di [src/lib/workspace.ts](src/lib/workspace.ts) (per tutta la libreria o per una materia). I colori sono i token `--dock-*` di [globals.css](src/app/globals.css), uno per stile.
+**13b. Pannello di studio e timer**
+- **Pannello**: [StudyDock.tsx](src/components/StudyDock.tsx) è una striscia a 3 caselle (Ripasso di oggi, All'esame, timer). Lo stile è nelle classi `.study-strip`, `.study-cell`, `.study-chip`, `.study-btn` di [globals.css](src/app/globals.css): in Classic usa `--accent-soft`, in Vivid i colori `--dock-tile-*` con il contorno a inchiostro. I dati si calcolano in `loadStudy` di [src/lib/workspace.ts](src/lib/workspace.ts) (tutta la libreria o una materia), con tutte le richieste in parallelo.
+- **Timer**: [StudyTimer.tsx](src/components/StudyTimer.tsx). `StudyTimerProvider` sta nel layout dell'app ([(app)/layout.tsx](src/app/(app)/layout.tsx)), quindi il timer non si azzera cambiando pagina; `TimerCell` è la casella del pannello, `MiniTimer` la pillola nella barra laterale. Il tempo compare anche nel titolo della scheda.
+- **Dove stanno i dati del timer**: durate e numero di sessioni in `profiles.preferences` (`timerStudy`, `timerBreak`, `timerLong`, `timerSessions`, letti in [preferences.ts](src/core/preferences.ts)); i minuti di studio finiti nella tabella `study_sessions` (migrazione `20261020100000_study_sessions.sql`), da cui si calcola "oggi N min"; il conto alla rovescia in corso nel `localStorage` del browser (chiave `studymap-timer`), solo per non perderlo ricaricando la pagina.
 - **Carte da ripassare**: oggi sono le carte segnate "non so" più quelle mai ripassate. Con la ripetizione dilazionata (Fase 2) diventeranno le carte in scadenza oggi.
-- **Data dell'esame**: colonna `profiles.exam_date`, scrivibile dal client (migrazione `20261019000200_exam_date.sql`); si imposta in Impostazioni → Esame.
-- **Verifica**: `tokens.test.ts` controlla il contrasto del testo sui riquadri; `dates.test.ts` il conto dei giorni.
+- **Data dell'esame**: colonna `profiles.exam_date`, scrivibile dal client; si imposta in Impostazioni → Esame.
+- **Verifica**: `tokens.test.ts` controlla il contrasto dei colori del pannello; `preferences.test.ts` le durate del timer; `tests/db/study-sessions.test.ts` la tabella dei minuti.
 
 **13c. Materie, cartelle e appunti**
 - **Pagine**: la libreria ([library/page.tsx](src/app/(app)/library/page.tsx)) mostra le materie; [folders/[id]/page.tsx](src/app/(app)/folders/[id]/page.tsx) è la stessa pagina per materie e sottocartelle (il dock compare solo nella materia e conta tutto l'albero); [notes/[id]/page.tsx](src/app/(app)/notes/[id]/page.tsx) è l'editor degli appunti.

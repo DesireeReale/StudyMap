@@ -1,5 +1,4 @@
 import "server-only";
-import { PLANS } from "@/config/plans";
 import { daysUntil } from "@/core/dates";
 import { monthPeriod } from "@/core/entitlements";
 import { pathTo } from "@/core/folders";
@@ -55,9 +54,8 @@ export function folderStats(folders: FolderItem[], lists: { folder_id: string }[
 }
 
 export async function loadStudy(supabase: Supabase, profile: Profile, scope?: Promise<string[]>) {
-  const [decks, maps, cards, usage, folderIds] = await Promise.all([
+  const [decks, cards, usage, folderIds] = await Promise.all([
     supabase.from("decks").select("id, title, folder_id, created_at").order("created_at", { ascending: false }),
-    supabase.from("maps").select("id, title, folder_id").order("updated_at", { ascending: false }),
     supabase.from("flashcards").select("deck_id, last_result"),
     supabase.from("quota_counters").select("count").eq("period", monthPeriod()).eq("kind", "generation").maybeSingle(),
     scope,
@@ -65,7 +63,6 @@ export async function loadStudy(supabase: Supabase, profile: Profile, scope?: Pr
   const inScope = (row: { folder_id: string }) => !folderIds || folderIds.includes(row.folder_id);
   const deckList = (decks.data ?? []).filter(inScope);
   const deckIds = new Set(deckList.map((d) => d.id));
-  const mapList = (maps.data ?? []).filter(inScope);
 
   const counts = new Map<string, DeckCounts>();
   for (const c of cards.data ?? []) {
@@ -81,17 +78,15 @@ export async function loadStudy(supabase: Supabase, profile: Profile, scope?: Pr
   const focus = [...deckList].sort((a, b) => pending(counts.get(b.id)) - pending(counts.get(a.id)))[0];
   const focusCounts = focus ? counts.get(focus.id) : undefined;
   const used = usage.data?.count ?? 0;
-  const lastMap = mapList[0];
 
   const dock: DockData = {
     deck:
       focus && focusCounts
-        ? { title: focus.title, known: focusCounts.known, total: focusCounts.known + pending(focusCounts) }
+        ? { id: focus.id, title: focus.title, known: focusCounts.known, total: focusCounts.known + pending(focusCounts) }
         : null,
     toReview,
     examDays: profile.exam_date ? daysUntil(profile.exam_date) : null,
-    lastMap: lastMap ? { id: lastMap.id, title: lastMap.title } : null,
-    generations: { used, limit: PLANS[profile.plan].generationsPerMonth },
+    examDate: profile.exam_date,
   };
   return { dock, decks: deckList, counts, focus, toReview, used };
 }
