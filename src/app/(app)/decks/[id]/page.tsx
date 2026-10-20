@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { DeckEditor } from "@/components/DeckEditor";
 import { DeleteButton } from "@/components/DeleteButton";
 import { EditableTitle } from "@/components/EditableTitle";
 import { FlashcardReview } from "@/components/FlashcardReview";
@@ -19,7 +20,7 @@ export default async function DeckPage({ params }: PageProps<"/decks/[id]">) {
   const { data: deck } = await supabase.from("decks").select("id, title, document_id, folder_id").eq("id", id).maybeSingle();
   if (!deck) notFound();
   const [{ data: cards }, { data: doc }, folders] = await Promise.all([
-    supabase.from("flashcards").select("id, front, back, last_result").eq("deck_id", id).order("position"),
+    supabase.from("flashcards").select("id, front, back, last_result, position").eq("deck_id", id).order("position"),
     deck.document_id
       ? supabase.from("documents").select("id, title").eq("id", deck.document_id).maybeSingle()
       : Promise.resolve({ data: null }),
@@ -39,11 +40,14 @@ export default async function DeckPage({ params }: PageProps<"/decks/[id]">) {
       <EditableTitle table="decks" id={deck.id} title={deck.title} label="Titolo del mazzo" />
       {cards?.length ? (
         <div className="w-full max-w-[760px]">
-          <FlashcardReview cards={cards} />
+          <FlashcardReview key={cards.map((c) => `${c.id}${c.front.length}${c.back.length}`).join()} cards={cards} />
         </div>
       ) : (
-        <p className="rounded-row border border-dashed border-control px-4 py-3 text-sm text-muted">Questo mazzo è vuoto.</p>
+        <p className="rounded-row border border-dashed border-control px-4 py-3 text-sm text-muted">
+          Questo mazzo è vuoto: aggiungi la prima carta qui sotto.
+        </p>
       )}
+      <DeckEditor deckId={deck.id} cards={cards ?? []} />
       <div className="mt-6 flex justify-end border-t border-border pt-6">
         <DeleteButton table="decks" id={deck.id} redirect={`/folders/${deck.folder_id}`} label="Elimina mazzo" confirm={`Eliminare il mazzo "${deck.title}"?`} />
       </div>

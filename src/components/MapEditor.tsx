@@ -19,7 +19,6 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { toPng } from "html-to-image";
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { APP_STYLES, type AppStyle } from "@/config/styles";
 import { NODE_ROLES, childRole, layoutGraph, nodeRole, type Graph, type NodeRole } from "@/core/graph";
@@ -221,6 +220,7 @@ function Editor({
     const height = Math.max(600, Math.ceil(bounds.height + 160));
     const vp = getViewportForBounds(bounds, width, height, 0.2, 2, 0.08);
     const viewport = document.querySelector<HTMLElement>(".react-flow__viewport")!;
+    const { toPng } = await import("html-to-image");
     const dataUrl = await toPng(viewport, {
       backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--sheet").trim() || "#ffffff",
       width,

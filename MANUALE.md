@@ -497,7 +497,8 @@ Lo schema iniziale è in [supabase/migrations/20261019000000_init.sql](supabase/
 - **Timer**: [StudyTimer.tsx](src/components/StudyTimer.tsx). `StudyTimerProvider` sta nel layout dell'app ([(app)/layout.tsx](src/app/(app)/layout.tsx)), quindi il timer non si azzera cambiando pagina; `TimerCell` è la casella del pannello, `MiniTimer` la pillola nella barra laterale. Il tempo compare anche nel titolo della scheda.
 - **Dove stanno i dati del timer**: durate e numero di sessioni in `profiles.preferences` (`timerStudy`, `timerBreak`, `timerLong`, `timerSessions`, letti in [preferences.ts](src/core/preferences.ts)); i minuti di studio finiti nella tabella `study_sessions` (migrazione `20261020100000_study_sessions.sql`), da cui si calcola "oggi N min"; il conto alla rovescia in corso nel `localStorage` del browser (chiave `studymap-timer`), solo per non perderlo ricaricando la pagina.
 - **Carte da ripassare**: oggi sono le carte segnate "non so" più quelle mai ripassate. Con la ripetizione dilazionata (Fase 2) diventeranno le carte in scadenza oggi.
-- **Data dell'esame**: colonna `profiles.exam_date`, scrivibile dal client; si imposta in Impostazioni → Esame.
+- **Data dell'esame**: quella generale è `profiles.exam_date` (Impostazioni → Esame); ogni materia può averne una sua in `folders.exam_date` (Personalizza materia), che nel pannello della materia ha la precedenza.
+- **Modifica delle carte**: [DeckEditor.tsx](src/components/DeckEditor.tsx), sotto il ripasso nella pagina del mazzo. Ogni campo si salva quando lo lasci; si possono eliminare e aggiungere carte.
 - **Verifica**: `tokens.test.ts` controlla il contrasto dei colori del pannello; `preferences.test.ts` le durate del timer; `tests/db/study-sessions.test.ts` la tabella dei minuti.
 
 **13c. Materie, cartelle e appunti**
@@ -515,6 +516,10 @@ Lo schema iniziale è in [supabase/migrations/20261019000000_init.sql](supabase/
 - **Dove**: le opzioni sono in [styles.ts](src/config/styles.ts), la lettura con valori di riserva in [src/core/preferences.ts](src/core/preferences.ts), il pannello in [StyleSwitch.tsx](src/components/StyleSwitch.tsx).
 - **Come funziona**: la fonte vera è `profiles.preferences`. Il cookie `studymap-style` ne tiene una copia, così [layout.tsx](src/app/layout.tsx) mette subito `data-style`, `data-font`, `data-size` e `data-spacing` su `<html>`, senza lampo. Se apri l'app su un altro dispositivo, `PreferencesSync` riallinea il cookie al profilo.
 - **CSS**: `[data-font]` cambia `--body-font`; `[data-size]` ingrandisce i testi in `rem` e la classe `.reading` (appunti, testo dei documenti, flashcard); `[data-spacing="ampia"]` aumenta interlinea e spaziatura su `.reading`.
+
+**13e. Export della mappa**
+- **Dove**: `renderPng` ed `exportPdf` in [MapEditor.tsx](src/components/MapEditor.tsx). `html-to-image` e `jspdf` si caricano solo quando premi l'export.
+- **Attenzione**: `html-to-image` è fissata alla versione **1.11.11** (senza `^` in package.json). Le versioni successive non disegnano le linee della mappa, come avverte anche la documentazione di React Flow: prova del 20 ottobre, 946 pixel di linea con la 1.11.11 contro 126 con la 1.11.13. Non aggiornarla senza ripetere la prova.
 
 **14. Aggiornare gli screenshot della landing**
 - **Come**: lancia `npm run shots`. Crea un utente temporaneo sul progetto di test, usa l'AI finta, salva le immagini in `public/landing/` e poi cancella l'utente.

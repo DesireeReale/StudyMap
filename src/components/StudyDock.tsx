@@ -7,6 +7,7 @@ export type DockData = {
   toReview: number;
   examDays: number | null;
   examDate: string | null;
+  examHref?: string;
 };
 
 function Cell({ tone, label, children, wide = false }: { tone: 1 | 2 | 3; label?: string; children: ReactNode; wide?: boolean }) {
@@ -21,7 +22,7 @@ function Cell({ tone, label, children, wide = false }: { tone: 1 | 2 | 3; label?
 const big = "num font-mono text-[28px] leading-none";
 
 export function StudyDock({ data }: { data: DockData }) {
-  const { deck, toReview, examDays, examDate } = data;
+  const { deck, toReview, examDays, examDate, examHref = "/settings#esame" } = data;
   const pct = deck && deck.total ? Math.round((deck.known / deck.total) * 100) : 0;
 
   return (
@@ -41,7 +42,7 @@ export function StudyDock({ data }: { data: DockData }) {
 
       <Cell tone={2} label="All'esame">
         {examDays === null ? (
-          <Link href="/settings#esame" className="text-[15px] font-bold underline underline-offset-4">
+          <Link href={examHref} className="text-[15px] font-bold underline underline-offset-4">
             Imposta la data
           </Link>
         ) : (

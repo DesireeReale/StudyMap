@@ -9,7 +9,7 @@ import { supabaseServer } from "./supabase/server";
 import type { FolderRow, Profile } from "./supabase/types";
 
 type Supabase = Awaited<ReturnType<typeof supabaseServer>>;
-export type FolderItem = Pick<FolderRow, "id" | "parent_id" | "name" | "color" | "icon" | "position" | "created_at">;
+export type FolderItem = Pick<FolderRow, "id" | "parent_id" | "name" | "color" | "icon" | "position" | "created_at" | "exam_date">;
 
 export async function pageTitle(table: "folders" | "documents" | "maps" | "decks" | "notes", id: string) {
   const supabase = await supabaseServer();
@@ -19,7 +19,7 @@ export async function pageTitle(table: "folders" | "documents" | "maps" | "decks
 }
 
 export async function loadFolders(supabase: Supabase): Promise<FolderItem[]> {
-  const { data } = await supabase.from("folders").select("id, parent_id, name, color, icon, position, created_at").order("position");
+  const { data } = await supabase.from("folders").select("id, parent_id, name, color, icon, position, created_at, exam_date").order("position");
   return data ?? [];
 }
 
@@ -96,7 +96,7 @@ const pattern = (q: string) => `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 export async function searchWorkspace(supabase: Supabase, q: string, folderIds?: string[]) {
   const like = pattern(q);
   const scoped = <Q extends { in: (column: string, values: string[]) => Q }>(q: Q) => (folderIds ? q.in("folder_id", folderIds) : q);
-  const folderQuery = supabase.from("folders").select("id, parent_id, name, color, icon, position, created_at").ilike("name", like);
+  const folderQuery = supabase.from("folders").select("id, parent_id, name, color, icon, position, created_at, exam_date").ilike("name", like);
   const [folders, documents, maps, decks, noteTitles, noteBodies] = await Promise.all([
     folderIds ? folderQuery.in("id", folderIds) : folderQuery,
     scoped(supabase.from("documents").select("id, title, kind, page_count, created_at, folder_id").ilike("title", like)).limit(30),

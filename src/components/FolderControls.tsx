@@ -10,7 +10,7 @@ import { Icon } from "./icons";
 import { FolderBadge } from "./LibraryLists";
 import { UpgradeNotice } from "./UpgradeNotice";
 
-type Folder = { id: string; name: string; color: FolderColor; icon: FolderIcon; position: number };
+type Folder = { id: string; name: string; color: FolderColor; icon: FolderIcon; position: number; exam_date?: string | null };
 type Option = { id: string; name: string; depth: number };
 
 const indent = (o: Option) => `${"   ".repeat(o.depth)}${o.name}`;
@@ -244,7 +244,7 @@ export function FolderSettings({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState("");
 
-  async function save(change: { name?: string; color?: FolderColor; icon?: FolderIcon; parent_id?: string }) {
+  async function save(change: { name?: string; color?: FolderColor; icon?: FolderIcon; parent_id?: string; exam_date?: string | null }) {
     setError(null);
     const { error } = await supabaseBrowser().from("folders").update(change).eq("id", folder.id);
     if (error) return setError(folderError(error));
@@ -280,6 +280,21 @@ export function FolderSettings({
           </button>
         </div>
       </form>
+
+      {!parentId && (
+        <label className="flex flex-col gap-2">
+          <span className="label">Data dell&apos;esame di questa materia</span>
+          <span className="flex flex-wrap items-center gap-2">
+            <input
+              type="date"
+              defaultValue={folder.exam_date ?? ""}
+              onChange={(e) => save({ exam_date: e.target.value || null })}
+              className="field w-auto"
+            />
+            <span className="text-[13px] text-muted">Se la lasci vuota, vale la data generale delle Impostazioni.</span>
+          </span>
+        </label>
+      )}
 
       <fieldset>
         <legend className="label mb-2">Colore</legend>

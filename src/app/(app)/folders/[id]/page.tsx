@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { daysUntil } from "@/core/dates";
 import { childrenOf, MAX_FOLDER_DEPTH, moveTargets, pathTo, subtreeIds } from "@/core/folders";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { FolderGrid, FolderSettings } from "@/components/FolderControls";
@@ -86,7 +87,15 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
             </>
           }
         />
-        {depth === 1 && <StudyDock data={study.dock} />}
+        {depth === 1 && (
+          <StudyDock
+            data={{
+              ...study.dock,
+              ...(folder.exam_date ? { examDays: daysUntil(folder.exam_date), examDate: folder.exam_date } : {}),
+              examHref: `${base}?personalizza=1#personalizza`,
+            }}
+          />
+        )}
         <SearchForm q={q} label={`Cerca in ${folder.name}`} />
       </div>
 

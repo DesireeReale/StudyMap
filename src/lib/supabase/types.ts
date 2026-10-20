@@ -25,6 +25,7 @@ export type FolderRow = {
   color: FolderColor;
   icon: FolderIcon;
   position: number;
+  exam_date: string | null;
   created_at: string;
 };
 
