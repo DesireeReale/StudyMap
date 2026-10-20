@@ -5,10 +5,12 @@ import { useEffect, useRef } from "react";
 export type MascotPose = "idle" | "email" | "password" | "peek";
 
 const IDLE_END = 4;
+const COVER_START = 6.4;
 const HOLD = { peek: 6.5, password: 7.5 };
-const LOOK_LEFT = [2.42, 1.8];
-const LOOK_RIGHT = [3.0, 3.6];
-const LOOK_SPLIT = 0.6;
+const LOOK_LEFT = [3.6, 3.0];
+const LOOK_RIGHT = [1.8, 2.42];
+const LOOK_SPLIT = 0.5;
+const SPEED = 1.5;
 
 function gazeTime(look: number) {
   const k = Math.min(Math.max(look, 0), 1);
@@ -19,7 +21,7 @@ function gazeTime(look: number) {
 
 function seek(video: HTMLVideoElement, target: number, done?: () => void) {
   const from = video.currentTime;
-  const ms = Math.max(Math.min(Math.abs(target - from), 0.8) * 1000, 1);
+  const ms = Math.max((Math.abs(target - from) / SPEED) * 1000, 1);
   const start = performance.now();
   let id = 0;
   const step = (now: number) => {
@@ -49,7 +51,10 @@ export function LoginMascot({ pose, look }: { pose: MascotPose; look: number }) 
       video.currentTime = pose === "idle" ? 0 : HOLD[pose];
       return;
     }
-    if (pose !== "idle") return seek(video, HOLD[pose]);
+    if (pose !== "idle") {
+      if (video.currentTime < COVER_START) video.currentTime = COVER_START;
+      return seek(video, HOLD[pose]);
+    }
 
     const rewind = () => {
       if (video.currentTime >= IDLE_END) video.currentTime = 0;
@@ -58,7 +63,16 @@ export function LoginMascot({ pose, look }: { pose: MascotPose; look: number }) 
       video.addEventListener("timeupdate", rewind);
       video.play().catch(() => {});
     };
-    const stop = video.currentTime > IDLE_END ? seek(video, 0, loop) : (loop(), undefined);
+    const restart = () => {
+      video.currentTime = 0;
+      loop();
+    };
+    const stop =
+      video.currentTime > COVER_START
+        ? seek(video, COVER_START, restart)
+        : video.currentTime > IDLE_END
+          ? (restart(), undefined)
+          : (loop(), undefined);
     return () => {
       stop?.();
       video.removeEventListener("timeupdate", rewind);
