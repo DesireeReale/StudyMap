@@ -130,7 +130,8 @@
 
 ## Modelli AI
 - [x] Nemotron VL e Gemma 4 gratuiti (OpenRouter) nella catena, solo con consenso
-- [ ] Prova reale di Nemotron VL e Gemma 4 (con ok dell'utente)
+- [x] Prova reale di Nemotron VL e Gemma 4 (con ok dell'utente): Gemma 4 ok con json_object (33 s, 873 token in ingresso, 1537 in uscita, 32 concetti); Nemotron in timeout due volte a 45 s, spostato dopo Gemma
+- [ ] Riprovare Nemotron VL più avanti o alzare il timeout solo per lui
 - [ ] Landing: argomenti verificabili al posto dei numeri (bassa, piccolo)
 
 ## Da fare tu

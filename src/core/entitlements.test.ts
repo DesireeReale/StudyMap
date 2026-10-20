@@ -25,22 +25,22 @@ describe("modelChain", () => {
     expect(keys("free", true)).toEqual([
       "gemini-flash",
       "gemini-flash-lite",
-      "nemotron-vl-free",
       "gemma-4-free",
+      "nemotron-vl-free",
       "openrouter-free",
     ]);
-    expect(keys("pro", true).slice(-3)).toEqual(["nemotron-vl-free", "gemma-4-free", "openrouter-free"]);
+    expect(keys("pro", true).slice(-3)).toEqual(["gemma-4-free", "nemotron-vl-free", "openrouter-free"]);
   });
 
   it("filters vision-capable models", () => {
-    expect(keys("free", true, true)).toEqual(["gemini-flash", "gemini-flash-lite", "nemotron-vl-free", "gemma-4-free"]);
+    expect(keys("free", true, true)).toEqual(["gemini-flash", "gemini-flash-lite", "gemma-4-free", "nemotron-vl-free"]);
   });
 
   it("skips disabled models and models without an API key", () => {
     expect(MODELS.find((m) => m.key === "muse-spark")?.enabled).toBe(false);
     expect(modelChain("pro", { consent: true, hasKey: (m) => m.provider !== "gemini" }).map((m) => m.key)).toEqual([
-      "nemotron-vl-free",
       "gemma-4-free",
+      "nemotron-vl-free",
       "openrouter-free",
     ]);
   });

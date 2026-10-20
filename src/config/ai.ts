@@ -130,8 +130,8 @@ export const CHAINS: Record<PlanId, string[]> = {
     "mistral-small",
     "gemini-flash",
     "gemini-flash-lite",
-    "nemotron-vl-free",
     "gemma-4-free",
+    "nemotron-vl-free",
     "openrouter-free",
   ],
   pro: [
@@ -139,8 +139,8 @@ export const CHAINS: Record<PlanId, string[]> = {
     "mistral-small",
     "gemini-flash",
     "gemini-flash-lite",
-    "nemotron-vl-free",
     "gemma-4-free",
+    "nemotron-vl-free",
     "openrouter-free",
   ],
 };
