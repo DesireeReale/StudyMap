@@ -23,8 +23,8 @@
 - [x] Avviso: niente dati di pazienti reali
 - [x] Manifest PWA installabile
 - [x] Test unitari (AI, quote, chunking, layout)
-- [ ] Eseguire test RLS e E2E sul progetto Supabase di test
-- [ ] Provare una generazione reale con un modello vero
+- [x] Eseguire test RLS e E2E sul progetto Supabase di test
+- [x] Provare una generazione reale con un modello vero (20 ottobre: riuscita con gemini-flash-lite dopo 3 errori di gemini-flash, 108 s; serve un fallback più rapido)
 - [ ] Completare l'informativa privacy (titolare del trattamento)
 
 ## Fase 2
