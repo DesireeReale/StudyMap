@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { z } from "zod";
+import { SUPPORT_EMAIL } from "../feedback";
 import {
   CHUNK_INPUT_TOKENS,
   CONTEXT_USE,
@@ -59,6 +60,8 @@ export type AiContext = {
 };
 
 export type Slot = "ok" | "minute" | "day";
+
+export const NO_CREDIT_ERROR = `I modelli AI dell'app sono momentaneamente senza credito. Abbiamo bisogno di ricaricarlo: riprova più tardi o scrivi a ${SUPPORT_EMAIL}.`;
 
 export const DAILY_LIMIT_ERROR =
   "Per oggi i modelli AI gratuiti hanno raggiunto il limite di richieste dell'app. Riprova domani.";
@@ -179,6 +182,7 @@ export async function complete<T>(
   const inputTokens = estimateTokens(JSON.stringify(opts.messages));
   const full = new Map<ProviderId, Slot>();
   const tried = new Set<string>();
+  const failures: unknown[] = [];
   const fits = (m: ModelConfig) => inputTokens + maxTokens <= m.contextTokens * CONTEXT_USE;
 
   for (let round = 0; round <= QUEUE_ROUNDS; round++) {
@@ -278,6 +282,7 @@ export async function complete<T>(
         throw new InvalidOutputError();
       } catch (e) {
         if (!shouldFallback(e)) throw e;
+        failures.push(e);
       }
     }
     if (![...full.values()].includes("minute") || round === QUEUE_ROUNDS) break;
@@ -288,5 +293,9 @@ export async function complete<T>(
     ctx.onWait?.(false);
   }
   if (full.size && [...full.values()].every((v) => v === "day")) throw new AiUnavailableError(DAILY_LIMIT_ERROR);
+  if (failures.length && failures.every((e) => e instanceof ProviderError && e.status === 402)) {
+    console.error("AI providers out of credit");
+    throw new AiUnavailableError(NO_CREDIT_ERROR);
+  }
   throw new AiUnavailableError();
 }

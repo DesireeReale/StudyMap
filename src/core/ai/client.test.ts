@@ -4,6 +4,7 @@ import { MODELS, RETRY_DELAYS_MS, TASKS } from "@/config/ai";
 import {
   AiUnavailableError,
   DAILY_LIMIT_ERROR,
+  NO_CREDIT_ERROR,
   ProviderError,
   complete,
   costUsd,
@@ -282,5 +283,26 @@ describe("latency", () => {
     await expect(run(c)).resolves.toMatchObject({ data: { answer: "a" } });
     expect(usage[0]).toMatchObject({ outcome: "rate_limited", queueWaitMs: 0 });
     expect(usage.at(-1)).toMatchObject({ outcome: "ok", queueWaitMs: 30_500 });
+  });
+});
+
+describe("credit", () => {
+  it("says the credit is over when every model refuses for lack of credit", async () => {
+    const { c } = ctx(async () => {
+      throw new ProviderError("402 Insufficient credits", 402);
+    });
+    c.chain = [modelA, modelC];
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(run(c)).rejects.toThrow(NO_CREDIT_ERROR);
+  });
+
+  it("keeps the generic message when only some models lack credit", async () => {
+    const { c } = ctx(async ({ model }) => {
+      throw new ProviderError("x", model.id === "model-a" ? 402 : 503);
+    });
+    c.chain = [modelA, modelC];
+    const error = await run(c).catch((e: Error) => e);
+    expect(error).toBeInstanceOf(AiUnavailableError);
+    expect((error as Error).message).not.toBe(NO_CREDIT_ERROR);
   });
 });
