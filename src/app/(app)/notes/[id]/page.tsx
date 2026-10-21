@@ -5,6 +5,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { DeleteButton } from "@/components/DeleteButton";
 import { DocumentChat } from "@/components/DocumentChat";
 import { textToPages } from "@/core/ingest";
+import { summaryPages } from "@/core/outline";
 import { excerptsFor } from "@/core/retrieval";
 import { MoveToFolder } from "@/components/FolderControls";
 import { GenerateButtons } from "@/components/GenerateButtons";
@@ -20,11 +21,21 @@ export default async function NotePage({ params }: PageProps<"/notes/[id]">) {
   const { id } = await params;
   const { supabase } = await requireUser();
   const [{ data: note }, folders, chat] = await Promise.all([
-    supabase.from("notes").select("id, title, body, folder_id").eq("id", id).maybeSingle(),
+    supabase.from("notes").select("id, title, body, folder_id, document_id").eq("id", id).maybeSingle(),
     loadFolders(supabase),
     supabase.from("chat_messages").select("id, role, content, pages").eq("note_id", id).order("id"),
   ]);
   if (!note) notFound();
+  const { data: doc } = note.document_id
+    ? await supabase.from("documents").select("pages, kind").eq("id", note.document_id).maybeSingle()
+    : { data: null };
+  const source = doc
+    ? {
+        excerpts: excerptsFor(doc.pages, summaryPages(note.body)),
+        unit: doc.kind === "pptx" ? ("Slide" as const) : ("Pagina" as const),
+        idPrefix: "fonte",
+      }
+    : undefined;
   const messages = chat.data ?? [];
 
   return (
@@ -33,7 +44,7 @@ export default async function NotePage({ params }: PageProps<"/notes/[id]">) {
         <Breadcrumb trail={folderTrail(folders, note.folder_id)} current={note.title} />
         <MoveToFolder table="notes" id={note.id} current={note.folder_id} options={treeOptions(folders)} />
       </div>
-      <NoteEditor noteId={note.id} title={note.title} body={note.body} />
+      <NoteEditor noteId={note.id} title={note.title} body={note.body} source={source} />
       <section aria-label="Genera dall'appunto" className="panel flex flex-wrap items-center justify-between gap-4">
         <p className="max-w-md text-sm text-muted">
           Crea una mappa o un mazzo dal testo salvato di questo appunto. Mappa e mazzo finiscono nella stessa cartella.

@@ -39,6 +39,9 @@ test("choose the source with tiles and what to create while uploading", async ({
   const tray = page.getByRole("region", { name: "Lavori in corso" });
   await tray.getByRole("link", { name: "Apri le flashcard" }).click({ timeout: 60_000 });
   await expect(page).toHaveURL(/\/decks\//);
+  const status = page.getByRole("definition").first();
+  await expect(page.getByLabel("Stato del mazzo")).toContainText("Mai viste");
+  await expect(status).toHaveText(/\d+/);
 });
 
 test("a file upload starts the chosen generations once it has been read", async ({ page }) => {

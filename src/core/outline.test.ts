@@ -16,6 +16,14 @@ describe("outline", () => {
 });
 
 describe("blocks", () => {
+  it("reads the source pages line of a section", () => {
+    expect(blocks("## Segni\n[pagine 4, 6]\n- Dispnea")).toEqual([
+      { kind: "heading", text: "Segni" },
+      { kind: "pages", text: "[pagine 4, 6]", pages: [4, 6] },
+      { kind: "point", text: "Dispnea" },
+    ]);
+  });
+
   it("splits a summary into headings, points and plain lines", () => {
     expect(blocks("## Segni\n- Dispnea\n\nNota finale")).toEqual([
       { kind: "heading", text: "Segni" },

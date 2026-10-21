@@ -55,4 +55,6 @@ test("upload PowerPoint slides, read their pictures and summarise them", async (
 
   await page.getByRole("button", { name: "Riassunto" }).click();
   await expect(page).toHaveURL(/\/notes\//);
+  await page.getByRole("button", { name: "slide 1" }).first().click();
+  await expect(page.getByText("Introduzione alla cinematica").first()).toBeVisible();
 });

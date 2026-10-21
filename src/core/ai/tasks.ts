@@ -216,9 +216,17 @@ export async function generateSummary(
   return { sections };
 }
 
-export function summaryToText(summary: Summary): string {
-  return summary.sections.map((s) => `## ${s.heading}\n${s.points.map((p) => `- ${p}`).join("\n")}`).join("\n\n");
+export function summaryToText(summary: Summary, pageCount = 0): string {
+  return summary.sections
+    .map((s) => {
+      const pages = [...new Set(s.pages)].filter((p) => p <= pageCount).sort((a, b) => a - b);
+      const source = pages.length ? `\n${pagesLine(pages)}` : "";
+      return `## ${s.heading}${source}\n${s.points.map((p) => `- ${p}`).join("\n")}`;
+    })
+    .join("\n\n");
 }
+
+export const pagesLine = (pages: number[]) => `[${pages.length === 1 ? "pagina" : "pagine"} ${pages.join(", ")}]`;
 
 export async function generateQuiz(
   ctx: AiContext,

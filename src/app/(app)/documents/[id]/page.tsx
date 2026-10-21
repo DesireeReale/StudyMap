@@ -13,6 +13,7 @@ import { GenerateButtons } from "@/components/GenerateButtons";
 import { Icon } from "@/components/icons";
 import { MapThumb } from "@/components/StudyMarks";
 import { SummaryView } from "@/components/SummaryView";
+import { summaryPages } from "@/core/outline";
 import { pageCount } from "@/core/files";
 import { requireUser } from "@/lib/supabase/server";
 import { folderTrail, loadFolders, pageTitle } from "@/lib/workspace";
@@ -78,6 +79,11 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
         {summary ? (
           <SummaryView
             body={summary.body}
+            source={{
+              excerpts: excerptsFor(doc.pages, summaryPages(summary.body)),
+              unit: doc.kind === "pptx" ? "Slide" : "Pagina",
+              idPrefix: "riassunto",
+            }}
             className="mx-auto w-full max-w-[72ch] rounded-row bg-sheet px-[clamp(16px,5%,48px)] py-6"
           />
         ) : (

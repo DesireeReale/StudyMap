@@ -178,7 +178,7 @@ export const TASKS: Record<TaskId, { promptVersion: string; maxTokens: number; t
   flashcards: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000, reasoning: "low" },
   transcribe: { promptVersion: "v1", maxTokens: 3000, timeoutMs: 30_000, reasoning: "low" },
   figure: { promptVersion: "v1", maxTokens: 2000, timeoutMs: 30_000, reasoning: "low" },
-  summary: { promptVersion: "v1", maxTokens: 3000, timeoutMs: 40_000, reasoning: "low" },
+  summary: { promptVersion: "v2", maxTokens: 3000, timeoutMs: 40_000, reasoning: "low" },
   quiz: { promptVersion: "v3", maxTokens: 4000, timeoutMs: 60_000, reasoning: "medium" },
   chat: { promptVersion: "v1", maxTokens: 2000, timeoutMs: 30_000, reasoning: "low" },
 };

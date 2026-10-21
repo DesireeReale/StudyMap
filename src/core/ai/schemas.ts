@@ -27,7 +27,13 @@ export const TranscriptionSchema = z.object({ markdown: z.string() });
 
 export const SummarySchema = z.object({
   sections: z
-    .array(z.object({ heading: z.string().min(1).max(120), points: z.array(z.string().min(1).max(400)).min(1).max(8) }))
+    .array(
+      z.object({
+        heading: z.string().min(1).max(120),
+        points: z.array(z.string().min(1).max(400)).min(1).max(8),
+        pages: z.array(z.number().int().min(1)).max(20).default([]),
+      }),
+    )
     .min(1)
     .max(12),
 });

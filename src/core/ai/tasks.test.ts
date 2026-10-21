@@ -96,6 +96,13 @@ describe("summary and quiz", () => {
     );
   });
 
+  it("writes the source pages of each section, dropping pages the document does not have", async () => {
+    const summary = await generateSummary(ctx, { title: "Scompenso", pages: ["Testo di prova."] });
+    expect(summaryToText(summary, 1)).toContain("## Che cos'è\n[pagina 1]\n- Lo scompenso");
+    expect(summaryToText(summary, 1)).toContain("## Segni e sintomi\n[pagina 1]\n- Dispnea");
+    expect(summaryToText(summary, 2)).toContain("## Segni e sintomi\n[pagine 1, 2]\n");
+  });
+
   it("keeps each right answer while spreading answers across positions", () => {
     const q = (n: number) => ({ type: "scelta" as const, question: `D${n}`, options: [`giusta${n}`, "b", "c", "d"], correct: 0, answer: "", explanation: "x" });
     let seed = 1;

@@ -55,7 +55,7 @@ export function generation(supabase: SupabaseClient<Database>, profile: Profile,
     }
 
     if (type === "summary") {
-      const text = summaryToText(await generateSummary(ctx, input, onPart));
+      const text = summaryToText(await generateSummary(ctx, input, onPart), doc.id ? doc.pages.length : 0);
       const { data, error } = await supabase
         .from("notes")
         .insert({

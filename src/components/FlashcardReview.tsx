@@ -78,23 +78,27 @@ export function FlashcardReview({ cards: initial }: { cards: Card[] }) {
     const forgot = Object.values(results).filter((r) => r === "unknown").length;
     const upcoming = nextDate(cards.filter((c) => !isDue(c)));
     return (
-      <div className="panel flex flex-col items-start gap-4" role="status">
-        <p className="text-[20px] font-bold">{reviewed ? "Ripasso di oggi finito" : "Niente da ripassare oggi"}</p>
-        <p className="num text-[15px]">
-          {reviewed
-            ? `Hai ripassato ${reviewed} ${reviewed === 1 ? "carta" : "carte"}${forgot ? `, ${forgot} da consolidare: torneranno presto` : ""}.`
-            : "Le carte di questo mazzo tornano quando stai per dimenticarle."}
-          {upcoming && ` Prossimo ripasso: ${upcoming}.`}
-        </p>
-        <button type="button" className="btn-secondary" onClick={() => restart([...cards].sort(byDue))}>
-          Ripassa tutto comunque
-        </button>
+      <div className="flex flex-col gap-4">
+        <DeckStatus cards={cards} />
+        <div className="panel flex flex-col items-start gap-4" role="status">
+          <p className="text-[20px] font-bold">{reviewed ? "Ripasso di oggi finito" : "Niente da ripassare oggi"}</p>
+          <p className="num text-[15px]">
+            {reviewed
+              ? `Hai ripassato ${reviewed} ${reviewed === 1 ? "carta" : "carte"}${forgot ? `, ${forgot} da consolidare: torneranno presto` : ""}.`
+              : "Le carte di questo mazzo tornano quando stai per dimenticarle."}
+            {upcoming && ` Prossimo ripasso: ${upcoming}.`}
+          </p>
+          <button type="button" className="btn-secondary" onClick={() => restart([...cards].sort(byDue))}>
+            Ripassa tutto comunque
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-4">
+      <DeckStatus cards={cards} />
       <div className="flex flex-col gap-2">
         <p className="num text-sm text-muted" aria-live="polite">
           Flashcard <span className="text-ink">{index + 1}</span> di {queue.length}
@@ -141,5 +145,28 @@ export function FlashcardReview({ cards: initial }: { cards: Card[] }) {
         </div>
       )}
     </div>
+  );
+}
+
+function DeckStatus({ cards }: { cards: Card[] }) {
+  const due = cards.filter((c) => isDue(c)).length;
+  const fresh = cards.filter((c) => c.last_result === null).length;
+  const learned = cards.filter((c) => c.last_result === "known" && !isDue(c)).length;
+  const shaky = cards.filter((c) => c.last_result === "unknown").length;
+  const items: [string, number][] = [
+    ["Da ripassare oggi", due],
+    ["Mai viste", fresh],
+    ["Da consolidare", shaky],
+    ["Imparate", learned],
+  ];
+  return (
+    <dl aria-label="Stato del mazzo" className="num grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {items.map(([label, n]) => (
+        <div key={label} className="flex flex-col gap-0.5 rounded-row border border-border bg-raised px-3 py-2">
+          <dt className="text-[13px] text-muted">{label}</dt>
+          <dd className="text-[20px] leading-tight font-bold">{n}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

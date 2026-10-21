@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       .single();
     if (error) return fail("Salvataggio non riuscito", 500);
     const types = [...new Set(body.create)];
-    if (types.length) after(() => startRequested(supabase, profile, types, { noteId: data.id }, body.title));
+    await startRequested(supabase, profile, types, { noteId: data.id }, body.title);
     return NextResponse.json({ id: data.id, href: `/notes/${data.id}`, jobs: types.length });
   }
 

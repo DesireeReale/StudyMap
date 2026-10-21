@@ -26,8 +26,8 @@ export const MOCK_OUTPUTS: Record<TaskId, unknown> = {
   chat: { answer: "Secondo il materiale, lo scompenso si manifesta con dispnea ed edemi declivi.", pages: [1, 99] },
   summary: {
     sections: [
-      { heading: "Che cos'è", points: ["Lo scompenso cardiaco è l'incapacità del cuore di garantire una gittata adeguata."] },
-      { heading: "Segni e sintomi", points: ["Dispnea da sforzo e ortopnea.", "Edemi declivi e turgore giugulare."] },
+      { heading: "Che cos'è", points: ["Lo scompenso cardiaco è l'incapacità del cuore di garantire una gittata adeguata."], pages: [1] },
+      { heading: "Segni e sintomi", points: ["Dispnea da sforzo e ortopnea.", "Edemi declivi e turgore giugulare."], pages: [1, 2] },
     ],
   },
   quiz: {

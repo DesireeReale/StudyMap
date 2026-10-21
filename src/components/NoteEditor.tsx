@@ -3,10 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 import { MAX_NOTE_CHARS } from "@/core/files";
 import { outline } from "@/core/outline";
-import { SummaryView } from "./SummaryView";
+import { SummaryView, type PageSource } from "./SummaryView";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
-export function NoteEditor({ noteId, title, body }: { noteId: string; title: string; body: string }) {
+export function NoteEditor({
+  noteId,
+  title,
+  body,
+  source,
+}: {
+  noteId: string;
+  title: string;
+  body: string;
+  source?: PageSource;
+}) {
   const [draft, setDraft] = useState({ title, body });
   const [status, setStatus] = useState<"saved" | "saving" | "error">("saved");
   const saved = useRef(JSON.stringify({ title, body }));
@@ -92,7 +102,7 @@ export function NoteEditor({ noteId, title, body }: { noteId: string; title: str
         )}
         {reading ? (
           <div className="min-h-[60vh] rounded-[4px] border border-border bg-raised px-[clamp(20px,7%,72px)] py-[clamp(24px,6%,64px)] shadow-[0_2px_12px_-4px_rgb(15_27_45/0.25)] lg:min-h-auto lg:aspect-[210/297]">
-            <SummaryView body={draft.body} />
+            <SummaryView body={draft.body} source={source} />
           </div>
         ) : (
           <>
