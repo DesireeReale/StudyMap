@@ -10,17 +10,18 @@ const LOOK_FROM = 0.92;
 const LOOK_TO = 1.42;
 const LEAN_END = 3.3;
 const HOLD = { peek: 3.5, password: 3.95 };
-const IDLE_SPEED = 0.5;
+const IDLE_SPEED = 0.6;
 const IDLE_PAUSE = 1200;
-const LEAN_SPEED = 2;
-const EASE = 6;
+const BASE_SPEED = 1.2;
+const LEAN_SPEED = 2.4;
+const EASE = 7;
 
 function gazeTime(look: number) {
   return LOOK_FROM + (LOOK_TO - LOOK_FROM) * Math.min(Math.max(look, 0), 1);
 }
 
 function speedAt(t: number) {
-  return t > LOOK_TO && t < LEAN_END ? LEAN_SPEED : 1;
+  return t > LOOK_TO && t < LEAN_END ? LEAN_SPEED : BASE_SPEED;
 }
 
 export function LoginMascot({ pose, look }: { pose: MascotPose; look: number }) {
