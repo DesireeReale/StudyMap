@@ -95,6 +95,18 @@ export const MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
+    key: "gemma-4-31b-free",
+    provider: "openrouter",
+    id: "google/gemma-4-31b-it:free",
+    inputUsdPerMTok: 0,
+    outputUsdPerMTok: 0,
+    contextTokens: 262_144,
+    vision: true,
+    structuredOutput: "json_object",
+    usesDataForTraining: true,
+    enabled: true,
+  },
+  {
     key: "gemma-4-free",
     provider: "openrouter",
     id: "google/gemma-4-26b-a4b-it:free",
@@ -148,12 +160,12 @@ export type Chains = { text: string[]; vision: string[] };
 
 export const CHAINS: Record<PlanId, Chains> = {
   free: {
-    text: ["minimax-flash-free", "gemma-4-free", "nemotron-vl-free", "openrouter-free"],
-    vision: ["minimax-flash-free", "gemma-4-free", "nemotron-vl-free"],
+    text: ["minimax-flash-free", "gemma-4-free", "gemma-4-31b-free", "nemotron-vl-free", "openrouter-free"],
+    vision: ["minimax-flash-free", "gemma-4-free", "gemma-4-31b-free", "nemotron-vl-free"],
   },
   pro: {
-    text: ["muse-spark", "mistral-small", "minimax-flash-free", "gemma-4-free", "nemotron-vl-free", "openrouter-free"],
-    vision: ["muse-spark", "mistral-small", "minimax-flash-free", "gemma-4-free", "nemotron-vl-free"],
+    text: ["muse-spark", "mistral-small", "minimax-flash-free", "gemma-4-free", "gemma-4-31b-free", "nemotron-vl-free", "openrouter-free"],
+    vision: ["muse-spark", "mistral-small", "minimax-flash-free", "gemma-4-free", "gemma-4-31b-free", "nemotron-vl-free"],
   },
 };
 

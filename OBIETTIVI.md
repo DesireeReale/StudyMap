@@ -153,6 +153,9 @@
 - [x] Informativa: sezione sulla beta con provider, trasferimento fuori UE e come revocare
 - [x] Latenza: durata, attesa in coda ed esito di ogni chiamata in ai_usage, durata dei job, vista ai_latency_stats (mediana e p95 a 7 giorni)
 - [x] Timeout per attività in config (40 s per mappe, flashcard, riassunti e quiz; 30 s per trascrizioni e chat): oltre si passa al modello successivo
+- [x] Prova di 8 modelli gratuiti di OpenRouter (risultati in docs/prova-modelli.md): oggi nessuno sostituisce MiniMax
+- [x] Catene separate per testo e immagini, scadenza automatica dei modelli (MiniMax esce il 22 ottobre), ragionamento "medium" per i quiz e "low" per il resto
+- [ ] Prima della beta: scegliere un modello di riserva affidabile dopo il ritiro di MiniMax (Gemma 4 oggi risponde 429)
 - [ ] Chat in streaming (stima: mezza giornata o una giornata di lavoro, da approvare)
 - [x] E2E instabili al login: `router.refresh()` subito dopo `router.push()` annullava la navigazione; ora `router.replace()`, e 2 test in parallelo invece di 9 (3 giri di fila tutti verdi)
 - [x] Contatto di assistenza aistudymap@proton.me in privacy, landing e Impostazioni
