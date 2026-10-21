@@ -8,10 +8,10 @@ const allow: Decision = { ok: true };
 
 export function modelChain(
   plan: PlanId,
-  opts: { consent: boolean; vision?: boolean; hasKey?: (m: ModelConfig) => boolean; now?: number },
+  opts: { consent: boolean; vision?: boolean; hasKey?: (m: ModelConfig) => boolean; now?: number; chains?: typeof CHAINS },
 ): ModelConfig[] {
   const now = opts.now ?? Date.now();
-  return CHAINS[plan][opts.vision ? "vision" : "text"]
+  return (opts.chains ?? CHAINS)[plan][opts.vision ? "vision" : "text"]
     .map((key) => MODELS.find((m) => m.key === key))
     .filter((m): m is ModelConfig => !!m)
     .filter((m) => m.enabled)

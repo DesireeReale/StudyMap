@@ -13,7 +13,7 @@ export type ModelConfig = {
   structuredOutput: "json_schema" | "json_object" | "prompt";
   usesDataForTraining: boolean;
   enabled: boolean;
-  reasoning?: { extraTokens: number };
+  reasoning?: { extraTokens: number; mandatory?: boolean };
   timeoutMs?: number;
   expiresAt?: string;
 };
@@ -29,9 +29,37 @@ export const PROVIDERS = {
 // The Gemini free tier is off: Google's terms allow only paid services for apps serving EEA users
 // (https://ai.google.dev/gemini-api/terms, "Use Restrictions"). Enable it again only with a paid key.
 // Gemini's OpenAI-compatible endpoint rejects our JSON schemas in json_schema mode, so it uses json_object + Zod.
-// Models with `reasoning` get the task's effort (TASKS); reasoning tokens count against max_tokens, so they
-// get `extraTokens` more. A model with `expiresAt` leaves the chains automatically after that instant.
+// Models with `reasoning` get the task's effort (TASKS), or the lowest one when they cannot turn it off;
+// reasoning tokens are billed as output and count against max_tokens, so they get `extraTokens` more.
+// Paid OpenRouter models are routed only to providers that do not collect data (`data_collection: "deny"`).
+// A model with `expiresAt` leaves the chains automatically after that instant.
 export const MODELS: ModelConfig[] = [
+  {
+    key: "qwen-flash",
+    provider: "openrouter",
+    id: "qwen/qwen3.7-flash",
+    inputUsdPerMTok: 0.03,
+    outputUsdPerMTok: 0.13,
+    contextTokens: 1_000_000,
+    vision: true,
+    structuredOutput: "json_object",
+    usesDataForTraining: false,
+    enabled: true,
+    reasoning: { extraTokens: 4000 },
+  },
+  {
+    key: "deepseek-flash",
+    provider: "openrouter",
+    id: "deepseek/deepseek-v4.1-flash",
+    inputUsdPerMTok: 0.024,
+    outputUsdPerMTok: 0.375,
+    contextTokens: 1_048_576,
+    vision: true,
+    structuredOutput: "json_object",
+    usesDataForTraining: false,
+    enabled: true,
+    reasoning: { extraTokens: 4000 },
+  },
   {
     key: "minimax-flash-free",
     provider: "openrouter",
@@ -43,7 +71,7 @@ export const MODELS: ModelConfig[] = [
     structuredOutput: "json_object",
     usesDataForTraining: true,
     enabled: true,
-    reasoning: { extraTokens: 4000 },
+    reasoning: { extraTokens: 4000, mandatory: true },
     expiresAt: "2026-10-22T00:00:00Z",
   },
   {
@@ -160,37 +188,43 @@ export type Chains = { text: string[]; vision: string[] };
 
 export const CHAINS: Record<PlanId, Chains> = {
   free: {
-    text: ["minimax-flash-free", "gemma-4-free", "gemma-4-31b-free", "nemotron-vl-free", "openrouter-free"],
-    vision: ["minimax-flash-free", "gemma-4-free", "gemma-4-31b-free", "nemotron-vl-free"],
+    text: ["deepseek-flash", "qwen-flash", "gemma-4-free"],
+    vision: ["deepseek-flash", "qwen-flash", "gemma-4-free"],
   },
   pro: {
-    text: ["muse-spark", "mistral-small", "minimax-flash-free", "gemma-4-free", "gemma-4-31b-free", "nemotron-vl-free", "openrouter-free"],
-    vision: ["muse-spark", "mistral-small", "minimax-flash-free", "gemma-4-free", "gemma-4-31b-free", "nemotron-vl-free"],
+    text: ["muse-spark", "mistral-small", "deepseek-flash", "qwen-flash", "gemma-4-free"],
+    vision: ["muse-spark", "mistral-small", "deepseek-flash", "qwen-flash", "gemma-4-free"],
   },
 };
 
 export type TaskId = "mindmap" | "flashcards" | "transcribe" | "figure" | "summary" | "quiz" | "chat";
 
-export type Reasoning = "low" | "medium";
+export type Reasoning = "none" | "low" | "medium";
 
 export const TASKS: Record<TaskId, { promptVersion: string; maxTokens: number; timeoutMs: number; reasoning: Reasoning }> = {
-  mindmap: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000, reasoning: "low" },
-  flashcards: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000, reasoning: "low" },
-  transcribe: { promptVersion: "v1", maxTokens: 3000, timeoutMs: 30_000, reasoning: "low" },
-  figure: { promptVersion: "v1", maxTokens: 2000, timeoutMs: 30_000, reasoning: "low" },
-  summary: { promptVersion: "v2", maxTokens: 3000, timeoutMs: 40_000, reasoning: "low" },
-  quiz: { promptVersion: "v3", maxTokens: 4000, timeoutMs: 60_000, reasoning: "medium" },
-  chat: { promptVersion: "v1", maxTokens: 2000, timeoutMs: 30_000, reasoning: "low" },
+  mindmap: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000, reasoning: "none" },
+  flashcards: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000, reasoning: "none" },
+  transcribe: { promptVersion: "v1", maxTokens: 3000, timeoutMs: 30_000, reasoning: "none" },
+  figure: { promptVersion: "v1", maxTokens: 2000, timeoutMs: 30_000, reasoning: "none" },
+  summary: { promptVersion: "v2", maxTokens: 3000, timeoutMs: 40_000, reasoning: "none" },
+  quiz: { promptVersion: "v3", maxTokens: 4000, timeoutMs: 60_000, reasoning: "low" },
+  chat: { promptVersion: "v1", maxTokens: 2000, timeoutMs: 30_000, reasoning: "none" },
 };
 
 export const CHUNK_INPUT_TOKENS = 12_000;
 export const CONTEXT_USE = 0.8;
 
-// Per-account request limits shared by every user of the app. OpenRouter :free models: 20 per minute and
-// 1000 per day once at least 10 credits were bought (https://openrouter.ai/docs/api-reference/limits).
+export type LimitPool = ProviderId | "openrouter-free";
+
+export const poolOf = (m: ModelConfig): LimitPool =>
+  m.provider === "openrouter" && m.inputUsdPerMTok === 0 && m.outputUsdPerMTok === 0 ? "openrouter-free" : m.provider;
+
+// Per-account request limits shared by every user of the app. OpenRouter free models: 20 per minute, 50 per day
+// until 10 credits were bought in total, then 1000 (https://openrouter.ai/docs/api-reference/limits).
 // The other values are estimates: check them in each provider's console.
-export const PROVIDER_LIMITS: Record<ProviderId, { perMinute: number; perDay: number | null }> = {
-  openrouter: { perMinute: 20, perDay: 1000 },
+export const PROVIDER_LIMITS: Record<LimitPool, { perMinute: number; perDay: number | null }> = {
+  "openrouter-free": { perMinute: 20, perDay: 50 },
+  openrouter: { perMinute: 60, perDay: null },
   mistral: { perMinute: 60, perDay: null },
   gemini: { perMinute: 10, perDay: 250 },
   meta: { perMinute: 60, perDay: null },

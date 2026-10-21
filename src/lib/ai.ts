@@ -1,5 +1,5 @@
 import "server-only";
-import { PROVIDER_LIMITS, PROVIDERS, type ModelConfig, type ProviderId } from "@/config/ai";
+import { PROVIDER_LIMITS, PROVIDERS, type LimitPool, type ModelConfig } from "@/config/ai";
 import { PLANS, RATE_LIMITS } from "@/config/plans";
 import { openaiChat, type AiContext, type Slot } from "@/core/ai/client";
 import { mockChat } from "@/core/ai/mock";
@@ -26,10 +26,10 @@ const slowMockChat: typeof mockChat = async (req) => {
 
 const mockProviderLimit = Number(process.env.AI_MOCK_PROVIDER_LIMIT ?? 0);
 
-async function takeSlot(provider: ProviderId): Promise<Slot> {
-  const limits = aiMockEnabled ? { perMinute: mockProviderLimit, perDay: null } : PROVIDER_LIMITS[provider];
+async function takeSlot(pool: LimitPool): Promise<Slot> {
+  const limits = aiMockEnabled ? { perMinute: mockProviderLimit, perDay: null } : PROVIDER_LIMITS[pool];
   const { data, error } = await supabaseAdmin().rpc("take_provider_slot", {
-    p_provider: aiMockEnabled ? `mock:${provider}` : provider,
+    p_provider: aiMockEnabled ? `mock:${pool}` : pool,
     p_minute: `m:${minutePeriod()}`,
     p_minute_limit: limits.perMinute,
     p_day: `d:${dayPeriod()}`,
@@ -65,6 +65,7 @@ export function aiContextFor(profile: Profile): AiContext {
         prompt_version: u.promptVersion,
         input_tokens: u.inputTokens,
         output_tokens: u.outputTokens,
+        reasoning_tokens: u.reasoningTokens,
         ocr_pages: u.ocrPages,
         cost_usd: u.costUsd,
         ok: u.ok,

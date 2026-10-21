@@ -1,4 +1,24 @@
-# Prova dei modelli gratuiti di OpenRouter
+# Prova dei modelli di OpenRouter
+
+## Modelli a pagamento (21 ottobre 2026, ore 17:13)
+Una chiamata per attività, con il codice dell'app (`complete`), lo stesso testo sulla fotosintesi e la stessa slide della prova dei gratuiti. Ragionamento spento (`reasoning: { effort: "none" }`) e `provider: { data_collection: "deny" }`. Costo letto da `usage.cost` di OpenRouter.
+
+| Modello | Attività | Tempo | JSON | Token in / out / ragionamento | Costo |
+|---|---|---|---|---|---|
+| deepseek/deepseek-v4.1-flash | Mappa | 4,5 s | valido | 943 / 1632 / 0 | 0,00168 $ |
+| deepseek/deepseek-v4.1-flash | Trascrizione | 0,8 s | valido | 513 / 94 / 0 | 0,00027 $ |
+| qwen/qwen3.7-flash | Mappa | 15,0 s | valido | 863 / 1852 / 0 | 0,00027 $ |
+| qwen/qwen3.7-flash | Trascrizione | 3,3 s | valido | 712 / 123 / 0 | 0,00004 $ |
+
+- **Qualità:** 37 concetti per entrambi, fedeli al testo. DeepSeek scrive etichette più naturali ("Trasforma energia luminosa in energia chimica"), Qwen più telegrafiche ("Trasforma energia luce in chimica"). Trascrizioni corrette per entrambi; DeepSeek mette i valori del grafico in un elenco.
+- **Costo di DeepSeek:** circa 2,6 volte il prezzo di listino (0,024 / 0,375 $ per milione), perché `data_collection: "deny"` esclude i provider più economici. Qwen ha pagato il prezzo di listino.
+- **Ordine scelto:** DeepSeek V4.1 Flash, Qwen 3.7 Flash, Gemma 4 26B gratuito. DeepSeek è tre volte più veloce sulla mappa; costa di più ma resta sotto mezzo centesimo.
+
+### Stima dei costi (NON VERIFICATO: dipende da lunghezza delle lezioni e provider scelto)
+- Una mappa da una lezione di circa 20 pagine (10.000 token in, 2.000 out) con DeepSeek: circa 0,005 $; con Qwen circa 0,0006 $.
+- Un mese di beta con 10 studenti (20 generazioni a testa, circa 50 pagine trascritte e 30 messaggi di chat a testa): circa 2 $. Con 7,40 $ di credito si coprono circa 3 mesi.
+
+## Modelli gratuiti
 
 Data: 21 ottobre 2026, dalle 14:27 alle 14:33 (ora italiana). Una richiesta alla volta, con il codice dell'app (`complete`, timeout dell'app: 40 s per la mappa, 30 s per la trascrizione) e il ragionamento "low" dove il modello lo accetta.
 

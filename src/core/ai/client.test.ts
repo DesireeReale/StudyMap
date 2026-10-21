@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { MODELS, RETRY_DELAYS_MS, TASKS } from "@/config/ai";
+import { MODELS, poolOf, RETRY_DELAYS_MS, TASKS } from "@/config/ai";
 import {
   AiUnavailableError,
   DAILY_LIMIT_ERROR,
@@ -8,6 +8,7 @@ import {
   ProviderError,
   complete,
   costUsd,
+  effortFor,
   inputBudget,
   type Slot,
   type AiContext,
@@ -170,7 +171,7 @@ describe("provider limits", () => {
   it("queues until the next minute when every provider is full", async () => {
     const { c, usage } = ctx(async () => ok('{"answer":"a"}'));
     c.chain = [modelA, modelC];
-    c.takeSlot = slots({ [modelA.provider]: ["minute"], [modelC.provider]: ["minute"] });
+    c.takeSlot = slots({ [modelA.provider]: ["minute"], [poolOf(modelC)]: ["minute"] });
     c.onWait = vi.fn();
     c.now = () => Date.parse("2026-10-20T12:00:45Z");
     await expect(run(c)).resolves.toMatchObject({ data: { answer: "a" } });
@@ -278,7 +279,7 @@ describe("latency", () => {
       return ok('{"answer":"a"}');
     });
     c.chain = [modelA, modelC];
-    c.takeSlot = vi.fn(async (provider: string) => (provider === modelC.provider && calls === 1 ? "minute" : "ok"));
+    c.takeSlot = vi.fn(async (provider: string) => (provider === poolOf(modelC) && calls === 1 ? "minute" : "ok"));
     c.now = () => Date.parse("2026-10-20T12:00:30Z");
     await expect(run(c)).resolves.toMatchObject({ data: { answer: "a" } });
     expect(usage[0]).toMatchObject({ outcome: "rate_limited", queueWaitMs: 0 });
@@ -304,5 +305,42 @@ describe("credit", () => {
     const error = await run(c).catch((e: Error) => e);
     expect(error).toBeInstanceOf(AiUnavailableError);
     expect((error as Error).message).not.toBe(NO_CREDIT_ERROR);
+  });
+});
+
+describe("paid models", () => {
+  const qwen = byKey("qwen-flash");
+  const deepseek = byKey("deepseek-flash");
+  const gemma = byKey("gemma-4-free");
+
+  it("keeps free models out of the fallback list of paid ones and gives them their own limits", async () => {
+    const { c } = ctx(async () => ok('{"answer":"q"}'));
+    c.chain = [qwen, deepseek, gemma];
+    c.takeSlot = vi.fn(async () => "ok" as const);
+    await run(c);
+    expect(c.chat).toHaveBeenCalledWith(expect.objectContaining({ fallbacks: [deepseek.id] }));
+    expect(c.takeSlot).toHaveBeenCalledWith("openrouter");
+    expect(poolOf(gemma)).toBe("openrouter-free");
+  });
+
+  it("turns reasoning off except for quizzes and models that cannot turn it off", () => {
+    expect(effortFor(qwen, "mindmap")).toBe("none");
+    expect(effortFor(qwen, "quiz")).toBe("low");
+    expect(effortFor(byKey("minimax-flash-free"), "mindmap")).toBe("low");
+    expect(effortFor(gemma, "mindmap")).toBeUndefined();
+  });
+
+  it("adds room for reasoning only when it is on", async () => {
+    const { c } = ctx(async () => ok('{"answer":"q"}'));
+    c.chain = [qwen];
+    await run(c);
+    expect(c.chat).toHaveBeenCalledWith(expect.objectContaining({ maxTokens: TASKS.mindmap.maxTokens }));
+  });
+
+  it("records the cost and reasoning tokens reported by the provider", async () => {
+    const { c, usage } = ctx(async () => ({ ...ok('{"answer":"q"}'), costUsd: 0.00042, reasoningTokens: 120 }));
+    c.chain = [qwen];
+    await run(c);
+    expect(usage[0]).toMatchObject({ costUsd: 0.00042, reasoningTokens: 120 });
   });
 });

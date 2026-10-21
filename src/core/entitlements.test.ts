@@ -20,7 +20,7 @@ describe("modelChain", () => {
     modelChain(plan, { consent: opts.consent ?? true, vision: opts.vision, now: opts.now ?? before }).map((m) => m.key);
 
   it("excludes models that train on data without consent", () => {
-    expect(keys("free", { consent: false })).toEqual([]);
+    expect(keys("free", { consent: false })).toEqual(["deepseek-flash", "qwen-flash"]);
   });
 
   it("follows the configured text and vision chains", () => {
@@ -31,9 +31,11 @@ describe("modelChain", () => {
   });
 
   it("drops a model on its own once it expires", () => {
-    expect(keys("free")[0]).toBe("minimax-flash-free");
-    expect(keys("free", { now: after })).not.toContain("minimax-flash-free");
-    expect(keys("free", { now: after, vision: true })).not.toContain("minimax-flash-free");
+    const chains = { ...CHAINS, free: { text: ["minimax-flash-free", "gemma-4-free"], vision: ["minimax-flash-free"] } };
+    const at = (now: number, vision = false) => modelChain("free", { consent: true, vision, now, chains }).map((m) => m.key);
+    expect(at(before)[0]).toBe("minimax-flash-free");
+    expect(at(after)).toEqual(["gemma-4-free"]);
+    expect(at(after, true)).toEqual([]);
   });
 
   it("skips disabled models and models without an API key", () => {

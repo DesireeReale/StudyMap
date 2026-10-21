@@ -100,6 +100,7 @@ export type AiUsageRow = {
   prompt_version: string | null;
   input_tokens: number;
   output_tokens: number;
+  reasoning_tokens: number;
   ocr_pages: number;
   cost_usd: number;
   ok: boolean;

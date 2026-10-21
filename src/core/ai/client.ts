@@ -5,12 +5,14 @@ import { SUPPORT_EMAIL } from "../feedback";
 import {
   CHUNK_INPUT_TOKENS,
   CONTEXT_USE,
+  poolOf,
   PROVIDERS,
   QUEUE_ROUNDS,
   RETRY_DELAYS_MS,
   TASKS,
+  type LimitPool,
   type ModelConfig,
-  type ProviderId,
+  type Reasoning,
   type TaskId,
 } from "@/config/ai";
 
@@ -26,7 +28,14 @@ export type ChatRequest = {
   timeoutMs: number;
 };
 
-export type ChatResponse = { content: string; inputTokens: number; outputTokens: number; model?: string };
+export type ChatResponse = {
+  content: string;
+  inputTokens: number;
+  outputTokens: number;
+  reasoningTokens?: number;
+  costUsd?: number;
+  model?: string;
+};
 
 export type ChatFn = (req: ChatRequest) => Promise<ChatResponse>;
 
@@ -37,6 +46,7 @@ export type UsageRecord = {
   promptVersion: string;
   inputTokens: number;
   outputTokens: number;
+  reasoningTokens: number;
   ocrPages: number;
   costUsd: number;
   ok: boolean;
@@ -54,7 +64,7 @@ export type AiContext = {
   chat: ChatFn;
   record: (usage: UsageRecord) => Promise<void>;
   sleep?: (ms: number) => Promise<void>;
-  takeSlot?: (provider: ProviderId) => Promise<Slot>;
+  takeSlot?: (pool: LimitPool) => Promise<Slot>;
   onWait?: (waiting: boolean) => void;
   now?: () => number;
 };
@@ -71,6 +81,12 @@ export const estimateTokens = (text: string) => Math.ceil(text.length / 4);
 export function inputBudget(chain: ModelConfig[], task: TaskId): number {
   const context = chain[0]?.contextTokens ?? 0;
   return Math.max(CHUNK_INPUT_TOKENS, Math.floor(context * CONTEXT_USE) - TASKS[task].maxTokens);
+}
+
+export function effortFor(model: ModelConfig, task: TaskId): Reasoning | undefined {
+  if (!model.reasoning) return undefined;
+  const effort = TASKS[task].reasoning;
+  return effort === "none" && model.reasoning.mandatory ? "low" : effort;
 }
 
 const msToNextMinute = (now: number) => 60_000 - (now % 60_000) + 500;
@@ -105,7 +121,8 @@ export const openaiChat: ChatFn = async ({ task, model, messages, maxTokens, jso
     const res = await client.chat.completions.create({
       model: model.id,
       ...(fallbacks?.length ? { models: [model.id, ...fallbacks] } : {}),
-      ...(model.reasoning ? { reasoning: { effort: TASKS[task].reasoning } } : {}),
+      ...(model.reasoning ? { reasoning: { effort: effortFor(model, task) } } : {}),
+      ...(model.provider === "openrouter" && !model.usesDataForTraining ? { provider: { data_collection: "deny" } } : {}),
       messages,
       max_tokens: maxTokens,
       temperature: 0.3,
@@ -122,6 +139,8 @@ export const openaiChat: ChatFn = async ({ task, model, messages, maxTokens, jso
       content: res.choices[0]?.message?.content ?? "",
       inputTokens: res.usage?.prompt_tokens ?? 0,
       outputTokens: res.usage?.completion_tokens ?? 0,
+      reasoningTokens: res.usage?.completion_tokens_details?.reasoning_tokens ?? 0,
+      costUsd: (res.usage as { cost?: number } | undefined)?.cost,
       model: res.model,
     };
   } catch (e) {
@@ -180,7 +199,7 @@ export async function complete<T>(
   }
   let totalInput = 0;
   const inputTokens = estimateTokens(JSON.stringify(opts.messages));
-  const full = new Map<ProviderId, Slot>();
+  const full = new Map<LimitPool, Slot>();
   const tried = new Set<string>();
   const failures: unknown[] = [];
   const fits = (m: ModelConfig) => inputTokens + maxTokens <= m.contextTokens * CONTEXT_USE;
@@ -189,16 +208,23 @@ export async function complete<T>(
     full.clear();
     tried.clear();
     for (const [index, model] of chain.entries()) {
-      if (tried.has(model.key) || !fits(model) || full.has(model.provider)) continue;
-      const slot = ctx.takeSlot ? await ctx.takeSlot(model.provider) : "ok";
+      const pool = poolOf(model);
+      if (tried.has(model.key) || !fits(model) || full.has(pool)) continue;
+      const slot = ctx.takeSlot ? await ctx.takeSlot(pool) : "ok";
       if (slot !== "ok") {
-        full.set(model.provider, slot);
+        full.set(pool, slot);
         continue;
       }
       const later = chain.slice(index + 1);
       const fallbacks =
         model.provider === "openrouter"
-          ? later.filter((m) => m.provider === "openrouter" && !tried.has(m.key) && fits(m))
+          ? later.filter(
+              (m) =>
+                poolOf(m) === pool &&
+                m.usesDataForTraining === model.usesDataForTraining &&
+                !tried.has(m.key) &&
+                fits(m),
+            )
           : [];
       for (const m of [model, ...fallbacks]) tried.add(m.key);
       const isLast = later.every((m) => tried.has(m.key));
@@ -214,7 +240,7 @@ export async function complete<T>(
                 task: opts.task,
                 model,
                 messages,
-                maxTokens: maxTokens + (model.reasoning?.extraTokens ?? 0),
+                maxTokens: maxTokens + (effortFor(model, opts.task) !== "none" ? (model.reasoning?.extraTokens ?? 0) : 0),
                 jsonSchema,
                 fallbacks: fallbacks.map((m) => m.id),
                 timeoutMs: model.timeoutMs ?? timeoutMs,
@@ -228,6 +254,7 @@ export async function complete<T>(
                 promptVersion,
                 inputTokens: 0,
                 outputTokens: 0,
+                reasoningTokens: 0,
                 ocrPages: 0,
                 costUsd: 0,
                 ok: false,
@@ -260,8 +287,9 @@ export async function complete<T>(
             promptVersion,
             inputTokens: res.inputTokens,
             outputTokens: res.outputTokens,
+            reasoningTokens: res.reasoningTokens ?? 0,
             ocrPages: data !== undefined ? (opts.ocrPages ?? 0) : 0,
-            costUsd: costUsd(model, res.inputTokens, res.outputTokens),
+            costUsd: res.costUsd ?? costUsd(model, res.inputTokens, res.outputTokens),
             ok: data !== undefined,
             error: error?.slice(0, 500) ?? null,
             durationMs,
