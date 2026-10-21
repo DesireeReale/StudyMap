@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { CHUNK_INPUT_TOKENS, TASKS, type TaskId } from "@/config/ai";
 import { chunkPages } from "./chunk";
-import { complete, type AiContext } from "./client";
+import { complete, inputBudget, type AiContext } from "./client";
 import { loadPrompt } from "./prompts";
 import { selectPages } from "../retrieval";
 import {
@@ -36,7 +36,7 @@ export async function generateMindMap(
 ): Promise<MindMap> {
   const system = await systemPrompt("mindmap", MindMapSchema, input.title);
   const parts: MindMap[] = [];
-  const chunks = chunkPages(input.pages, CHUNK_INPUT_TOKENS);
+  const chunks = chunkPages(input.pages, inputBudget(ctx.chain, "mindmap"));
   for (const [i, chunk] of chunks.entries()) {
     onPart?.(i, chunks.length);
     const { data } = await complete(ctx, {
@@ -107,7 +107,7 @@ export async function generateFlashcards(
 ): Promise<Flashcards["cards"]> {
   const system = await systemPrompt("flashcards", FlashcardsSchema, input.title);
   const cards: Flashcards["cards"] = [];
-  const chunks = chunkPages(input.pages, CHUNK_INPUT_TOKENS);
+  const chunks = chunkPages(input.pages, inputBudget(ctx.chain, "flashcards"));
   for (const [i, chunk] of chunks.entries()) {
     onPart?.(i, chunks.length);
     const { data } = await complete(ctx, {
@@ -200,7 +200,7 @@ export async function generateSummary(
 ): Promise<Summary> {
   const system = await systemPrompt("summary", SummarySchema, input.title);
   const sections: Summary["sections"] = [];
-  const chunks = chunkPages(input.pages, CHUNK_INPUT_TOKENS);
+  const chunks = chunkPages(input.pages, inputBudget(ctx.chain, "summary"));
   for (const [i, chunk] of chunks.entries()) {
     onPart?.(i, chunks.length);
     const { data } = await complete(ctx, {
@@ -227,7 +227,7 @@ export async function generateQuiz(
 ): Promise<QuizQuestion[]> {
   const system = await systemPrompt("quiz", QuizSchema, input.title);
   const questions: QuizQuestion[] = [];
-  const chunks = chunkPages(input.pages, CHUNK_INPUT_TOKENS);
+  const chunks = chunkPages(input.pages, inputBudget(ctx.chain, "quiz"));
   for (const [i, chunk] of chunks.entries()) {
     onPart?.(i, chunks.length);
     const { data } = await complete(ctx, {

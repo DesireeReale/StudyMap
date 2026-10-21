@@ -14,6 +14,8 @@ export type Profile = {
   id: string;
   plan: "free" | "pro";
   ai_data_sharing_consent_at: string | null;
+  beta_terms_accepted_at: string | null;
+  beta_terms_version: string | null;
   exam_date: string | null;
   preferences: Record<string, unknown>;
   created_at: string;
@@ -102,6 +104,9 @@ export type AiUsageRow = {
   cost_usd: number;
   ok: boolean;
   error: string | null;
+  duration_ms: number | null;
+  queue_wait_ms: number;
+  outcome: "ok" | "invalid" | "timeout" | "rate_limited" | "error" | null;
   created_at: string;
 };
 
@@ -155,6 +160,7 @@ export type AiJobRow = {
   quota_period: string | null;
   quiz_period: string | null;
   seen_at: string | null;
+  duration_ms: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -179,10 +185,15 @@ export type Database = {
       chat_messages: Table<ChatMessageRow, "role" | "content">;
       feature_requests: Table<FeatureRequestRow, "kind" | "message">;
       ai_jobs: Table<AiJobRow, "user_id" | "type">;
+      provider_usage: Table<{ provider: string; period: string; count: number }, "provider" | "period">;
     };
     Views: { [_ in never]: never };
     Functions: {
       move_document: { Args: { p_document: string; p_folder: string }; Returns: undefined };
+      take_provider_slot: {
+        Args: { p_provider: string; p_minute: string; p_minute_limit: number; p_day: string; p_day_limit?: number | null };
+        Returns: string;
+      };
       consume_quota: {
         Args: { p_user: string; p_kind: string; p_period: string; p_amount?: number; p_limit?: number | null };
         Returns: boolean;

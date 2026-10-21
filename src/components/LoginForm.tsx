@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { BETA_TERMS, BETA_TERMS_VERSION } from "@/config/beta";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { Icon } from "./icons";
 import { LoginMascot, type MascotPose } from "./LoginMascot";
@@ -42,7 +43,10 @@ export function LoginForm() {
         : await supabase.auth.signUp({
             email,
             password,
-            options: { emailRedirectTo: `${location.origin}/auth/callback` },
+            options: {
+              emailRedirectTo: `${location.origin}/auth/callback`,
+              data: { beta_terms_version: BETA_TERMS_VERSION },
+            },
           });
     setBusy(false);
     if (error) return setError(mode === "signin" ? "Email o password non corrette." : error.message);
@@ -108,6 +112,20 @@ export function LoginForm() {
               </button>
             </div>
           </div>
+          {mode === "signup" && (
+            <label className="flex cursor-pointer items-start gap-3 rounded-row border border-border bg-sheet p-3 text-sm">
+              <input type="checkbox" name="beta" required className="mt-0.5 size-5 shrink-0 accent-[var(--accent)]" />
+              <span>
+                <span className="block font-bold">Accetto le condizioni della beta</span>
+                <span className="block text-muted">
+                  {BETA_TERMS}{" "}
+                  <a href="/privacy" target="_blank" className="font-bold text-accent hover:underline">
+                    Informativa privacy
+                  </a>
+                </span>
+              </span>
+            </label>
+          )}
           {error && (
             <p role="alert" className="text-sm text-negative">
               {error}

@@ -3,19 +3,24 @@ import { z } from "zod";
 import { MODELS, RETRY_DELAYS_MS, TASKS } from "@/config/ai";
 import {
   AiUnavailableError,
+  DAILY_LIMIT_ERROR,
   ProviderError,
   complete,
   costUsd,
+  inputBudget,
+  type Slot,
   type AiContext,
   type ChatFn,
   type UsageRecord,
 } from "./client";
 
 const schema = z.object({ answer: z.string() });
+const byKey = (key: string) => MODELS.find((m) => m.key === key)!;
 const [modelA, modelB] = [
-  { ...MODELS[0]!, key: "a", id: "model-a", inputUsdPerMTok: 1, outputUsdPerMTok: 2 },
-  { ...MODELS[1]!, key: "b", id: "model-b" },
+  { ...byKey("gemini-flash"), key: "a", id: "model-a", inputUsdPerMTok: 1, outputUsdPerMTok: 2 },
+  { ...byKey("gemini-flash-lite"), key: "b", id: "model-b" },
 ];
+const modelC = { ...byKey("gemma-4-free"), key: "c", id: "model-c" };
 
 function ctx(chat: ChatFn) {
   const usage: UsageRecord[] = [];
@@ -144,5 +149,138 @@ describe("complete", () => {
 describe("costUsd", () => {
   it("computes per-million pricing", () => {
     expect(costUsd(modelA, 2_000_000, 1_000_000)).toBe(4);
+  });
+});
+
+describe("provider limits", () => {
+  const slots = (byProvider: Record<string, Slot[]>) =>
+    vi.fn(async (provider: string) => byProvider[provider]?.shift() ?? "ok");
+
+  it("moves at once to a model of another provider when one is full", async () => {
+    const { c, usage } = ctx(async () => ok('{"answer":"c"}'));
+    c.chain = [modelA, modelB, modelC];
+    c.takeSlot = slots({ [modelA.provider]: ["minute"] });
+    await expect(run(c)).resolves.toMatchObject({ data: { answer: "c" } });
+    expect(usage.map((u) => u.model)).toEqual(["model-c"]);
+    expect(c.takeSlot).toHaveBeenCalledTimes(2);
+    expect(c.sleep).not.toHaveBeenCalled();
+  });
+
+  it("queues until the next minute when every provider is full", async () => {
+    const { c, usage } = ctx(async () => ok('{"answer":"a"}'));
+    c.chain = [modelA, modelC];
+    c.takeSlot = slots({ [modelA.provider]: ["minute"], [modelC.provider]: ["minute"] });
+    c.onWait = vi.fn();
+    c.now = () => Date.parse("2026-10-20T12:00:45Z");
+    await expect(run(c)).resolves.toMatchObject({ data: { answer: "a" } });
+    expect(c.onWait).toHaveBeenNthCalledWith(1, true);
+    expect(c.onWait).toHaveBeenNthCalledWith(2, false);
+    expect(vi.mocked(c.sleep!).mock.calls).toEqual([[15_500]]);
+    expect(usage.map((u) => u.model)).toEqual(["model-a"]);
+  });
+
+  it("stops with a clear message when the daily limit is reached everywhere", async () => {
+    const { c } = ctx(async () => ok('{"answer":"a"}'));
+    c.chain = [modelA, modelC];
+    c.takeSlot = vi.fn(async () => "day" as const);
+    await expect(run(c)).rejects.toThrow(DAILY_LIMIT_ERROR);
+    expect(c.chat).not.toHaveBeenCalled();
+  });
+
+  it("gives up after a few minutes in the queue", async () => {
+    const { c } = ctx(async () => ok('{"answer":"a"}'));
+    c.chain = [modelA];
+    c.takeSlot = vi.fn(async () => "minute" as const);
+    await expect(run(c)).rejects.toBeInstanceOf(AiUnavailableError);
+    expect(c.sleep).toHaveBeenCalledTimes(3);
+  });
+
+  it("skips models whose context is too small for the input", async () => {
+    const { c, usage } = ctx(async () => ok('{"answer":"c"}'));
+    c.chain = [{ ...modelA, contextTokens: 6_000 }, modelC];
+    await complete(c, { task: "mindmap", schema, messages: [{ role: "user", content: "x".repeat(20_000) }] });
+    expect(usage.map((u) => u.model)).toEqual(["model-c"]);
+  });
+
+  it("sends the whole document at once when it fits the first model", () => {
+    expect(inputBudget([{ ...modelC, contextTokens: 262_144 }], "mindmap")).toBe(Math.floor(262_144 * 0.8) - TASKS.mindmap.maxTokens);
+    expect(inputBudget([{ ...modelC, contextTokens: 8_000 }], "mindmap")).toBe(12_000);
+  });
+});
+
+describe("OpenRouter fallbacks", () => {
+  const minimax = { ...byKey("minimax-flash-free"), key: "m", id: "minimax" };
+  const gemma = { ...byKey("gemma-4-free"), key: "g", id: "gemma" };
+
+  it("lets OpenRouter switch between its models in one request and records who answered", async () => {
+    const { c, usage } = ctx(async () => ({ ...ok('{"answer":"g"}'), model: "gemma" }));
+    c.chain = [minimax, gemma, modelA];
+    await expect(run(c)).resolves.toMatchObject({ data: { answer: "g" } });
+    expect(c.chat).toHaveBeenCalledTimes(1);
+    expect(c.chat).toHaveBeenCalledWith(
+      expect.objectContaining({ fallbacks: ["gemma"], maxTokens: TASKS.mindmap.maxTokens + minimax.reasoning!.extraTokens }),
+    );
+    expect(usage[0]).toMatchObject({ model: "gemma", ok: true });
+  });
+
+  it("does not retry the OpenRouter fallbacks itself and moves to another provider", async () => {
+    const { c, usage } = ctx(async ({ model }) => {
+      if (model.provider === "openrouter") throw new ProviderError("busy", 429);
+      return ok('{"answer":"a"}');
+    });
+    c.chain = [minimax, gemma, modelA];
+    await expect(run(c)).resolves.toMatchObject({ data: { answer: "a" } });
+    expect(vi.mocked(c.chat).mock.calls.map(([req]) => req.model.id)).toEqual(["minimax", "model-a"]);
+    expect(usage.map((u) => u.model)).toEqual(["minimax", "model-a"]);
+  });
+
+  it("sends no fallback list to other providers", async () => {
+    const { c } = ctx(async () => ok('{"answer":"a"}'));
+    c.chain = [modelA, gemma];
+    await run(c);
+    expect(c.chat).toHaveBeenCalledWith(expect.objectContaining({ fallbacks: [] }));
+  });
+});
+
+describe("latency", () => {
+  const minimax = { ...byKey("minimax-flash-free"), key: "m", id: "minimax" };
+  const gemma = { ...byKey("gemma-4-free"), key: "g", id: "gemma" };
+  const clock = (...times: number[]) => vi.fn(() => times.shift() ?? 0);
+
+  it("records how long each call took and its outcome", async () => {
+    const { c, usage } = ctx(async () => ok('{"answer":"a"}'));
+    c.chain = [modelA];
+    c.now = clock(1_000, 4_500);
+    await run(c);
+    expect(usage[0]).toMatchObject({ durationMs: 3_500, queueWaitMs: 0, outcome: "ok" });
+    expect(c.chat).toHaveBeenCalledWith(expect.objectContaining({ timeoutMs: TASKS.mindmap.timeoutMs }));
+  });
+
+  it("moves on after a timeout and still tries the models OpenRouter did not reach", async () => {
+    const { c, usage } = ctx(async ({ model }) => {
+      if (model.id === "minimax") throw new ProviderError("Request timed out.", undefined, true);
+      return ok('{"answer":"g"}');
+    });
+    c.chain = [minimax, gemma];
+    await expect(run(c)).resolves.toMatchObject({ data: { answer: "g" } });
+    expect(vi.mocked(c.chat).mock.calls.map(([req]) => req.model.id)).toEqual(["minimax", "gemma"]);
+    expect(usage.map((u) => [u.model, u.outcome])).toEqual([
+      ["minimax", "timeout"],
+      ["gemma", "ok"],
+    ]);
+  });
+
+  it("labels rate limits and counts the time spent in the queue", async () => {
+    let calls = 0;
+    const { c, usage } = ctx(async () => {
+      if (calls++ === 0) throw new ProviderError("busy", 429);
+      return ok('{"answer":"a"}');
+    });
+    c.chain = [modelA, modelC];
+    c.takeSlot = vi.fn(async (provider: string) => (provider === modelC.provider && calls === 1 ? "minute" : "ok"));
+    c.now = () => Date.parse("2026-10-20T12:00:30Z");
+    await expect(run(c)).resolves.toMatchObject({ data: { answer: "a" } });
+    expect(usage[0]).toMatchObject({ outcome: "rate_limited", queueWaitMs: 0 });
+    expect(usage.at(-1)).toMatchObject({ outcome: "ok", queueWaitMs: 30_500 });
   });
 });

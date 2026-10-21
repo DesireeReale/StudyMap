@@ -1,7 +1,17 @@
 import OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { z } from "zod";
-import { PROVIDERS, REQUEST_TIMEOUT_MS, RETRY_DELAYS_MS, TASKS, type ModelConfig, type TaskId } from "@/config/ai";
+import {
+  CHUNK_INPUT_TOKENS,
+  CONTEXT_USE,
+  PROVIDERS,
+  QUEUE_ROUNDS,
+  RETRY_DELAYS_MS,
+  TASKS,
+  type ModelConfig,
+  type ProviderId,
+  type TaskId,
+} from "@/config/ai";
 
 export type Message = ChatCompletionMessageParam;
 
@@ -11,9 +21,11 @@ export type ChatRequest = {
   messages: Message[];
   maxTokens: number;
   jsonSchema: Record<string, unknown>;
+  fallbacks?: string[];
+  timeoutMs: number;
 };
 
-export type ChatResponse = { content: string; inputTokens: number; outputTokens: number };
+export type ChatResponse = { content: string; inputTokens: number; outputTokens: number; model?: string };
 
 export type ChatFn = (req: ChatRequest) => Promise<ChatResponse>;
 
@@ -28,7 +40,12 @@ export type UsageRecord = {
   costUsd: number;
   ok: boolean;
   error: string | null;
+  durationMs: number;
+  queueWaitMs: number;
+  outcome: Outcome;
 };
+
+export type Outcome = "ok" | "invalid" | "timeout" | "rate_limited" | "error";
 
 export type AiContext = {
   chain: ModelConfig[];
@@ -36,12 +53,30 @@ export type AiContext = {
   chat: ChatFn;
   record: (usage: UsageRecord) => Promise<void>;
   sleep?: (ms: number) => Promise<void>;
+  takeSlot?: (provider: ProviderId) => Promise<Slot>;
+  onWait?: (waiting: boolean) => void;
+  now?: () => number;
 };
+
+export type Slot = "ok" | "minute" | "day";
+
+export const DAILY_LIMIT_ERROR =
+  "Per oggi i modelli AI gratuiti hanno raggiunto il limite di richieste dell'app. Riprova domani.";
+
+export const estimateTokens = (text: string) => Math.ceil(text.length / 4);
+
+export function inputBudget(chain: ModelConfig[], task: TaskId): number {
+  const context = chain[0]?.contextTokens ?? 0;
+  return Math.max(CHUNK_INPUT_TOKENS, Math.floor(context * CONTEXT_USE) - TASKS[task].maxTokens);
+}
+
+const msToNextMinute = (now: number) => 60_000 - (now % 60_000) + 500;
 
 export class ProviderError extends Error {
   constructor(
     message: string,
     readonly status?: number,
+    readonly timeout = false,
   ) {
     super(message);
   }
@@ -55,17 +90,19 @@ export class AiUnavailableError extends Error {
 
 class InvalidOutputError extends Error {}
 
-export const openaiChat: ChatFn = async ({ model, messages, maxTokens, jsonSchema }) => {
+export const openaiChat: ChatFn = async ({ model, messages, maxTokens, jsonSchema, fallbacks, timeoutMs }) => {
   const provider = PROVIDERS[model.provider];
   const client = new OpenAI({
     baseURL: provider.baseURL,
     apiKey: process.env[provider.apiKeyEnv],
-    timeout: REQUEST_TIMEOUT_MS,
+    timeout: timeoutMs,
     maxRetries: 0,
   });
   try {
     const res = await client.chat.completions.create({
       model: model.id,
+      ...(fallbacks?.length ? { models: [model.id, ...fallbacks] } : {}),
+      ...(model.reasoning ? { reasoning: { effort: model.reasoning.effort } } : {}),
       messages,
       max_tokens: maxTokens,
       temperature: 0.3,
@@ -78,8 +115,10 @@ export const openaiChat: ChatFn = async ({ model, messages, maxTokens, jsonSchem
       content: res.choices[0]?.message?.content ?? "",
       inputTokens: res.usage?.prompt_tokens ?? 0,
       outputTokens: res.usage?.completion_tokens ?? 0,
+      model: res.model,
     };
   } catch (e) {
+    if (e instanceof OpenAI.APIConnectionTimeoutError) throw new ProviderError(e.message, undefined, true);
     if (e instanceof OpenAI.APIError) throw new ProviderError(e.message, e.status);
     throw new ProviderError(e instanceof Error ? e.message : String(e));
   }
@@ -87,6 +126,12 @@ export const openaiChat: ChatFn = async ({ model, messages, maxTokens, jsonSchem
 
 export function costUsd(model: ModelConfig, inputTokens: number, outputTokens: number): number {
   return (inputTokens * model.inputUsdPerMTok + outputTokens * model.outputUsdPerMTok) / 1_000_000;
+}
+
+function outcomeOf(e: unknown): Outcome {
+  if (e instanceof ProviderError && e.timeout) return "timeout";
+  if (e instanceof ProviderError && e.status === 429) return "rate_limited";
+  return "error";
 }
 
 function isBusy(e: unknown): boolean {
@@ -116,81 +161,128 @@ export async function complete<T>(
     ocrPages?: number;
   },
 ): Promise<{ data: T; inputTokens: number }> {
-  const { promptVersion, maxTokens } = TASKS[opts.task];
+  const { promptVersion, maxTokens, timeoutMs } = TASKS[opts.task];
+  const now = ctx.now ?? Date.now;
+  let queueWaitMs = 0;
   const jsonSchema = z.toJSONSchema(opts.schema) as Record<string, unknown>;
   const chain = opts.vision ? ctx.visionChain : ctx.chain;
   if (!chain.length) {
     throw new AiUnavailableError(
-      "Nessun modello AI disponibile: manca la chiave API del provider oppure, con i provider gratuiti, il consenso all'uso dei dati (Impostazioni).",
+      "Nessun modello AI disponibile: manca la chiave API del provider oppure non hai ancora accettato le condizioni della beta.",
     );
   }
   let totalInput = 0;
+  const inputTokens = estimateTokens(JSON.stringify(opts.messages));
+  const full = new Map<ProviderId, Slot>();
+  const tried = new Set<string>();
+  const fits = (m: ModelConfig) => inputTokens + maxTokens <= m.contextTokens * CONTEXT_USE;
 
-  for (const [index, model] of chain.entries()) {
-    const isLast = index === chain.length - 1;
-    const messages = [...opts.messages];
-    try {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        let res: ChatResponse | undefined;
-        for (let retry = 0; !res; retry++) {
-          try {
-            res = await ctx.chat({ task: opts.task, model, messages, maxTokens, jsonSchema });
-          } catch (e) {
-            await ctx.record({
-              task: opts.task,
-              provider: model.provider,
-              model: model.id,
-              promptVersion,
-              inputTokens: 0,
-              outputTokens: 0,
-              ocrPages: 0,
-              costUsd: 0,
-              ok: false,
-              error: e instanceof Error ? e.message.slice(0, 500) : String(e),
-            });
-            if (!isBusy(e) || !isLast || retry >= RETRY_DELAYS_MS.length) throw e;
-            await (ctx.sleep ?? wait)(RETRY_DELAYS_MS[retry]!);
-          }
-        }
-        totalInput += res.inputTokens;
-
-        let error: string | null = null;
-        let data: T | undefined;
-        try {
-          const parsed = opts.schema.safeParse(parseJsonOutput(res.content));
-          if (parsed.success) data = parsed.data;
-          else error = z.prettifyError(parsed.error);
-        } catch (e) {
-          error = e instanceof Error ? e.message : "JSON non valido";
-        }
-
-        await ctx.record({
-          task: opts.task,
-          provider: model.provider,
-          model: model.id,
-          promptVersion,
-          inputTokens: res.inputTokens,
-          outputTokens: res.outputTokens,
-          ocrPages: data !== undefined ? (opts.ocrPages ?? 0) : 0,
-          costUsd: costUsd(model, res.inputTokens, res.outputTokens),
-          ok: data !== undefined,
-          error: error?.slice(0, 500) ?? null,
-        });
-
-        if (data !== undefined) return { data, inputTokens: totalInput };
-
-        messages.push(
-          { role: "assistant", content: res.content },
-          {
-            role: "user",
-            content: `La risposta non rispetta lo schema JSON richiesto:\n${error}\nRispondi di nuovo solo con JSON valido.`,
-          },
-        );
+  for (let round = 0; round <= QUEUE_ROUNDS; round++) {
+    full.clear();
+    tried.clear();
+    for (const [index, model] of chain.entries()) {
+      if (tried.has(model.key) || !fits(model) || full.has(model.provider)) continue;
+      const slot = ctx.takeSlot ? await ctx.takeSlot(model.provider) : "ok";
+      if (slot !== "ok") {
+        full.set(model.provider, slot);
+        continue;
       }
-      throw new InvalidOutputError();
-    } catch (e) {
-      if (!shouldFallback(e)) throw e;
+      const later = chain.slice(index + 1);
+      const fallbacks =
+        model.provider === "openrouter"
+          ? later.filter((m) => m.provider === "openrouter" && !tried.has(m.key) && fits(m))
+          : [];
+      for (const m of [model, ...fallbacks]) tried.add(m.key);
+      const isLast = later.every((m) => tried.has(m.key));
+      const messages = [...opts.messages];
+      try {
+        for (let attempt = 0; attempt < 2; attempt++) {
+          let res: ChatResponse | undefined;
+          let durationMs = 0;
+          for (let retry = 0; !res; retry++) {
+            const started = now();
+            try {
+              res = await ctx.chat({
+                task: opts.task,
+                model,
+                messages,
+                maxTokens: maxTokens + (model.reasoning?.extraTokens ?? 0),
+                jsonSchema,
+                fallbacks: fallbacks.map((m) => m.id),
+                timeoutMs: model.timeoutMs ?? timeoutMs,
+              });
+              durationMs = now() - started;
+            } catch (e) {
+              await ctx.record({
+                task: opts.task,
+                provider: model.provider,
+                model: model.id,
+                promptVersion,
+                inputTokens: 0,
+                outputTokens: 0,
+                ocrPages: 0,
+                costUsd: 0,
+                ok: false,
+                error: e instanceof Error ? e.message.slice(0, 500) : String(e),
+                durationMs: now() - started,
+                queueWaitMs,
+                outcome: outcomeOf(e),
+              });
+              if (e instanceof ProviderError && e.timeout) for (const m of fallbacks) tried.delete(m.key);
+              if (!isBusy(e) || !isLast || retry >= RETRY_DELAYS_MS.length) throw e;
+              await (ctx.sleep ?? wait)(RETRY_DELAYS_MS[retry]!);
+            }
+          }
+          totalInput += res.inputTokens;
+
+          let error: string | null = null;
+          let data: T | undefined;
+          try {
+            const parsed = opts.schema.safeParse(parseJsonOutput(res.content));
+            if (parsed.success) data = parsed.data;
+            else error = z.prettifyError(parsed.error);
+          } catch (e) {
+            error = e instanceof Error ? e.message : "JSON non valido";
+          }
+
+          await ctx.record({
+            task: opts.task,
+            provider: model.provider,
+            model: res.model ?? model.id,
+            promptVersion,
+            inputTokens: res.inputTokens,
+            outputTokens: res.outputTokens,
+            ocrPages: data !== undefined ? (opts.ocrPages ?? 0) : 0,
+            costUsd: costUsd(model, res.inputTokens, res.outputTokens),
+            ok: data !== undefined,
+            error: error?.slice(0, 500) ?? null,
+            durationMs,
+            queueWaitMs,
+            outcome: data !== undefined ? "ok" : "invalid",
+          });
+
+          if (data !== undefined) return { data, inputTokens: totalInput };
+
+          messages.push(
+            { role: "assistant", content: res.content },
+            {
+              role: "user",
+              content: `La risposta non rispetta lo schema JSON richiesto:\n${error}\nRispondi di nuovo solo con JSON valido.`,
+            },
+          );
+        }
+        throw new InvalidOutputError();
+      } catch (e) {
+        if (!shouldFallback(e)) throw e;
+      }
     }
+    if (![...full.values()].includes("minute") || round === QUEUE_ROUNDS) break;
+    ctx.onWait?.(true);
+    const pause = msToNextMinute(now());
+    await (ctx.sleep ?? wait)(pause);
+    queueWaitMs += pause;
+    ctx.onWait?.(false);
   }
+  if (full.size && [...full.values()].every((v) => v === "day")) throw new AiUnavailableError(DAILY_LIMIT_ERROR);
   throw new AiUnavailableError();
 }

@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { BETA_TERMS_VERSION } from "../src/config/beta";
 import type { Database } from "../src/lib/supabase/types";
 import { loadTestEnv } from "./test-env";
 
@@ -8,10 +9,15 @@ const noSession = { auth: { persistSession: false, autoRefreshToken: false } };
 
 export const admin = createClient<Database>(url, env.SUPABASE_SERVICE_ROLE_KEY!, noSession);
 
-export async function createTestUser(label: string) {
+export async function createTestUser(label: string, { betaTerms = true } = {}) {
   const email = `${label}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.test`;
   const password = `pw-${crypto.randomUUID()}`;
-  const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: betaTerms ? { beta_terms_version: BETA_TERMS_VERSION } : {},
+  });
   if (error) throw error;
   return { id: data.user.id, email, password };
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { CSSProperties, ReactNode } from "react";
 import { PLANS } from "@/config/plans";
+import { SUPPORT_EMAIL } from "@/core/feedback";
 import { BrandMark } from "@/components/icons";
 import { HEART_FAILURE, MapArt } from "@/components/landing/MapArt";
 import { ReadingDemo } from "@/components/landing/ReadingDemo";
@@ -528,7 +529,10 @@ export default async function Home() {
       <footer className="border-t border-border py-7 text-[14px] text-muted">
         <div className="mx-auto flex w-full max-w-[1180px] px-4 flex-wrap justify-between gap-x-6 gap-y-3">
           <span>StudyMap · Italia, 2026</span>
-          <span className="flex gap-4">
+          <span className="flex flex-wrap gap-4">
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-ink hover:underline">
+              {SUPPORT_EMAIL}
+            </a>
             <Link href="/privacy" className="hover:text-ink hover:underline">
               Privacy
             </Link>

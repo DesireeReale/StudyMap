@@ -2,7 +2,9 @@ import { AppNav } from "@/components/AppNav";
 import { JobTray } from "@/components/JobTray";
 import { PreferencesSync } from "@/components/StyleSwitch";
 import { StudyTimerProvider } from "@/components/StudyTimer";
-import { aiMockEnabled } from "@/lib/ai";
+import { BetaTerms } from "@/components/BetaTerms";
+import { BETA_SHARED_MODELS } from "@/config/beta";
+import { acceptedBetaTerms, aiMockEnabled } from "@/lib/ai";
 import { getWorkspace } from "@/lib/app-style";
 import { requireUser } from "@/lib/supabase/server";
 
@@ -32,7 +34,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           id="contenuto"
           className="flex-1 bg-sheet px-4 py-6 md:rounded-2xl md:border md:border-border md:px-8 md:py-9"
         >
-          {children}
+          {BETA_SHARED_MODELS && !acceptedBetaTerms(profile) ? <BetaTerms userId={user.id} /> : children}
         </main>
       </div>
       <JobTray />

@@ -142,9 +142,26 @@
 - [x] Nemotron VL e Gemma 4 gratuiti (OpenRouter) nella catena, solo con consenso
 - [x] Prova reale di Nemotron VL e Gemma 4 (con ok dell'utente): Gemma 4 ok con json_object (33 s, 873 token in ingresso, 1537 in uscita, 32 concetti); Nemotron in timeout due volte a 45 s, spostato dopo Gemma
 - [ ] Riprovare Nemotron VL più avanti o alzare il timeout solo per lui
+- [x] Beta: piano Free a 20 generazioni al mese
+- [x] Beta: Gemma 4 subito dopo Mistral Small; Gemini gratuito spento (i termini Google vietano il piano gratuito con utenti UE)
+- [x] Limiti al minuto: contatore condiviso per provider su Supabase, passaggio a un altro provider se pieno, coda "In coda…" se sono pieni tutti
+- [x] Una sola richiesta quando il documento sta nel contesto del modello (Gemma 262k, Nemotron 1M)
+- [x] MiniMax M3.1 Flash gratuito primo modello del piano Free (ragionamento al minimo "low", obbligatorio per questo modello)
+- [x] Fallback interno di OpenRouter con il parametro `models` (MiniMax, Gemma 4, Nemotron in una sola richiesta) e modello che ha risposto registrato in ai_usage
+- [ ] Prova reale di MiniMax: risultato da leggere (le due chiamate fatte non hanno lasciato l'output)
+- [x] Beta: accettazione unica e obbligatoria alla registrazione (o al primo accesso per gli account esistenti), salvata con data e versione; tolta la spunta di consenso separata (flag BETA_SHARED_MODELS)
+- [x] Informativa: sezione sulla beta con provider, trasferimento fuori UE e come revocare
+- [x] Latenza: durata, attesa in coda ed esito di ogni chiamata in ai_usage, durata dei job, vista ai_latency_stats (mediana e p95 a 7 giorni)
+- [x] Timeout per attività in config (40 s per mappe, flashcard, riassunti e quiz; 30 s per trascrizioni e chat): oltre si passa al modello successivo
+- [ ] Chat in streaming (stima: mezza giornata o una giornata di lavoro, da approvare)
+- [ ] E2E instabili: una volta 6 test su 9 sono rimasti sulla pagina di login; il giro successivo è passato
+- [x] Contatto di assistenza aistudymap@proton.me in privacy, landing e Impostazioni
 - [x] Landing: argomenti verificabili al posto dei numeri (bassa, piccolo)
 
 ## Da fare tu
+- [ ] Registrarsi nell'app con aistudymap@proton.me, poi far passare il profilo al piano Pro
+- [ ] Caricare 10 € di credito su OpenRouter (porta il limite dei modelli gratuiti da 50 a 1000 richieste al giorno)
+- [ ] Per ricevere i suggerimenti via email: account Resend gratuito e RESEND_API_KEY in .env.local
 - [x] Creare il progetto Supabase di sviluppo (regione UE)
 - [x] Creare il progetto Supabase di test (regione UE)
 - [x] Applicare le migrazioni a entrambi (npm run db:push)

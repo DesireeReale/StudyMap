@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SUPPORT_EMAIL } from "@/core/feedback";
+import { BETA_TERMS } from "@/config/beta";
 
 export const metadata: Metadata = { title: "Informativa privacy" };
 
@@ -32,23 +34,45 @@ export default function PrivacyPage() {
       <h2>Dove sono conservati</h2>
       <p>Database e file sono ospitati su Supabase in una regione dell&apos;Unione Europea.</p>
 
-      <h2>Elaborazione con l&apos;intelligenza artificiale</h2>
+      <h2>Elaborazione con l&apos;intelligenza artificiale durante la beta</h2>
       <p>
-        Per creare mappe e flashcard il testo dei tuoi materiali viene inviato a un provider AI. Usiamo senza
-        ulteriori consensi solo provider configurati in modo che i contenuti non vengano usati per addestrare i
-        modelli.
+        <strong>{BETA_TERMS}</strong> Accetti queste condizioni alla registrazione (o al primo accesso, se avevi già un
+        account): salviamo la data e la versione del testo che hai accettato.
       </p>
       <p>
-        <strong>Solo se dai un consenso separato</strong> nelle impostazioni possiamo usare anche servizi AI gratuiti
-        (Google Gemini, provider raggiunti tramite OpenRouter), che possono trovarsi fuori dall&apos;UE, conservare i
-        contenuti e usarli per migliorare i propri modelli. Il consenso è facoltativo e revocabile in qualsiasi
-        momento. In questa fase di sviluppo le funzioni AI sono disponibili solo con il consenso.
+        Per creare mappe, flashcard, quiz, riassunti e risposte il testo dei tuoi materiali viene inviato, tramite
+        OpenRouter (Stati Uniti), a questi provider di modelli gratuiti:
+      </p>
+      <ul>
+        <li>MiniMax, società con sede in Cina (modello MiniMax M3.1 Flash);</li>
+        <li>Google (modelli Gemma);</li>
+        <li>NVIDIA (modelli Nemotron);</li>
+        <li>altri modelli gratuiti scelti da OpenRouter, solo come ultima riserva.</li>
+      </ul>
+      <p>
+        Questi servizi conservano i contenuti e possono usarli per migliorare i propri modelli. I testi vengono quindi
+        trasferiti fuori dall&apos;Unione Europea, anche verso paesi per cui non esiste una decisione di adeguatezza
+        della Commissione europea, come la Cina.
+      </p>
+      <p>
+        <strong>Come revocare:</strong> elimina l&apos;account dalla pagina Impostazioni. Si cancellano l&apos;account
+        e tutti i contenuti salvati su StudyMap; non possiamo cancellare le copie che i provider AI hanno già
+        conservato.
       </p>
 
       <h2>I tuoi diritti</h2>
       <p>
         Puoi eliminare in qualsiasi momento singoli documenti oppure l&apos;intero account con tutti i dati collegati
         dalla pagina Impostazioni. Hai inoltre i diritti previsti dagli articoli 15-22 del GDPR.
+      </p>
+
+      <h2>Contatti</h2>
+      <p>
+        Per domande sui tuoi dati o per esercitare i tuoi diritti scrivi a{" "}
+        <a href={`mailto:${SUPPORT_EMAIL}`} className="font-bold text-accent hover:underline">
+          {SUPPORT_EMAIL}
+        </a>
+        .
       </p>
     </main>
   );

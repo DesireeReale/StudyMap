@@ -13,6 +13,8 @@ export type ModelConfig = {
   structuredOutput: "json_schema" | "json_object";
   usesDataForTraining: boolean;
   enabled: boolean;
+  reasoning?: { effort: "low"; extraTokens: number };
+  timeoutMs?: number;
 };
 
 export const PROVIDERS = {
@@ -23,9 +25,24 @@ export const PROVIDERS = {
 } as const;
 
 // Prices are what this app actually pays: 0 on free tiers (Gemini free tier, OpenRouter :free).
-// The Gemini free tier is for development only: Google's terms require paid services for apps serving EEA users.
+// The Gemini free tier is off: Google's terms allow only paid services for apps serving EEA users
+// (https://ai.google.dev/gemini-api/terms, "Use Restrictions"). Enable it again only with a paid key.
 // Gemini's OpenAI-compatible endpoint rejects our JSON schemas in json_schema mode, so it uses json_object + Zod.
+// MiniMax M3.1 Flash requires reasoning (lowest effort "low"); reasoning tokens count against max_tokens.
 export const MODELS: ModelConfig[] = [
+  {
+    key: "minimax-flash-free",
+    provider: "openrouter",
+    id: "minimax/minimax-m3.1-flash:free",
+    inputUsdPerMTok: 0,
+    outputUsdPerMTok: 0,
+    contextTokens: 1_000_000,
+    vision: true,
+    structuredOutput: "json_object",
+    usesDataForTraining: true,
+    enabled: true,
+    reasoning: { effort: "low", extraTokens: 4000 },
+  },
   {
     key: "gemini-flash",
     provider: "gemini",
@@ -36,7 +53,7 @@ export const MODELS: ModelConfig[] = [
     vision: true,
     structuredOutput: "json_object",
     usesDataForTraining: true,
-    enabled: true,
+    enabled: false,
   },
   {
     key: "gemini-flash-lite",
@@ -48,7 +65,7 @@ export const MODELS: ModelConfig[] = [
     vision: true,
     structuredOutput: "json_object",
     usesDataForTraining: true,
-    enabled: true,
+    enabled: false,
   },
   {
     key: "mistral-small",
@@ -126,20 +143,21 @@ export const MODELS: ModelConfig[] = [
 
 export const CHAINS: Record<PlanId, string[]> = {
   free: [
+    "minimax-flash-free",
     "muse-spark-contributor",
     "mistral-small",
+    "gemma-4-free",
     "gemini-flash",
     "gemini-flash-lite",
-    "gemma-4-free",
     "nemotron-vl-free",
     "openrouter-free",
   ],
   pro: [
     "muse-spark",
     "mistral-small",
+    "gemma-4-free",
     "gemini-flash",
     "gemini-flash-lite",
-    "gemma-4-free",
     "nemotron-vl-free",
     "openrouter-free",
   ],
@@ -147,16 +165,27 @@ export const CHAINS: Record<PlanId, string[]> = {
 
 export type TaskId = "mindmap" | "flashcards" | "transcribe" | "figure" | "summary" | "quiz" | "chat";
 
-export const TASKS: Record<TaskId, { promptVersion: string; maxTokens: number }> = {
-  mindmap: { promptVersion: "v2", maxTokens: 4000 },
-  flashcards: { promptVersion: "v2", maxTokens: 4000 },
-  transcribe: { promptVersion: "v1", maxTokens: 3000 },
-  figure: { promptVersion: "v1", maxTokens: 2000 },
-  summary: { promptVersion: "v1", maxTokens: 3000 },
-  quiz: { promptVersion: "v2", maxTokens: 4000 },
-  chat: { promptVersion: "v1", maxTokens: 2000 },
+export const TASKS: Record<TaskId, { promptVersion: string; maxTokens: number; timeoutMs: number }> = {
+  mindmap: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000 },
+  flashcards: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000 },
+  transcribe: { promptVersion: "v1", maxTokens: 3000, timeoutMs: 30_000 },
+  figure: { promptVersion: "v1", maxTokens: 2000, timeoutMs: 30_000 },
+  summary: { promptVersion: "v1", maxTokens: 3000, timeoutMs: 40_000 },
+  quiz: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000 },
+  chat: { promptVersion: "v1", maxTokens: 2000, timeoutMs: 30_000 },
 };
 
 export const CHUNK_INPUT_TOKENS = 12_000;
-export const REQUEST_TIMEOUT_MS = 45_000;
+export const CONTEXT_USE = 0.8;
+
+// Per-account request limits shared by every user of the app. OpenRouter :free models: 20 per minute and
+// 1000 per day once at least 10 credits were bought (https://openrouter.ai/docs/api-reference/limits).
+// The other values are estimates: check them in each provider's console.
+export const PROVIDER_LIMITS: Record<ProviderId, { perMinute: number; perDay: number | null }> = {
+  openrouter: { perMinute: 20, perDay: 1000 },
+  mistral: { perMinute: 60, perDay: null },
+  gemini: { perMinute: 10, perDay: 250 },
+  meta: { perMinute: 60, perDay: null },
+};
+export const QUEUE_ROUNDS = 3;
 export const RETRY_DELAYS_MS = [2_000, 5_000];

@@ -22,18 +22,13 @@ describe("modelChain", () => {
   });
 
   it("includes them with consent", () => {
-    expect(keys("free", true)).toEqual([
-      "gemini-flash",
-      "gemini-flash-lite",
-      "gemma-4-free",
-      "nemotron-vl-free",
-      "openrouter-free",
-    ]);
+    expect(keys("free", true)).toEqual(["minimax-flash-free", "gemma-4-free", "nemotron-vl-free", "openrouter-free"]);
     expect(keys("pro", true).slice(-3)).toEqual(["gemma-4-free", "nemotron-vl-free", "openrouter-free"]);
   });
 
   it("filters vision-capable models", () => {
-    expect(keys("free", true, true)).toEqual(["gemini-flash", "gemini-flash-lite", "gemma-4-free", "nemotron-vl-free"]);
+    expect(keys("free", true, true)).toEqual(["minimax-flash-free", "gemma-4-free", "nemotron-vl-free"]);
+    expect(MODELS.filter((m) => m.provider === "gemini").every((m) => !m.enabled)).toBe(true);
   });
 
   it("skips disabled models and models without an API key", () => {

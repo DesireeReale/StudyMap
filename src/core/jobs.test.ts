@@ -26,6 +26,7 @@ describe("phaseText", () => {
     expect(phaseText({ ...base, phase: "generate", done: 1, total: 5 })).toBe("Creo la mappa: parte 2 di 5");
     expect(phaseText({ ...base, phase: "generate", done: 0, total: 1 })).toBe("Creo la mappa…");
     expect(phaseText({ ...base, phase: "merge" })).toBe("Metto insieme le parti…");
+    expect(phaseText({ ...base, phase: "wait" })).toMatch(/^In coda/);
   });
 
   it("reports the outcome", () => {

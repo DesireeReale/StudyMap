@@ -10,7 +10,7 @@ import { officeKind, readDocx, readPptx } from "@/core/office";
 import { readZip } from "@/core/zip";
 import { aiContextFor, guardAi } from "@/lib/ai";
 import { apiUser, denied, fail } from "@/lib/api";
-import { failJob, JobFailure, runJob } from "@/lib/jobs";
+import { failJob, JobFailure, runJob, type Work } from "@/lib/jobs";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 export const maxDuration = 300;
@@ -100,7 +100,8 @@ export async function POST(request: Request) {
   const transcribe = (dataUrl: string) => transcribeImage(ctx, dataUrl);
   const figures = body.figures ? { describe: (dataUrl: string, context: string) => describeFigure(ctx, dataUrl, context), max: plan.maxFigures } : undefined;
 
-  const work: Parameters<typeof runJob>[1] = async (progress) => {
+  const work: Work = async (progress, onWait) => {
+    ctx.onWait = onWait;
     progress("read");
     const onPage = (done: number, total: number) => progress("transcribe", done, total);
     let pages: string[];

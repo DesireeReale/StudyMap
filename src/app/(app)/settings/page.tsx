@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { BETA_TERMS } from "@/config/beta";
 import { PLANS } from "@/config/plans";
-import { ConsentToggle, DeleteAccount, ExamDate } from "@/components/AccountActions";
+import { shortDate } from "@/core/dates";
+import { DeleteAccount, ExamDate } from "@/components/AccountActions";
 import { FeedbackForm } from "@/components/FeedbackForm";
+import { SUPPORT_EMAIL } from "@/core/feedback";
 import { WorkspacePicker } from "@/components/StyleSwitch";
 import { getWorkspace } from "@/lib/app-style";
 import { requireUser } from "@/lib/supabase/server";
@@ -80,13 +83,31 @@ export default async function SettingsPage() {
           </>
         }
       >
-        <ConsentToggle consentAt={profile.ai_data_sharing_consent_at} />
+        <div className="flex flex-col gap-2 text-sm">
+          <p className="font-bold">Condizioni della beta</p>
+          <p className="text-muted">{BETA_TERMS}</p>
+          {profile.beta_terms_accepted_at && (
+            <p className="num">
+              Accettate il {shortDate(profile.beta_terms_accepted_at)}. Per revocare l&apos;accettazione elimina
+              l&apos;account qui sotto: si cancellano anche tutti i tuoi contenuti.
+            </p>
+          )}
+        </div>
       </Section>
 
       <Section
         id="suggerimenti"
         title="Suggerisci un'idea"
-        description="Proponi una funzione nuova o segnala qualcosa che non va. Il messaggio viene salvato insieme al tuo account."
+        description={
+          <>
+            Proponi una funzione nuova o segnala qualcosa che non va. Il messaggio viene salvato insieme al tuo
+            account. Per assistenza scrivi a{" "}
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="font-bold text-accent hover:underline">
+              {SUPPORT_EMAIL}
+            </a>
+            .
+          </>
+        }
       >
         <FeedbackForm />
       </Section>

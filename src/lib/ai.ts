@@ -1,7 +1,7 @@
 import "server-only";
-import { PROVIDERS, type ModelConfig } from "@/config/ai";
+import { PROVIDER_LIMITS, PROVIDERS, type ModelConfig, type ProviderId } from "@/config/ai";
 import { PLANS, RATE_LIMITS } from "@/config/plans";
-import { openaiChat, type AiContext } from "@/core/ai/client";
+import { openaiChat, type AiContext, type Slot } from "@/core/ai/client";
 import { mockChat } from "@/core/ai/mock";
 import {
   minutePeriod,
@@ -11,6 +11,8 @@ import {
   tokenLimitReached,
   type Decision,
 } from "@/core/entitlements";
+import { BETA_SHARED_MODELS, BETA_TERMS_VERSION } from "@/config/beta";
+import { dayPeriod } from "@/core/feedback";
 import { supabaseAdmin } from "./supabase/server";
 import type { Profile } from "./supabase/types";
 
@@ -22,14 +24,38 @@ const slowMockChat: typeof mockChat = async (req) => {
   return mockChat(req);
 };
 
+const mockProviderLimit = Number(process.env.AI_MOCK_PROVIDER_LIMIT ?? 0);
+
+async function takeSlot(provider: ProviderId): Promise<Slot> {
+  const limits = aiMockEnabled ? { perMinute: mockProviderLimit, perDay: null } : PROVIDER_LIMITS[provider];
+  const { data, error } = await supabaseAdmin().rpc("take_provider_slot", {
+    p_provider: aiMockEnabled ? `mock:${provider}` : provider,
+    p_minute: `m:${minutePeriod()}`,
+    p_minute_limit: limits.perMinute,
+    p_day: `d:${dayPeriod()}`,
+    p_day_limit: limits.perDay,
+  });
+  if (error) {
+    console.error("take_provider_slot failed", error.message);
+    return "ok";
+  }
+  return data as Slot;
+}
+
+export const acceptedBetaTerms = (profile: Profile) => profile.beta_terms_version === BETA_TERMS_VERSION;
+
+const sharedModelsAllowed = (profile: Profile) =>
+  BETA_SHARED_MODELS ? acceptedBetaTerms(profile) : !!profile.ai_data_sharing_consent_at;
+
 export function aiContextFor(profile: Profile): AiContext {
   const admin = supabaseAdmin();
-  const consent = aiMockEnabled || !!profile.ai_data_sharing_consent_at;
+  const consent = aiMockEnabled || sharedModelsAllowed(profile);
   const keyFilter = aiMockEnabled ? undefined : hasKey;
   return {
     chain: modelChain(profile.plan, { consent, hasKey: keyFilter }),
     visionChain: modelChain(profile.plan, { consent, vision: true, hasKey: keyFilter }),
     chat: aiMockEnabled ? slowMockChat : openaiChat,
+    takeSlot: !aiMockEnabled || mockProviderLimit > 0 ? takeSlot : undefined,
     record: async (u) => {
       const { error } = await admin.from("ai_usage").insert({
         user_id: profile.id,
@@ -43,6 +69,9 @@ export function aiContextFor(profile: Profile): AiContext {
         cost_usd: u.costUsd,
         ok: u.ok,
         error: u.error,
+        duration_ms: u.durationMs,
+        queue_wait_ms: u.queueWaitMs,
+        outcome: u.outcome,
       });
       if (error) console.error("ai_usage insert failed", error.message);
       if (u.inputTokens > 0) await consumeQuota(profile.id, "input_tokens", monthPeriod(), u.inputTokens, null);

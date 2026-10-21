@@ -1,6 +1,6 @@
 export type JobStatus = "queued" | "running" | "done" | "error";
 export type JobType = "ingest" | "mindmap" | "flashcards" | "summary" | "quiz";
-export type JobPhase = "queued" | "read" | "transcribe" | "generate" | "merge" | "done" | "error";
+export type JobPhase = "queued" | "read" | "transcribe" | "generate" | "merge" | "wait" | "done" | "error";
 export type Progress = (phase: JobPhase, done?: number, total?: number) => void;
 
 export type JobView = {
@@ -63,6 +63,8 @@ export function phaseText(j: Pick<JobView, "type" | "status" | "phase" | "done" 
       return j.total > 1 ? `${CREATING[j.type]}: parte ${current(j)} di ${j.total}` : `${CREATING[j.type]}…`;
     case "merge":
       return "Metto insieme le parti…";
+    case "wait":
+      return "In coda: i modelli AI sono occupati, riparto tra meno di un minuto…";
     default:
       return "In attesa di iniziare…";
   }

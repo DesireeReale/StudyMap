@@ -34,9 +34,11 @@ function reporter(jobId: string): Progress {
   };
 }
 
-export function generation(supabase: SupabaseClient<Database>, profile: Profile, type: GenerationType, doc: Source) {
-  return async (progress: Progress): Promise<string> => {
-    const ctx = aiContextFor(profile);
+export type Work = (progress: Progress, onWait: (waiting: boolean) => void) => Promise<string>;
+
+export function generation(supabase: SupabaseClient<Database>, profile: Profile, type: GenerationType, doc: Source): Work {
+  return async (progress, onWait) => {
+    const ctx = { ...aiContextFor(profile), onWait };
     const input = { title: doc.title, pages: doc.pages };
     const onPart = (done: number, total: number) => progress("generate", done, total);
 
@@ -100,7 +102,7 @@ export function generation(supabase: SupabaseClient<Database>, profile: Profile,
 async function settle(job: AiJobRow, patch: { status: "done" | "error"; phase: JobPhase; href?: string; error?: string }) {
   const { data } = await supabaseAdmin()
     .from("ai_jobs")
-    .update({ ...patch, updated_at: new Date().toISOString() })
+    .update({ ...patch, updated_at: new Date().toISOString(), duration_ms: Date.now() - Date.parse(job.created_at) })
     .eq("id", job.id)
     .in("status", ["queued", "running"])
     .select("id");
@@ -113,14 +115,25 @@ export async function failJob(job: AiJobRow, message: string) {
   if (job.quiz_period) await consumeQuota(job.user_id, "quiz", job.quiz_period, -1, null);
 }
 
-export async function runJob(job: AiJobRow, work: (progress: Progress) => Promise<string>, onFail?: () => Promise<unknown>) {
+function queueAware(progress: Progress) {
+  let last: Parameters<Progress> = ["queued"];
+  const tracked: Progress = (...args) => {
+    last = args;
+    progress(...args);
+  };
+  const onWait = (waiting: boolean) => (waiting ? progress("wait") : progress(...last));
+  return { tracked, onWait };
+}
+
+export async function runJob(job: AiJobRow, work: Work, onFail?: () => Promise<unknown>) {
   await supabaseAdmin()
     .from("ai_jobs")
     .update({ status: "running", updated_at: new Date().toISOString() })
     .eq("id", job.id)
     .eq("status", "queued");
   try {
-    await settle(job, { status: "done", phase: "done", href: await work(reporter(job.id)) });
+    const { tracked, onWait } = queueAware(reporter(job.id));
+    await settle(job, { status: "done", phase: "done", href: await work(tracked, onWait) });
   } catch (e) {
     const known = e instanceof JobFailure || e instanceof AiUnavailableError;
     if (!known) console.error("job failed", e);

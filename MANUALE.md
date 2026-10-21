@@ -311,6 +311,8 @@ Tutto avviene in `complete()` ([client.ts:102](src/core/ai/client.ts:102)):
 
 ### 3.6 Fallback, errori e rate limit
 
+**Limiti condivisi per provider.** Prima di ogni richiesta `complete()` ([client.ts](src/core/ai/client.ts)) chiede un posto a `take_provider_slot` su Supabase, con i limiti di `PROVIDER_LIMITS` ([config/ai.ts](src/config/ai.ts)). Se il provider è pieno in quel minuto passa al modello successivo di un altro provider; se sono pieni tutti, il lavoro aspetta il minuto dopo (la barra mostra "In coda…") fino a 3 volte. Se è finito il limite giornaliero, l'utente legge "riprova domani". I modelli con contesto troppo piccolo per il testo vengono saltati, e il documento si spezza in parti solo se non sta nell'80% del contesto del primo modello (`inputBudget`).
+
 `shouldFallback` ([client.ts:91](src/core/ai/client.ts:91)) decide quando passare al modello successivo:
 
 - **sì**: con 429 (rate limit), 5xx, timeout o errori di rete (status assente), 401/403 (chiave sbagliata) e output non valido dopo il retry;
@@ -386,6 +388,7 @@ L'elenco completo è in [.env.example](.env.example). Copialo in `.env.local`, c
 | `OPENROUTER_API_KEY` | no | come sopra | riserva |
 | `META_API_KEY` | no | come sopra | modelli Meta (spenti) |
 | `AI_MOCK` | no | [lib/ai.ts:17](src/lib/ai.ts:17) | `1` = risposte finte, ignorato in produzione |
+| `AI_MOCK_PROVIDER_LIMIT` | no | [lib/ai.ts](src/lib/ai.ts) | limite al minuto per provider con le risposte finte, per vedere la coda |
 | `AI_MOCK_DELAY_MS` | no | [lib/ai.ts](src/lib/ai.ts) | ritardo di ogni risposta finta, per vedere le fasi di avanzamento |
 | `FEEDBACK_EMAIL_TO` | no | [lib/notify.ts](src/lib/notify.ts) | indirizzo che riceve i messaggi di "Suggerisci un'idea" |
 | `RESEND_API_KEY` | no | come sopra | chiave di Resend per inviare quell'email |

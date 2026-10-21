@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { BETA_TERMS_VERSION } from "../../src/config/beta";
 import type { Database } from "../../src/lib/supabase/types";
 import { admin, createTestUser, deleteTestUser, signedInClient } from "../supabase";
 
@@ -83,5 +84,47 @@ describe("consume_quota", () => {
       .eq("period", "test")
       .single();
     expect(data?.count).toBe(5);
+  });
+});
+
+describe("take_provider_slot", () => {
+  const take = (minute: string, day: string, dayLimit: number | null) =>
+    admin.rpc("take_provider_slot", {
+      p_provider: "test-provider",
+      p_minute: minute,
+      p_minute_limit: 3,
+      p_day: day,
+      p_day_limit: dayLimit,
+    });
+  const day = `d:test-${crypto.randomUUID()}`;
+
+  it("lets through only the per-minute limit under concurrent calls", async () => {
+    const minute = `m:test-${crypto.randomUUID()}`;
+    const results = await Promise.all(Array.from({ length: 8 }, () => take(minute, day, 5)));
+    expect(results.map((r) => r.data).filter((d) => d === "ok")).toHaveLength(3);
+    expect(results.map((r) => r.data).filter((d) => d === "minute")).toHaveLength(5);
+  });
+
+  it("does not spend the daily budget on calls refused by the minute limit", async () => {
+    const minute = `m:test-${crypto.randomUUID()}`;
+    expect((await take(minute, day, 5)).data).toBe("ok");
+    expect((await take(minute, day, 5)).data).toBe("ok");
+    expect((await take(`m:test-${crypto.randomUUID()}`, day, 5)).data).toBe("day");
+    await admin.from("provider_usage").delete().eq("provider", "test-provider");
+  });
+});
+
+describe("beta terms", () => {
+  it("are saved on the profile when sign-up sends their version", async () => {
+    const [withTerms, without] = await Promise.all([createTestUser("terms-yes"), createTestUser("terms-no", { betaTerms: false })]);
+    const { data } = await admin
+      .from("profiles")
+      .select("id, beta_terms_version, beta_terms_accepted_at")
+      .in("id", [withTerms.id, without.id]);
+    const byId = new Map(data!.map((p) => [p.id, p]));
+    expect(byId.get(withTerms.id)).toMatchObject({ beta_terms_version: BETA_TERMS_VERSION });
+    expect(byId.get(withTerms.id)?.beta_terms_accepted_at).not.toBeNull();
+    expect(byId.get(without.id)).toMatchObject({ beta_terms_version: null, beta_terms_accepted_at: null });
+    await Promise.all([deleteTestUser(withTerms.id), deleteTestUser(without.id)]);
   });
 });

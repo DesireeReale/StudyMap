@@ -14,11 +14,12 @@ export function JobTray() {
   const [jobs, setJobs] = useState<JobView[]>([]);
   const [announcement, setAnnouncement] = useState("");
   const known = useRef(new Map<string, JobView["status"]>());
+  const dismissed = useRef(new Set<string>());
 
   const refresh = useCallback(async () => {
     const res = await fetch("/api/jobs", { cache: "no-store" }).catch(() => null);
     if (!res?.ok) return;
-    const { jobs: next } = (await res.json()) as { jobs: JobView[] };
+    const next = ((await res.json()) as { jobs: JobView[] }).jobs.filter((j) => !dismissed.current.has(j.id));
     for (const j of next) {
       const before = known.current.get(j.id);
       if (before !== j.status && (j.status === "done" || j.status === "error" || !before)) {
@@ -48,6 +49,7 @@ export function JobTray() {
   }, [running, refresh]);
 
   async function dismiss(id: string) {
+    dismissed.current.add(id);
     setJobs((js) => js.filter((j) => j.id !== id));
     await markSeen(id);
   }

@@ -18,7 +18,7 @@ const MB = 1024 * 1024;
 
 export const PLANS: Record<PlanId, Plan> = {
   free: {
-    generationsPerMonth: 5,
+    generationsPerMonth: 20,
     inputTokensPerMonth: 1_000_000,
     maxPdfPages: 20,
     maxFigures: 20,
