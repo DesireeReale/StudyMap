@@ -39,6 +39,7 @@ export const MOCK_OUTPUTS: Record<TaskId, unknown> = {
         correct: 0,
         answer: "",
         explanation: "Nello scompenso destro il ristagno venoso causa edemi declivi.",
+        topic: "Segni e sintomi",
       },
       {
         type: "vero_falso",
@@ -47,6 +48,7 @@ export const MOCK_OUTPUTS: Record<TaskId, unknown> = {
         correct: 0,
         answer: "",
         explanation: "Un aumento rapido del peso indica ritenzione di liquidi.",
+        topic: "Assistenza",
       },
       {
         type: "completamento",
@@ -55,6 +57,7 @@ export const MOCK_OUTPUTS: Record<TaskId, unknown> = {
         correct: 0,
         answer: "semi-Fowler",
         explanation: "La semi-Fowler, con il busto sollevato, riduce la dispnea.",
+        topic: "Assistenza",
       },
     ],
   },

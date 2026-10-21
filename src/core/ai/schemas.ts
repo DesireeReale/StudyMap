@@ -52,6 +52,7 @@ export const QuizSchema = z.object({
           correct: z.number().int().min(0).max(3),
           answer: z.string().max(100),
           explanation: z.string().min(1).max(800),
+          topic: z.string().trim().max(60).optional(),
         })
         .superRefine((q, ctx) => {
           const ok =

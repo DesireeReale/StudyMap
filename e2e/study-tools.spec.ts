@@ -33,15 +33,23 @@ test("write a note, get a summary and take a quiz", async ({ page }) => {
   await page.goto(noteUrl);
   await page.getByRole("button", { name: "Quiz" }).click();
   await expect(page).toHaveURL(/\/quizzes\//);
-  for (let i = 0; i < 2; i++) {
-    await page.getByRole("group").getByRole("button").first().click();
-    await page.getByRole("button", { name: "Prossima domanda" }).click();
-  }
+  await expect(page.getByRole("heading", { name: "Prima di iniziare" })).toBeVisible();
+  await page.getByText("Tutti", { exact: true }).click();
+  await page.getByRole("button", { name: "Inizia" }).click();
+  await page.keyboard.press("1");
+  await expect(page.getByText("Esatto.")).toBeVisible();
+  await page.getByRole("button", { name: "Prossima domanda" }).click();
+  await page.keyboard.press("2");
+  await expect(page.getByText("L'affermazione è vera.")).toBeVisible();
+  await page.getByRole("button", { name: "Prossima domanda" }).click();
   await page.getByPlaceholder("Scrivi la parola mancante").fill("Semi fowler");
   await page.getByRole("button", { name: "Controlla" }).click();
   await expect(page.getByText("Esatto.")).toBeVisible();
   await page.getByRole("button", { name: "Vedi il risultato" }).click();
   await expect(page.getByText("Quiz finito")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Da ripassare" })).toContainText("Un aumento rapido del peso");
+  await page.getByRole("button", { name: "Rifai le sbagliate (1)" }).click();
+  await expect(page.getByText(/Domanda 1 di 1/)).toBeVisible();
   await page.reload();
   await expect(page.getByRole("region", { name: "Tentativi precedenti" })).toBeVisible();
 });
