@@ -4,80 +4,83 @@ import { useEffect, useRef } from "react";
 
 export type MascotPose = "idle" | "email" | "password" | "peek";
 
-const IDLE_END = 4;
-const COVER_START = 6.4;
-const HOLD = { peek: 6.5, password: 7.5 };
-const LOOK_LEFT = [3.6, 3.0];
-const LOOK_RIGHT = [1.8, 2.42];
-const LOOK_SPLIT = 0.5;
-const SPEED = 1.5;
+const IDLE_FROM = 0.1;
+const IDLE_TO = 0.9;
+const LOOK_FROM = 0.92;
+const LOOK_TO = 1.42;
+const LEAN_END = 3.3;
+const HOLD = { peek: 3.5, password: 3.95 };
+const IDLE_SPEED = 0.5;
+const IDLE_PAUSE = 1200;
+const LEAN_SPEED = 2;
+const EASE = 6;
 
 function gazeTime(look: number) {
-  const k = Math.min(Math.max(look, 0), 1);
-  return k < LOOK_SPLIT
-    ? LOOK_LEFT[0] + (LOOK_LEFT[1] - LOOK_LEFT[0]) * (k / LOOK_SPLIT)
-    : LOOK_RIGHT[0] + (LOOK_RIGHT[1] - LOOK_RIGHT[0]) * ((k - LOOK_SPLIT) / (1 - LOOK_SPLIT));
+  return LOOK_FROM + (LOOK_TO - LOOK_FROM) * Math.min(Math.max(look, 0), 1);
 }
 
-function seek(video: HTMLVideoElement, target: number, done?: () => void) {
-  const from = video.currentTime;
-  const ms = Math.max((Math.abs(target - from) / SPEED) * 1000, 1);
-  const start = performance.now();
-  let id = 0;
-  const step = (now: number) => {
-    const k = Math.min((now - start) / ms, 1);
-    if (!video.seeking) {
-      video.currentTime = from + (target - from) * k;
-      if (k === 1) return done?.();
-    }
-    id = requestAnimationFrame(step);
-  };
-  id = requestAnimationFrame(step);
-  return () => cancelAnimationFrame(id);
+function speedAt(t: number) {
+  return t > LOOK_TO && t < LEAN_END ? LEAN_SPEED : 1;
 }
 
 export function LoginMascot({ pose, look }: { pose: MascotPose; look: number }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const poseRef = useRef(pose);
+  const lookRef = useRef(look);
+
+  useEffect(() => {
+    poseRef.current = pose;
+    lookRef.current = look;
+  }, [pose, look]);
 
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
-    video.pause();
-    if (pose === "email") {
-      video.currentTime = gazeTime(look);
-      return;
-    }
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      video.currentTime = pose === "idle" ? 0 : HOLD[pose];
-      return;
-    }
-    if (pose !== "idle") {
-      if (video.currentTime < COVER_START) video.currentTime = COVER_START;
-      return seek(video, HOLD[pose]);
-    }
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    let idleTarget = IDLE_TO;
+    let pauseUntil = 0;
+    let last = performance.now();
+    let id = 0;
 
-    const rewind = () => {
-      if (video.currentTime >= IDLE_END) video.currentTime = 0;
+    const tick = (now: number) => {
+      id = requestAnimationFrame(tick);
+      const dt = Math.min((now - last) / 1000, 0.1);
+      last = now;
+      if (video.readyState < 2 || video.seeking) return;
+
+      const t = video.currentTime;
+      const current = poseRef.current;
+      let target: number;
+      let rate = speedAt(t);
+      if (current === "email") {
+        target = gazeTime(lookRef.current);
+        rate = Math.min(rate, Math.abs(target - t) * EASE + 0.05);
+      } else if (current === "idle") {
+        if (reduced.matches) target = IDLE_FROM;
+        else if (t > IDLE_TO + 0.01) target = IDLE_TO;
+        else {
+          if (Math.abs(idleTarget - t) < 0.01) {
+            pauseUntil ||= now + IDLE_PAUSE;
+            if (now < pauseUntil) return;
+            idleTarget = idleTarget === IDLE_TO ? IDLE_FROM : IDLE_TO;
+            pauseUntil = 0;
+          }
+          target = idleTarget;
+          rate = IDLE_SPEED;
+        }
+      } else {
+        target = HOLD[current];
+      }
+
+      const gap = target - t;
+      if (Math.abs(gap) < 0.005) return;
+      video.currentTime = reduced.matches ? target : t + Math.sign(gap) * Math.min(Math.abs(gap), rate * dt);
     };
-    const loop = () => {
-      video.addEventListener("timeupdate", rewind);
-      video.play().catch(() => {});
-    };
-    const restart = () => {
-      video.currentTime = 0;
-      loop();
-    };
-    const stop =
-      video.currentTime > COVER_START
-        ? seek(video, COVER_START, restart)
-        : video.currentTime > IDLE_END
-          ? (restart(), undefined)
-          : (loop(), undefined);
-    return () => {
-      stop?.();
-      video.removeEventListener("timeupdate", rewind);
-    };
-  }, [pose, look]);
+
+    video.currentTime = IDLE_FROM;
+    id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   return (
     <video

@@ -94,7 +94,7 @@ export function LoginForm() {
                 required
                 minLength={8}
                 autoComplete={mode === "signin" ? "current-password" : "new-password"}
-                className="field h-11 w-full pr-11"
+                className="field h-11 w-full pr-11 [&::-ms-reveal]:hidden"
               />
               <button
                 type="button"
