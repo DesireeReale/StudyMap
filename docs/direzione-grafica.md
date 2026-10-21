@@ -91,7 +91,7 @@ Come implementarlo:
 - **Dove si sceglie.** In Impostazioni, con due anteprime cliccabili, più un selettore rapido nella barra dell'app.
 - **Dove si salva.** In un cookie, così il server mette subito `data-style` giusto nell'HTML ed evita il lampo di stile sbagliato al caricamento; opzionale anche una colonna su `profiles` per ritrovarlo su un altro dispositivo.
 - **Export.** PNG e PDF usano lo stile attivo al momento dell'export.
-- **Landing.** Usa lo stile predefinito (Corsia); le schermate in `public/landing/` vanno rigenerate con `npm run shots`.
+- **Landing.** Usa lo stile predefinito (Corsia); gli esempi sono disegnati in `src/components/landing/`.
 - **Verifica.** Contrasto AA in tutte e quattro le combinazioni, compresi i colori dei nodi in dark.
 
 ## Dock di studio (ispirato a Cooldock)

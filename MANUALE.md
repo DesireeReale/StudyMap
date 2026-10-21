@@ -581,9 +581,8 @@ Lo schema iniziale è in [supabase/migrations/20261019000000_init.sql](supabase/
 - **Testo**: Markdown e OPML (per Obsidian, Notion, XMind, MindNode) e, nella pagina del mazzo, CSV (Excel) e TXT per Anki vengono da [export.ts](src/core/export.ts). Sono gratis per tutti i piani: i contenuti restano dello studente. La mappa diventa un elenco annidato seguendo le frecce, con i figli ordinati da sinistra a destra. Il file per Anki si importa da File → Importa; le righe `#separator:tab` e `#html:true` in testa dicono ad Anki come leggerlo.
 - **Attenzione**: `html-to-image` è fissata alla versione **1.11.11** (senza `^` in package.json). Le versioni successive non disegnano le linee della mappa, come avverte anche la documentazione di React Flow: prova del 20 ottobre, 946 pixel di linea con la 1.11.11 contro 126 con la 1.11.13. Non aggiornarla senza ripetere la prova.
 
-**14. Aggiornare gli screenshot della landing**
-- **Come**: lancia `npm run shots`. Crea un utente temporaneo sul progetto di test, usa l'AI finta, salva le immagini in `public/landing/` e poi cancella l'utente.
-- **Prima**: ferma `npm run dev`.
+**14. Modificare gli esempi della landing**
+- **Dove**: [src/components/landing/](src/components/landing/). Mappa, flashcard, quiz e opzioni di lettura sono disegnati in HTML/SVG con i colori del tema: non ci sono screenshot da rigenerare.
 
 ## 7. Debug
 

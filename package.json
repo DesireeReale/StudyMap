@@ -11,8 +11,7 @@
     "test": "vitest run",
     "test:db": "vitest run --config vitest.db.config.mts",
     "test:e2e": "playwright test",
-    "db:push": "supabase db push",
-    "shots": "playwright test --config playwright.shots.config.ts"
+    "db:push": "supabase db push"
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.1.1",
