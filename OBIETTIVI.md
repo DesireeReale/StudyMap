@@ -100,8 +100,8 @@
 
 ## Miglioramenti UX
 - [x] Mappa: zoom minimo leggibile all'apertura (alta, piccolo)
-- [ ] Mappa: colore per ramo ereditato dai figli (alta, medio)
-- [ ] Mappa: comprimi ed espandi i rami (alta, medio)
+- [x] Mappa: colore per ramo ereditato dai figli (alta, medio)
+- [x] Mappa: comprimi ed espandi i rami (alta, medio)
 - [ ] Mappa: barra contestuale e schermo intero (media, medio)
 - [ ] Mappa: una mappa per capitolo nei documenti lunghi (media, grande)
 - [ ] Quiz: impostazioni prima di iniziare (alta, medio)

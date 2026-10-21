@@ -5,7 +5,7 @@ import { NODE_ROLES, type NodeRole } from "./roles";
 export type GraphNode = {
   id: string;
   position: { x: number; y: number };
-  data: { label: string; color: string };
+  data: { label: string; color: string; collapsed?: boolean };
 };
 export type GraphEdge = { id: string; source: string; target: string; label?: string };
 export type Graph = { nodes: GraphNode[]; edges: GraphEdge[] };
@@ -97,4 +97,38 @@ export function openingNodes(graph: Graph, depth = 2): { id: string }[] {
     for (const id of level) ids.add(id);
   }
   return [...ids].map((id) => ({ id }));
+}
+
+type Link = { source: string; target: string };
+
+export function descendants(edges: Link[], id: string): Set<string> {
+  const out = new Set<string>();
+  const stack = [id];
+  while (stack.length) {
+    const current = stack.pop()!;
+    for (const e of edges) {
+      if (e.source === current && !out.has(e.target) && e.target !== id) {
+        out.add(e.target);
+        stack.push(e.target);
+      }
+    }
+  }
+  return out;
+}
+
+export function hiddenNodes(edges: Link[], collapsed: Iterable<string>): Set<string> {
+  const hidden = new Set<string>();
+  for (const id of collapsed) for (const d of descendants(edges, id)) hidden.add(d);
+  return hidden;
+}
+
+export function branchRecolor(edges: Link[], ids: string[], color: NodeRole): Set<string> {
+  const targets = new Set(edges.map((e) => e.target));
+  const out = new Set<string>();
+  for (const id of ids) {
+    out.add(id);
+    if (targets.has(id)) for (const d of descendants(edges, id)) out.add(d);
+  }
+  if (color === "radice") return new Set(ids);
+  return out;
 }

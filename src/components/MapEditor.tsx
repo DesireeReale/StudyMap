@@ -21,28 +21,42 @@ import {
 import "@xyflow/react/dist/style.css";
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { APP_STYLES, type AppStyle } from "@/config/styles";
-import { NODE_ROLES, childRole, layoutGraph, nodeRole, openingNodes, type Graph, type NodeRole } from "@/core/graph";
+import {
+  NODE_ROLES,
+  branchRecolor,
+  childRole,
+  descendants,
+  hiddenNodes,
+  layoutGraph,
+  nodeRole,
+  openingNodes,
+  type Graph,
+  type NodeRole,
+} from "@/core/graph";
 import { graphToMarkdown, graphToOpml } from "@/core/export";
 import { Icon } from "./icons";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
-type ConceptNode = Node<{ label: string; color: NodeRole }, "concept">;
+type ConceptNode = Node<{ label: string; color: NodeRole; collapsed?: boolean }, "concept">;
 type ExportOptions = { png: boolean; pdf: boolean; watermark: boolean };
 
 const EditingContext = createContext<{
   editingId: string | null;
   rename: (id: string, label: string | null) => void;
   startEditing: (id: string) => void;
-}>({ editingId: null, rename: () => {}, startEditing: () => {} });
+  branchSize: (id: string) => number;
+  toggle: (id: string) => void;
+}>({ editingId: null, rename: () => {}, startEditing: () => {}, branchSize: () => 0, toggle: () => {} });
 
 function ConceptNodeView({ id, data, selected }: NodeProps<ConceptNode>) {
-  const { editingId, rename, startEditing } = use(EditingContext);
+  const { editingId, rename, startEditing, branchSize, toggle } = use(EditingContext);
+  const size = branchSize(id);
   return (
     <div
       onDoubleClick={() => startEditing(id)}
       data-role={data.color}
       style={roleStyle(data.color)}
-      className={`concept-node max-w-[260px] min-w-[120px] px-4 py-2.5 text-center text-[15px] leading-snug font-bold ${
+      className={`concept-node relative max-w-[260px] min-w-[120px] px-4 py-2.5 text-center text-[15px] leading-snug font-bold ${
         selected ? "outline-3 outline-offset-3 outline-[var(--focus)]" : ""
       }`}
     >
@@ -64,6 +78,21 @@ function ConceptNodeView({ id, data, selected }: NodeProps<ConceptNode>) {
         data.label
       )}
       <Handle type="source" position={Position.Bottom} />
+      {size > 0 && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggle(id);
+          }}
+          aria-expanded={!data.collapsed}
+          aria-keyshortcuts={data.collapsed ? "+" : "-"}
+          aria-label={data.collapsed ? `Espandi il ramo (${size} concetti nascosti)` : "Comprimi il ramo"}
+          className="nodrag nopan absolute -right-3 -bottom-3.5 flex h-7 min-w-7 cursor-pointer items-center justify-center gap-0.5 rounded-full border border-control bg-raised px-1.5 text-[13px] font-bold text-ink shadow-sm hover:bg-active"
+        >
+          {data.collapsed ? `+${size}` : "−"}
+        </button>
+      )}
     </div>
   );
 }
@@ -87,7 +116,11 @@ const nodeTypes = { concept: ConceptNodeView };
 
 function toGraph(nodes: ConceptNode[], edges: Edge[]): Graph {
   return {
-    nodes: nodes.map((n) => ({ id: n.id, position: n.position, data: { label: n.data.label, color: n.data.color } })),
+    nodes: nodes.map((n) => ({
+      id: n.id,
+      position: n.position,
+      data: { label: n.data.label, color: n.data.color, ...(n.data.collapsed ? { collapsed: true } : {}) },
+    })),
     edges: edges.map((e) => ({
       id: e.id,
       source: e.source,
@@ -178,7 +211,21 @@ function Editor({
   const selected = nodes.filter((n) => n.selected);
   const colorNames = APP_STYLES.find((s) => s.id === appStyle)!.colors;
   const edgeType = appStyle === "evidenziatore" ? "smoothstep" : "straight";
-  const styledEdges = useMemo(() => edges.map((e) => ({ ...e, type: edgeType })), [edges, edgeType]);
+  const hidden = useMemo(
+    () => hiddenNodes(edges, nodes.filter((n) => n.data.collapsed).map((n) => n.id)),
+    [nodes, edges],
+  );
+  const viewNodes = useMemo(() => nodes.map((n) => (hidden.has(n.id) ? { ...n, hidden: true } : n)), [nodes, hidden]);
+  const styledEdges = useMemo(
+    () => edges.map((e) => ({ ...e, type: edgeType, hidden: hidden.has(e.target) || hidden.has(e.source) })),
+    [edges, edgeType, hidden],
+  );
+  const branchSize = useCallback((id: string) => descendants(edges, id).size, [edges]);
+  const toggle = useCallback(
+    (id: string) =>
+      setNodes((ns) => ns.map((n) => (n.id === id ? { ...n, data: { ...n.data, collapsed: !n.data.collapsed } } : n))),
+    [setNodes],
+  );
 
   const rename = useCallback(
     (id: string, label: string | null) => {
@@ -206,7 +253,17 @@ function Editor({
   }
 
   function setColor(color: NodeRole) {
-    setNodes((ns) => ns.map((n) => (n.selected ? { ...n, data: { ...n.data, color } } : n)));
+    const ids = branchRecolor(edges, selected.map((n) => n.id), color);
+    setNodes((ns) => ns.map((n) => (ids.has(n.id) ? { ...n, data: { ...n.data, color } } : n)));
+  }
+
+  function connect(c: Connection) {
+    setEdges((es) => addEdge(c, es));
+    const parent = nodes.find((n) => n.id === c.source);
+    if (!parent || !c.target) return;
+    const color = childRole(parent.data.color, edges.filter((e) => e.source === parent.id).length);
+    const ids = new Set([c.target, ...descendants(edges, c.target)]);
+    setNodes((ns) => ns.map((n) => (ids.has(n.id) ? { ...n, data: { ...n.data, color } } : n)));
   }
 
   function relayout() {
@@ -259,6 +316,13 @@ function Editor({
 
   function onKeyDown(e: React.KeyboardEvent) {
     if (editingId || selected.length !== 1) return;
+    const node = selected[0]!;
+    if ((e.key === "-" && !node.data.collapsed) || (e.key === "+" && node.data.collapsed)) {
+      if (!branchSize(node.id)) return;
+      e.preventDefault();
+      toggle(node.id);
+      return;
+    }
     if (e.key === "F2" || (e.key === "Enter" && (e.target as HTMLElement).classList.contains("react-flow__node"))) {
       e.preventDefault();
       setEditingId(selected[0]!.id);
@@ -268,7 +332,7 @@ function Editor({
   const statusText = { saved: "Salvato", saving: "Salvataggio…", error: "Salvataggio non riuscito" }[status];
 
   return (
-    <EditingContext value={{ editingId, rename, startEditing: setEditingId }}>
+    <EditingContext value={{ editingId, rename, startEditing: setEditingId, branchSize, toggle }}>
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="sr-only">Mappa: {mapTitle}</h1>
@@ -352,12 +416,12 @@ function Editor({
 
         <div className="h-[calc(100dvh-260px)] min-h-[420px] overflow-hidden rounded-row border border-border bg-sheet" onKeyDown={onKeyDown}>
           <ReactFlow
-            nodes={nodes}
+            nodes={viewNodes}
             edges={styledEdges}
             nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
-            onConnect={(c: Connection) => setEdges((es) => addEdge(c, es))}
+            onConnect={connect}
             deleteKeyCode={editingId ? null : ["Delete", "Backspace"]}
             style={{ backgroundColor: "transparent" }}
             defaultEdgeOptions={{
@@ -368,7 +432,7 @@ function Editor({
             fitView
             fitViewOptions={openingView}
             minZoom={0.1}
-            ariaLabelConfig={{ "node.a11yDescription.default": "Premi Invio o F2 per rinominare, Canc per eliminare, frecce per spostare." }}
+            ariaLabelConfig={{ "node.a11yDescription.default": "Premi Invio o F2 per rinominare, Canc per eliminare, frecce per spostare, meno e più per comprimere o espandere il ramo." }}
           >
             <Background color="var(--control)" />
             <Controls showInteractive={false} />
@@ -376,7 +440,7 @@ function Editor({
         </div>
         <p className="text-sm text-muted">
           Doppio clic o F2 per rinominare · trascina dal pallino inferiore di un concetto per collegarlo a un altro · Canc
-          per eliminare.
+          per eliminare · − e + per comprimere o espandere un ramo.
         </p>
       </div>
     </EditingContext>

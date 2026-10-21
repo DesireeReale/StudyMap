@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MOCK_OUTPUTS } from "./ai/mock";
 import { MindMapSchema } from "./ai/schemas";
-import { childRole, type Graph, mindMapToGraph, nodeRole, openingNodes } from "./graph";
+import { branchRecolor, childRole, descendants, hiddenNodes, type Graph, mindMapToGraph, nodeRole, openingNodes } from "./graph";
 
 describe("mindMapToGraph", () => {
   it("creates one edge per non-root node and lays out ranks top-down", () => {
@@ -48,5 +48,31 @@ describe("openingNodes", () => {
       ],
     };
     expect(openingNodes(graph satisfies Graph)).toEqual([{ id: "r" }, { id: "a" }, { id: "b" }, { id: "a1" }]);
+  });
+});
+
+describe("branches", () => {
+  const edges = [
+    { source: "r", target: "a" },
+    { source: "a", target: "a1" },
+    { source: "a1", target: "a2" },
+    { source: "r", target: "b" },
+  ];
+
+  it("finds every concept under a node", () => {
+    expect([...descendants(edges, "a")].sort()).toEqual(["a1", "a2"]);
+    expect(descendants(edges, "b").size).toBe(0);
+    expect(descendants([...edges, { source: "a2", target: "a" }], "a").has("a")).toBe(false);
+  });
+
+  it("hides the concepts under collapsed nodes", () => {
+    expect([...hiddenNodes(edges, ["a"])].sort()).toEqual(["a1", "a2"]);
+    expect([...hiddenNodes(edges, ["r"])].sort()).toEqual(["a", "a1", "a2", "b"]);
+  });
+
+  it("recolors a branch with its descendants but never the whole map from the root", () => {
+    expect([...branchRecolor(edges, ["a"], "area-2")].sort()).toEqual(["a", "a1", "a2"]);
+    expect([...branchRecolor(edges, ["r"], "area-2")]).toEqual(["r"]);
+    expect([...branchRecolor(edges, ["a"], "radice")]).toEqual(["a"]);
   });
 });

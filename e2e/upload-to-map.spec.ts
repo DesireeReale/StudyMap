@@ -48,4 +48,16 @@ test("log in, upload a PDF, generate and edit a concept map", async ({ page }) =
 
   await page.reload();
   await expect(page.locator(".react-flow__node").filter({ hasText: "Dispnea da sforzo" })).toBeVisible();
+
+  const branch = page.locator(".react-flow__node").filter({ hasText: /^Segni e sintomi/ });
+  await branch.getByRole("button", { name: "Comprimi il ramo" }).click();
+  await expect(page.locator(".react-flow__node").filter({ hasText: "Edemi declivi" })).toBeHidden();
+  await expect(page.getByRole("status").filter({ hasText: "Salvato" })).toBeVisible();
+  await page.reload();
+  const collapsed = page.locator(".react-flow__node").filter({ hasText: /^Segni e sintomi/ });
+  await expect(collapsed.getByRole("button", { name: "Espandi il ramo (2 concetti nascosti)" })).toBeVisible();
+  await expect(page.locator(".react-flow__node").filter({ hasText: "Edemi declivi" })).toBeHidden();
+  await collapsed.click();
+  await page.keyboard.press("+");
+  await expect(page.locator(".react-flow__node").filter({ hasText: "Edemi declivi" })).toBeVisible();
 });
