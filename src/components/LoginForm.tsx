@@ -51,8 +51,7 @@ export function LoginForm() {
     setBusy(false);
     if (error) return setError(mode === "signin" ? "Email o password non corrette." : error.message);
     if (!data.session) return setInfo("Controlla la tua email per confermare la registrazione.");
-    router.push("/library");
-    router.refresh();
+    router.replace("/library");
   }
 
   async function google() {

@@ -154,7 +154,7 @@
 - [x] Latenza: durata, attesa in coda ed esito di ogni chiamata in ai_usage, durata dei job, vista ai_latency_stats (mediana e p95 a 7 giorni)
 - [x] Timeout per attività in config (40 s per mappe, flashcard, riassunti e quiz; 30 s per trascrizioni e chat): oltre si passa al modello successivo
 - [ ] Chat in streaming (stima: mezza giornata o una giornata di lavoro, da approvare)
-- [ ] E2E instabili: una volta 6 test su 9 sono rimasti sulla pagina di login; il giro successivo è passato
+- [x] E2E instabili al login: `router.refresh()` subito dopo `router.push()` annullava la navigazione; ora `router.replace()`, e 2 test in parallelo invece di 9 (3 giri di fila tutti verdi)
 - [x] Contatto di assistenza aistudymap@proton.me in privacy, landing e Impostazioni
 - [x] Landing: argomenti verificabili al posto dei numeri (bassa, piccolo)
 
