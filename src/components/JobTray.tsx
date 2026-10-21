@@ -19,7 +19,14 @@ export function JobTray() {
   const refresh = useCallback(async () => {
     const res = await fetch("/api/jobs", { cache: "no-store" }).catch(() => null);
     if (!res?.ok) return;
-    const next = ((await res.json()) as { jobs: JobView[] }).jobs.filter((j) => !dismissed.current.has(j.id));
+    const jobs = ((await res.json()) as { jobs: JobView[] }).jobs;
+    for (const j of jobs) {
+      if (j.status === "done" && j.href === window.location.pathname && !dismissed.current.has(j.id)) {
+        dismissed.current.add(j.id);
+        void markSeen(j.id);
+      }
+    }
+    const next = jobs.filter((j) => !dismissed.current.has(j.id));
     for (const j of next) {
       const before = known.current.get(j.id);
       if (before !== j.status && (j.status === "done" || j.status === "error" || !before)) {
@@ -80,15 +87,20 @@ export function JobTray() {
             return (
               <div
                 key={j.id}
-                className={`flex flex-col gap-2 rounded-card border bg-raised p-3.5 text-sm shadow-[0_16px_40px_-24px_rgb(15_27_45/0.5)] ${
+                className={`flex flex-col gap-2 rounded-card border bg-raised p-3 text-sm shadow-[0_16px_40px_-24px_rgb(15_27_45/0.5)] ${
                   j.status === "error" ? "border-negative" : "border-border"
                 }`}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="min-w-0 flex-1">
                     <span className="block truncate font-bold text-ink">{j.title || "Documento"}</span>
                     <span className={`num block ${j.status === "error" ? "text-negative" : "text-muted"}`}>{phaseText(j)}</span>
                   </p>
+                  {j.status === "done" && j.href && (
+                    <Link href={j.href} onClick={() => dismiss(j.id)} className="btn-primary h-9 shrink-0 px-3 text-[14px]">
+                      {openLabel(j.type)}
+                    </Link>
+                  )}
                   {!active(j) && (
                     <button
                       type="button"
@@ -114,11 +126,6 @@ export function JobTray() {
                       style={ratio === null ? undefined : { width: `${Math.max(ratio * 100, 4)}%` }}
                     />
                   </div>
-                )}
-                {j.status === "done" && j.href && (
-                  <Link href={j.href} onClick={() => dismiss(j.id)} className="btn-primary self-start">
-                    {openLabel(j.type)}
-                  </Link>
                 )}
                 {j.status === "error" &&
                   (j.type === "ingest" ? (

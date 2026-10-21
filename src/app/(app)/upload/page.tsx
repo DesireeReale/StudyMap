@@ -19,8 +19,8 @@ export default async function UploadPage({ searchParams }: PageProps<"/upload">)
       <header>
         <h1 className="text-[24px] leading-tight font-bold">Carica materiale</h1>
         <p className="mt-1 text-[15px] text-muted">
-          PDF fino a {plan.maxPdfPages} pagine, foto degli appunti o testo incollato. Il testo viene estratto subito;
-          mappa e flashcard le generi dalla pagina del documento.
+          PDF fino a {plan.maxPdfPages} pagine, foto degli appunti o testo incollato. Scegli già qui cosa creare,
+          oppure fallo dopo dalla pagina del materiale.
         </p>
       </header>
       <div className="grid gap-4 lg:grid-cols-12">
