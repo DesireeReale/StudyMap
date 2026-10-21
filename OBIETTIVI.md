@@ -148,7 +148,7 @@
 - [x] Una sola richiesta quando il documento sta nel contesto del modello (Gemma 262k, Nemotron 1M)
 - [x] MiniMax M3.1 Flash gratuito primo modello del piano Free (ragionamento al minimo "low", obbligatorio per questo modello)
 - [x] Fallback interno di OpenRouter con il parametro `models` (MiniMax, Gemma 4, Nemotron in una sola richiesta) e modello che ha risposto registrato in ai_usage
-- [ ] Prova reale di MiniMax: risultato da leggere (le due chiamate fatte non hanno lasciato l'output)
+- [x] Prova reale di MiniMax M3.1 Flash (testo inventato di 250 parole, mappa): JSON valido al primo colpo, 9,5 s, 1122 token in ingresso e 1164 in uscita, 39 concetti pertinenti (Gemma 4: 33 s, Gemini: 108 s)
 - [x] Beta: accettazione unica e obbligatoria alla registrazione (o al primo accesso per gli account esistenti), salvata con data e versione; tolta la spunta di consenso separata (flag BETA_SHARED_MODELS)
 - [x] Informativa: sezione sulla beta con provider, trasferimento fuori UE e come revocare
 - [x] Latenza: durata, attesa in coda ed esito di ogni chiamata in ai_usage, durata dei job, vista ai_latency_stats (mediana e p95 a 7 giorni)
