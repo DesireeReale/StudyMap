@@ -10,6 +10,7 @@ Leggi questo file, `CLAUDE.md` (regole) e `OBIETTIVI.md` (cosa resta). Il codice
 - Assistenza: aistudymap@proton.me (anche `FEEDBACK_EMAIL_TO`).
 - Beta: chi si registra accetta `BETA_TERMS` (`src/config/beta.ts`); data e versione in `profiles.beta_terms_accepted_at` e `beta_terms_version`. Con `BETA_SHARED_MODELS = true` l'accettazione vale come consenso ai modelli gratuiti; per il Pro con un modello che non usa i dati basta mettere il flag a `false`.
 - UX prima della beta (21 ottobre): rami della mappa che ereditano il colore e si comprimono (stato in `graph.nodes[].data.collapsed`), quiz con impostazioni, tasti 1-4 e "Rifai le sbagliate" (prompt quiz.v3 con `topic`), caricamento a riquadri con "cosa vuoi creare" (`lib/generation.ts` fa partire i job a fine lettura), pagine di provenienza nel riassunto (prompt summary.v2, riga `[pagine 4, 5]` sotto ogni titolo), stato del mazzo nelle flashcard.
+- Navigazione (21 ottobre): barra laterale con Home, Materie e il gruppo "Studia" (`/studia/[tipo]`, sezioni in `src/core/sections.ts`); i riassunti si riconoscono dal titolo che inizia con "Riassunto · ".
 - Latenza: leggere la vista `ai_latency_stats` nel SQL editor di Supabase (mediana, p95, errori e timeout per modello e attività negli ultimi 7 giorni). Timeout per attività in `TASKS` (`src/config/ai.ts`).
 - Documenti: `docs/ricerca-concorrenti.md`, `docs/confronto-ux-algor.md` (27 interventi UX), `docs/direzione-grafica.md`.
 

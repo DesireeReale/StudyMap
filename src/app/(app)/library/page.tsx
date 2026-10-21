@@ -7,6 +7,8 @@ import { FolderGrid } from "@/components/FolderControls";
 import { Empty, MaterialList, PageHeader, SearchForm, Section } from "@/components/LibraryLists";
 import { SearchResults } from "@/components/SearchResults";
 import { StudyDock } from "@/components/StudyDock";
+import { Icon, type IconName } from "@/components/icons";
+import { isSummary, sectionHref } from "@/core/sections";
 import { requireUser } from "@/lib/supabase/server";
 import { folderStats, loadFolders, loadStudy, toMaterials } from "@/lib/workspace";
 
@@ -39,6 +41,15 @@ export default async function LibraryPage({ searchParams }: PageProps<"/library"
   ).slice(0, 4);
 
   const { focus, toReview } = study;
+  const summaries = (notes.data ?? []).filter((n) => isSummary(n.title)).length;
+  const tiles: { href: string; label: string; icon: IconName; count: number; note?: string; highlight?: boolean }[] = [
+    { href: sectionHref("mappe"), label: "Mappe", icon: "map", count: mapFolders.data?.length ?? 0 },
+    toReview > 0
+      ? { href: sectionHref("flashcard"), label: "Flashcard", icon: "cards", count: toReview, note: "da ripassare oggi", highlight: true }
+      : { href: sectionHref("flashcard"), label: "Flashcard", icon: "cards", count: decks.data?.length ?? 0, note: "mazzi" },
+    { href: sectionHref("quiz"), label: "Quiz", icon: "check", count: quizzes.data?.length ?? 0 },
+    { href: sectionHref("riassunti"), label: "Riassunti", icon: "note", count: summaries },
+  ];
   const [title, action] =
     focus && toReview > 0
       ? [`Oggi ripassi ${focus.title}.`, { href: `/decks/${focus.id}`, label: "Inizia il ripasso" }]
@@ -58,6 +69,24 @@ export default async function LibraryPage({ searchParams }: PageProps<"/library"
             </Link>
           }
         />
+        <nav aria-label="Il tuo materiale" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {tiles.map((t) => (
+            <Link
+              key={t.href}
+              href={t.href}
+              className={`flex flex-col gap-0.5 rounded-row border px-4 py-3 transition-colors duration-150 hover:border-control ${
+                t.highlight ? "border-accent bg-accent-soft" : "border-border bg-raised"
+              }`}
+            >
+              <span className="flex items-center gap-1.5 text-[14px] text-muted">
+                <Icon name={t.icon} size={16} />
+                {t.label}
+              </span>
+              <span className="num text-[24px] leading-tight font-bold text-ink">{t.count}</span>
+              {t.note && <span className="text-[13px] text-ink">{t.note}</span>}
+            </Link>
+          ))}
+        </nav>
         <StudyDock data={study.dock} />
         <SearchForm q={q} label="Cerca in tutta la libreria" />
       </div>

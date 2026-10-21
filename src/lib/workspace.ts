@@ -9,6 +9,7 @@ import type { Material } from "@/components/LibraryLists";
 import type { DeckCounts } from "@/components/StudyMarks";
 import { supabaseServer } from "./supabase/server";
 import type { FolderRow, Profile } from "./supabase/types";
+import { isSummary } from "@/core/sections";
 
 type Supabase = Awaited<ReturnType<typeof supabaseServer>>;
 export type FolderItem = Pick<FolderRow, "id" | "parent_id" | "name" | "color" | "icon" | "position" | "created_at" | "exam_date">;
@@ -156,18 +157,25 @@ export function toMaterials(
       title: d.title,
       detail: `${DOC_LABEL[d.kind]} · ${pageCount(d.kind, d.page_count)}`,
       date: d.created_at,
-      place: place(d.folder_id),
+      place: place(d.folder_id), folderId: d.folder_id,
     })),
-    ...(rows.notes ?? []).map((n) => ({ kind: "appunto" as const, id: n.id, title: n.title, detail: "", date: n.updated_at, place: place(n.folder_id) })),
+    ...(rows.notes ?? []).map((n) => ({
+      kind: isSummary(n.title) ? ("riassunto" as const) : ("appunto" as const),
+      id: n.id,
+      title: n.title,
+      detail: "",
+      date: n.updated_at,
+      place: place(n.folder_id), folderId: n.folder_id,
+    })),
     ...(rows.maps ?? []).map((m) => ({
       kind: "mappa" as const,
       id: m.id,
       title: m.title,
       detail: `${m.graph.nodes.length} concetti`,
       date: m.updated_at,
-      place: place(m.folder_id),
+      place: place(m.folder_id), folderId: m.folder_id,
     })),
-    ...(rows.decks ?? []).map((d) => ({ kind: "flashcard" as const, id: d.id, title: d.title, detail: pending(d.id), date: d.created_at, place: place(d.folder_id) })),
-    ...(rows.quizzes ?? []).map((z) => ({ kind: "quiz" as const, id: z.id, title: z.title, detail: "", date: z.created_at, place: place(z.folder_id) })),
+    ...(rows.decks ?? []).map((d) => ({ kind: "flashcard" as const, id: d.id, title: d.title, detail: pending(d.id), date: d.created_at, place: place(d.folder_id), folderId: d.folder_id })),
+    ...(rows.quizzes ?? []).map((z) => ({ kind: "quiz" as const, id: z.id, title: z.title, detail: "", date: z.created_at, place: place(z.folder_id), folderId: z.folder_id })),
   ].sort((a, b) => b.date.localeCompare(a.date));
 }

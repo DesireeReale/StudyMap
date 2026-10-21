@@ -157,6 +157,7 @@
 - [x] Catene separate per testo e immagini, scadenza automatica dei modelli (MiniMax esce il 22 ottobre), ragionamento "medium" per i quiz e "low" per il resto
 - [ ] Prima della beta, dopo aver caricato il credito: provare Qwen 3.7 Flash e DeepSeek V4.1 Flash (mappa e slide, meno di 1 centesimo) e metterli prima dei gratuiti; fino ad allora solo modelli gratuiti (decisione del 21 ottobre)
 - [x] Messaggio chiaro quando manca il credito di OpenRouter (prima un 402 appariva come "servizio momentaneamente occupato")
+- [x] Navigazione per tipo: sezioni Mappe, Flashcard (con le carte da ripassare), Quiz, Riassunti e Documenti nella barra laterale e nel menu del telefono, pagina Materie, riquadri nella home, quiz e riassunti nella pagina del documento
 - [ ] Chat in streaming (stima: mezza giornata o una giornata di lavoro, da approvare)
 - [x] E2E instabili al login: `router.refresh()` subito dopo `router.push()` annullava la navigazione; ora `router.replace()`, e 2 test in parallelo invece di 9 (3 giri di fila tutti verdi)
 - [x] Contatto di assistenza aistudymap@proton.me in privacy, landing e Impostazioni

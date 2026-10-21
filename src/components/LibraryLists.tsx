@@ -62,13 +62,14 @@ export function FolderBadge({ color, icon, size = 40 }: { color: FolderColor; ic
   );
 }
 
-export type MaterialKind = "documento" | "appunto" | "mappa" | "flashcard" | "quiz";
+export type MaterialKind = "documento" | "appunto" | "riassunto" | "mappa" | "flashcard" | "quiz";
 
-export type Material = { kind: MaterialKind; id: string; title: string; detail: string; date: string; place?: string };
+export type Material = { kind: MaterialKind; id: string; title: string; detail: string; date: string; place?: string; folderId?: string };
 
 const KINDS: Record<MaterialKind, { label: string; icon: IconName; href: string; chip: string }> = {
   documento: { label: "Documento", icon: "file", href: "/documents", chip: "bg-surface text-muted" },
   appunto: { label: "Appunto", icon: "note", href: "/notes", chip: "bg-pill-positive text-pill-positive-ink" },
+  riassunto: { label: "Riassunto", icon: "note", href: "/notes", chip: "bg-surface text-ink" },
   mappa: { label: "Mappa", icon: "map", href: "/maps", chip: "bg-accent-soft text-ink" },
   flashcard: { label: "Flashcard", icon: "cards", href: "/decks", chip: "bg-notice text-notice-ink" },
   quiz: { label: "Quiz", icon: "check", href: "/quizzes", chip: "bg-pill-negative text-pill-negative-ink" },
@@ -78,6 +79,7 @@ export const MATERIAL_FILTERS: { id: MaterialKind | null; name: string }[] = [
   { id: null, name: "Tutto" },
   { id: "documento", name: "Documenti" },
   { id: "appunto", name: "Appunti" },
+  { id: "riassunto", name: "Riassunti" },
   { id: "mappa", name: "Mappe" },
   { id: "flashcard", name: "Flashcard" },
   { id: "quiz", name: "Quiz" },

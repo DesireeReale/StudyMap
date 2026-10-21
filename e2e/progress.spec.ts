@@ -36,7 +36,7 @@ test("upload a long PDF, browse elsewhere and follow the progress until the map 
   await page.getByRole("button", { name: "Carica" }).click();
   await expect(page.getByText("Sto leggendo il file.")).toBeVisible({ timeout: 20_000 });
 
-  await page.getByRole("link", { name: "Libreria" }).first().click();
+  await page.getByRole("link", { name: "Home", exact: true }).first().click();
   await expect(page).toHaveURL(/\/library/);
   const tray = page.getByRole("region", { name: "Lavori in corso" });
   await expect(tray.getByText(/Sto leggendo pagina \d+ di 19/)).toBeVisible({ timeout: 20_000 });
@@ -46,7 +46,7 @@ test("upload a long PDF, browse elsewhere and follow the progress until the map 
   await expect(page).toHaveURL(/\/documents\//);
 
   await page.getByRole("button", { name: "Genera mappa concettuale" }).click();
-  await page.getByRole("link", { name: "Libreria" }).first().click();
+  await page.getByRole("link", { name: "Home", exact: true }).first().click();
   await expect(page).toHaveURL(/\/library/);
   await expect(tray.getByText(/Creo la mappa/)).toBeVisible({ timeout: 20_000 });
   await page.screenshot({ path: path.join(dir, "progress-map.png") });

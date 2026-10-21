@@ -9,8 +9,11 @@ import { getWorkspace } from "@/lib/app-style";
 import { requireUser } from "@/lib/supabase/server";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
-  const { user, profile } = await requireUser();
-  const { prefs, stale } = await getWorkspace(profile.preferences);
+  const { supabase, user, profile } = await requireUser();
+  const [{ prefs, stale }, due] = await Promise.all([
+    getWorkspace(profile.preferences),
+    supabase.from("flashcards").select("id", { count: "exact", head: true }).lte("due_at", new Date().toISOString()),
+  ]);
 
   return (
     <StudyTimerProvider prefs={prefs}>
@@ -22,7 +25,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         Vai al contenuto
       </a>
       {stale && <PreferencesSync prefs={prefs} />}
-      <AppNav email={user.email ?? ""} plan={profile.plan} prefs={prefs} />
+      <AppNav email={user.email ?? ""} plan={profile.plan} prefs={prefs} due={due.count ?? 0} />
       <div className="flex min-w-0 flex-1 flex-col md:py-2 md:pr-2">
         {aiMockEnabled && (
           <p role="alert" className="mb-2 rounded-lg bg-pill-negative px-4 py-2 text-sm font-bold text-pill-negative-ink">

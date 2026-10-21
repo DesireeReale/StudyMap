@@ -34,16 +34,17 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
     .maybeSingle();
   if (!doc) notFound();
 
-  const [maps, decks, folders, chat, summaries] = await Promise.all([
+  const [maps, decks, folders, chat, summaries, quizzes] = await Promise.all([
     supabase.from("maps").select("id, title, graph, updated_at").eq("document_id", id).order("updated_at", { ascending: false }),
     supabase.from("decks").select("id, title, created_at").eq("document_id", id).order("created_at", { ascending: false }),
     loadFolders(supabase),
     supabase.from("chat_messages").select("id, role, content, pages").eq("document_id", id).order("id"),
-    supabase.from("notes").select("id, body, updated_at").eq("document_id", id).order("updated_at", { ascending: false }).limit(1),
+    supabase.from("notes").select("id, title, body, updated_at").eq("document_id", id).order("updated_at", { ascending: false }),
+    supabase.from("quizzes").select("id, title, created_at").eq("document_id", id).order("created_at", { ascending: false }),
   ]);
   const summary = summaries.data?.[0];
   const messages = chat.data ?? [];
-  const made = (maps.data?.length ?? 0) + (decks.data?.length ?? 0);
+  const made = (maps.data?.length ?? 0) + (decks.data?.length ?? 0) + (quizzes.data?.length ?? 0) + (summaries.data?.length ?? 0);
   const fullText = reflow(doc.pages.join("\n\n"));
   const preview = fullText.slice(0, 4000);
 
@@ -102,7 +103,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
           </h2>
           {made === 0 ? (
             <p className="rounded-row border border-dashed border-control px-4 py-3 text-sm text-muted">
-              Ancora niente: genera una mappa concettuale o un mazzo di flashcard con i pulsanti in alto.
+              Ancora niente: genera mappa, flashcard, quiz o riassunto con i pulsanti in alto.
             </p>
           ) : (
             <ul className="flex flex-col gap-2">
@@ -128,6 +129,32 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
                     <span className="min-w-0">
                       <span className="block truncate font-bold">Flashcard · {d.title}</span>
                       <span className="num block text-[13px] text-muted">creato il {shortDate(d.created_at)}</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+              {quizzes.data?.map((z) => (
+                <li key={z.id}>
+                  <Link href={`/quizzes/${z.id}`} className="row-card flex min-h-[63px] items-center gap-3 hover:border-control">
+                    <span className="flex h-12 w-[72px] shrink-0 items-center justify-center rounded-lg bg-surface text-muted">
+                      <Icon name="check" size={20} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate font-bold">Quiz · {z.title}</span>
+                      <span className="num block text-[13px] text-muted">creato il {shortDate(z.created_at)}</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+              {summaries.data?.map((n) => (
+                <li key={n.id}>
+                  <Link href={`/notes/${n.id}`} className="row-card flex min-h-[63px] items-center gap-3 hover:border-control">
+                    <span className="flex h-12 w-[72px] shrink-0 items-center justify-center rounded-lg bg-surface text-muted">
+                      <Icon name="note" size={20} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate font-bold">{n.title}</span>
+                      <span className="num block text-[13px] text-muted">aggiornato il {shortDate(n.updated_at)}</span>
                     </span>
                   </Link>
                 </li>
