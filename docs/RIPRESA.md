@@ -24,7 +24,8 @@ Leggi questo file, `CLAUDE.md` (regole) e `OBIETTIVI.md` (cosa resta). Il codice
 
 ## Prossimi passi consigliati
 1. Dopo la registrazione di aistudymap@proton.me, passare il suo profilo a `plan = 'pro'` su Supabase di sviluppo.
-2. Seguire la beta: leggere `feature_requests` e `ai_usage` su Supabase di sviluppo, controllare tempi ed errori dei modelli.
+2. Quando l'utente avrà caricato il credito su OpenRouter: una prova reale di `qwen/qwen3.7-flash` e `deepseek/deepseek-v4.1-flash` (stesso testo e slide di `docs/prova-modelli.md`), poi metterli prima dei gratuiti nelle catene. Il 21 ottobre la prova si è fermata su "402 Insufficient credits".
+3. Seguire la beta: leggere `feature_requests` e `ai_usage` su Supabase di sviluppo, controllare tempi ed errori dei modelli.
 3. Regole di humanizer nei prompt `prompts/*.md`.
 4. Generazione AI in background: fatta con `after()`; coda vera solo se le generazioni superano i 300 s.
 5. Sessione di solo piano per podcast e registrazione delle lezioni (UI di riferimento: card scura, onda animata, testo che scorre, tasto microfono).

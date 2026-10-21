@@ -155,7 +155,8 @@
 - [x] Timeout per attività in config (40 s per mappe, flashcard, riassunti e quiz; 30 s per trascrizioni e chat): oltre si passa al modello successivo
 - [x] Prova di 8 modelli gratuiti di OpenRouter (risultati in docs/prova-modelli.md): oggi nessuno sostituisce MiniMax
 - [x] Catene separate per testo e immagini, scadenza automatica dei modelli (MiniMax esce il 22 ottobre), ragionamento "medium" per i quiz e "low" per il resto
-- [ ] Prima della beta: scegliere un modello di riserva affidabile dopo il ritiro di MiniMax (Gemma 4 oggi risponde 429)
+- [ ] Prima della beta, dopo aver caricato il credito: provare Qwen 3.7 Flash e DeepSeek V4.1 Flash (mappa e slide, meno di 1 centesimo) e metterli prima dei gratuiti; fino ad allora solo modelli gratuiti (decisione del 21 ottobre)
+- [ ] Messaggio chiaro quando manca il credito di OpenRouter (oggi un 402 appare come "servizio momentaneamente occupato")
 - [ ] Chat in streaming (stima: mezza giornata o una giornata di lavoro, da approvare)
 - [x] E2E instabili al login: `router.refresh()` subito dopo `router.push()` annullava la navigazione; ora `router.replace()`, e 2 test in parallelo invece di 9 (3 giri di fila tutti verdi)
 - [x] Contatto di assistenza aistudymap@proton.me in privacy, landing e Impostazioni
@@ -163,7 +164,7 @@
 
 ## Da fare tu
 - [ ] Registrarsi nell'app con aistudymap@proton.me, poi far passare il profilo al piano Pro
-- [ ] Caricare 10 € di credito su OpenRouter (porta il limite dei modelli gratuiti da 50 a 1000 richieste al giorno)
+- [ ] Caricare 10 € di credito su OpenRouter prima di dare l'app agli studenti (limite dei gratuiti da 50 a 1000 richieste al giorno, e modelli a pagamento di riserva)
 - [ ] Per ricevere i suggerimenti via email: account Resend gratuito e RESEND_API_KEY in .env.local
 - [x] Creare il progetto Supabase di sviluppo (regione UE)
 - [x] Creare il progetto Supabase di test (regione UE)
