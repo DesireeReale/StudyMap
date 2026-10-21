@@ -10,11 +10,12 @@ export type ModelConfig = {
   outputUsdPerMTok: number;
   contextTokens: number;
   vision: boolean;
-  structuredOutput: "json_schema" | "json_object";
+  structuredOutput: "json_schema" | "json_object" | "prompt";
   usesDataForTraining: boolean;
   enabled: boolean;
-  reasoning?: { effort: "low"; extraTokens: number };
+  reasoning?: { extraTokens: number };
   timeoutMs?: number;
+  expiresAt?: string;
 };
 
 export const PROVIDERS = {
@@ -28,7 +29,8 @@ export const PROVIDERS = {
 // The Gemini free tier is off: Google's terms allow only paid services for apps serving EEA users
 // (https://ai.google.dev/gemini-api/terms, "Use Restrictions"). Enable it again only with a paid key.
 // Gemini's OpenAI-compatible endpoint rejects our JSON schemas in json_schema mode, so it uses json_object + Zod.
-// MiniMax M3.1 Flash requires reasoning (lowest effort "low"); reasoning tokens count against max_tokens.
+// Models with `reasoning` get the task's effort (TASKS); reasoning tokens count against max_tokens, so they
+// get `extraTokens` more. A model with `expiresAt` leaves the chains automatically after that instant.
 export const MODELS: ModelConfig[] = [
   {
     key: "minimax-flash-free",
@@ -41,7 +43,8 @@ export const MODELS: ModelConfig[] = [
     structuredOutput: "json_object",
     usesDataForTraining: true,
     enabled: true,
-    reasoning: { effort: "low", extraTokens: 4000 },
+    reasoning: { extraTokens: 4000 },
+    expiresAt: "2026-10-22T00:00:00Z",
   },
   {
     key: "gemini-flash",
@@ -141,38 +144,31 @@ export const MODELS: ModelConfig[] = [
   },
 ];
 
-export const CHAINS: Record<PlanId, string[]> = {
-  free: [
-    "minimax-flash-free",
-    "muse-spark-contributor",
-    "mistral-small",
-    "gemma-4-free",
-    "gemini-flash",
-    "gemini-flash-lite",
-    "nemotron-vl-free",
-    "openrouter-free",
-  ],
-  pro: [
-    "muse-spark",
-    "mistral-small",
-    "gemma-4-free",
-    "gemini-flash",
-    "gemini-flash-lite",
-    "nemotron-vl-free",
-    "openrouter-free",
-  ],
+export type Chains = { text: string[]; vision: string[] };
+
+export const CHAINS: Record<PlanId, Chains> = {
+  free: {
+    text: ["minimax-flash-free", "gemma-4-free", "nemotron-vl-free", "openrouter-free"],
+    vision: ["minimax-flash-free", "gemma-4-free", "nemotron-vl-free"],
+  },
+  pro: {
+    text: ["muse-spark", "mistral-small", "minimax-flash-free", "gemma-4-free", "nemotron-vl-free", "openrouter-free"],
+    vision: ["muse-spark", "mistral-small", "minimax-flash-free", "gemma-4-free", "nemotron-vl-free"],
+  },
 };
 
 export type TaskId = "mindmap" | "flashcards" | "transcribe" | "figure" | "summary" | "quiz" | "chat";
 
-export const TASKS: Record<TaskId, { promptVersion: string; maxTokens: number; timeoutMs: number }> = {
-  mindmap: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000 },
-  flashcards: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000 },
-  transcribe: { promptVersion: "v1", maxTokens: 3000, timeoutMs: 30_000 },
-  figure: { promptVersion: "v1", maxTokens: 2000, timeoutMs: 30_000 },
-  summary: { promptVersion: "v1", maxTokens: 3000, timeoutMs: 40_000 },
-  quiz: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000 },
-  chat: { promptVersion: "v1", maxTokens: 2000, timeoutMs: 30_000 },
+export type Reasoning = "low" | "medium";
+
+export const TASKS: Record<TaskId, { promptVersion: string; maxTokens: number; timeoutMs: number; reasoning: Reasoning }> = {
+  mindmap: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000, reasoning: "low" },
+  flashcards: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000, reasoning: "low" },
+  transcribe: { promptVersion: "v1", maxTokens: 3000, timeoutMs: 30_000, reasoning: "low" },
+  figure: { promptVersion: "v1", maxTokens: 2000, timeoutMs: 30_000, reasoning: "low" },
+  summary: { promptVersion: "v1", maxTokens: 3000, timeoutMs: 40_000, reasoning: "low" },
+  quiz: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 60_000, reasoning: "medium" },
+  chat: { promptVersion: "v1", maxTokens: 2000, timeoutMs: 30_000, reasoning: "low" },
 };
 
 export const CHUNK_INPUT_TOKENS = 12_000;

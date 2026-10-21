@@ -8,12 +8,14 @@ const allow: Decision = { ok: true };
 
 export function modelChain(
   plan: PlanId,
-  opts: { consent: boolean; vision?: boolean; hasKey?: (m: ModelConfig) => boolean },
+  opts: { consent: boolean; vision?: boolean; hasKey?: (m: ModelConfig) => boolean; now?: number },
 ): ModelConfig[] {
-  return CHAINS[plan]
+  const now = opts.now ?? Date.now();
+  return CHAINS[plan][opts.vision ? "vision" : "text"]
     .map((key) => MODELS.find((m) => m.key === key))
     .filter((m): m is ModelConfig => !!m)
     .filter((m) => m.enabled)
+    .filter((m) => !m.expiresAt || now < Date.parse(m.expiresAt))
     .filter((m) => opts.consent || !m.usesDataForTraining)
     .filter((m) => !opts.vision || m.vision)
     .filter((m) => !opts.hasKey || opts.hasKey(m));

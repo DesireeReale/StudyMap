@@ -90,7 +90,7 @@ export class AiUnavailableError extends Error {
 
 class InvalidOutputError extends Error {}
 
-export const openaiChat: ChatFn = async ({ model, messages, maxTokens, jsonSchema, fallbacks, timeoutMs }) => {
+export const openaiChat: ChatFn = async ({ task, model, messages, maxTokens, jsonSchema, fallbacks, timeoutMs }) => {
   const provider = PROVIDERS[model.provider];
   const client = new OpenAI({
     baseURL: provider.baseURL,
@@ -102,14 +102,18 @@ export const openaiChat: ChatFn = async ({ model, messages, maxTokens, jsonSchem
     const res = await client.chat.completions.create({
       model: model.id,
       ...(fallbacks?.length ? { models: [model.id, ...fallbacks] } : {}),
-      ...(model.reasoning ? { reasoning: { effort: model.reasoning.effort } } : {}),
+      ...(model.reasoning ? { reasoning: { effort: TASKS[task].reasoning } } : {}),
       messages,
       max_tokens: maxTokens,
       temperature: 0.3,
-      response_format:
-        model.structuredOutput === "json_schema"
-          ? { type: "json_schema", json_schema: { name: "output", schema: jsonSchema } }
-          : { type: "json_object" },
+      ...(model.structuredOutput === "prompt"
+        ? {}
+        : {
+            response_format:
+              model.structuredOutput === "json_schema"
+                ? { type: "json_schema" as const, json_schema: { name: "output", schema: jsonSchema } }
+                : { type: "json_object" as const },
+          }),
     });
     return {
       content: res.choices[0]?.message?.content ?? "",

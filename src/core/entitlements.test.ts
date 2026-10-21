@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MODELS } from "@/config/ai";
+import { CHAINS, MODELS } from "@/config/ai";
 import { PLANS } from "@/config/plans";
 import {
   canCreateSubject,
@@ -14,30 +14,31 @@ import {
 } from "./entitlements";
 
 describe("modelChain", () => {
-  const keys = (plan: "free" | "pro", consent: boolean, vision = false) =>
-    modelChain(plan, { consent, vision }).map((m) => m.key);
+  const before = Date.parse("2026-10-21T12:00:00Z");
+  const after = Date.parse("2026-10-22T00:00:01Z");
+  const keys = (plan: "free" | "pro", opts: { consent?: boolean; vision?: boolean; now?: number } = {}) =>
+    modelChain(plan, { consent: opts.consent ?? true, vision: opts.vision, now: opts.now ?? before }).map((m) => m.key);
 
   it("excludes models that train on data without consent", () => {
-    expect(keys("free", false)).toEqual([]);
+    expect(keys("free", { consent: false })).toEqual([]);
   });
 
-  it("includes them with consent", () => {
-    expect(keys("free", true)).toEqual(["minimax-flash-free", "gemma-4-free", "nemotron-vl-free", "openrouter-free"]);
-    expect(keys("pro", true).slice(-3)).toEqual(["gemma-4-free", "nemotron-vl-free", "openrouter-free"]);
+  it("follows the configured text and vision chains", () => {
+    const enabled = (list: string[]) => list.filter((k) => MODELS.find((m) => m.key === k)?.enabled);
+    expect(keys("free")).toEqual(enabled(CHAINS.free.text));
+    expect(keys("free", { vision: true })).toEqual(enabled(CHAINS.free.vision));
+    expect(keys("free", { vision: true }).every((k) => MODELS.find((m) => m.key === k)?.vision)).toBe(true);
   });
 
-  it("filters vision-capable models", () => {
-    expect(keys("free", true, true)).toEqual(["minimax-flash-free", "gemma-4-free", "nemotron-vl-free"]);
-    expect(MODELS.filter((m) => m.provider === "gemini").every((m) => !m.enabled)).toBe(true);
+  it("drops a model on its own once it expires", () => {
+    expect(keys("free")[0]).toBe("minimax-flash-free");
+    expect(keys("free", { now: after })).not.toContain("minimax-flash-free");
+    expect(keys("free", { now: after, vision: true })).not.toContain("minimax-flash-free");
   });
 
   it("skips disabled models and models without an API key", () => {
-    expect(MODELS.find((m) => m.key === "muse-spark")?.enabled).toBe(false);
-    expect(modelChain("pro", { consent: true, hasKey: (m) => m.provider !== "gemini" }).map((m) => m.key)).toEqual([
-      "gemma-4-free",
-      "nemotron-vl-free",
-      "openrouter-free",
-    ]);
+    expect(MODELS.filter((m) => m.provider === "gemini").every((m) => !m.enabled)).toBe(true);
+    expect(modelChain("pro", { consent: true, now: before, hasKey: (m) => m.provider === "openrouter" }).every((m) => m.provider === "openrouter")).toBe(true);
   });
 });
 
