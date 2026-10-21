@@ -28,6 +28,28 @@ function fileExtension(file: File): string | undefined {
 const MIME_OF = Object.fromEntries(Object.entries(ACCEPT).map(([mime, ext]) => [ext, mime]));
 
 type Problem = { message: string; upgrade: boolean };
+type Source = "document" | "photo" | "text";
+
+const SOURCES: { id: Source; title: string; text: string; icon: "file" | "upload" | "note" }[] = [
+  { id: "document", title: "Documento", text: "PDF, Word o PowerPoint", icon: "file" },
+  { id: "photo", title: "Foto degli appunti", text: "Scatta o scegli una foto", icon: "upload" },
+  { id: "text", title: "Testo incollato", text: "Appunti scritti o copiati", icon: "note" },
+];
+const DOCUMENT_ACCEPT = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ".pdf",
+  ".docx",
+  ".pptx",
+].join(",");
+const PHOTO_ACCEPT = "image/png,image/jpeg,image/webp";
+const CREATE = [
+  { id: "mindmap", label: "Mappa" },
+  { id: "flashcards", label: "Flashcard" },
+  { id: "quiz", label: "Quiz" },
+  { id: "summary", label: "Riassunto" },
+] as const;
 
 export function UploadForm({
   userId,
@@ -43,7 +65,7 @@ export function UploadForm({
   initialMode?: "file" | "text";
 }) {
   const router = useRouter();
-  const [mode, setMode] = useState<"file" | "text">(initialMode);
+  const [mode, setMode] = useState<Source>(initialMode === "text" ? "text" : "document");
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<Problem | null>(null);
   const [ext, setExt] = useState<string>();
@@ -59,7 +81,7 @@ export function UploadForm({
     };
   }, []);
 
-  async function submit(body: Record<string, string | boolean>) {
+  async function submit(body: Record<string, string | boolean | string[]>) {
     const res = await fetch("/api/documents", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -67,7 +89,10 @@ export function UploadForm({
     });
     const json = await res.json();
     if (!res.ok) return setProblem({ message: json.error, upgrade: json.upgrade });
-    if (json.href) return router.push(json.href);
+    if (json.href) {
+      if (json.jobs) announceJobs();
+      return router.push(json.href);
+    }
     announceJobs();
     setReading(true);
     const job = await waitForJob(json.jobId, () => alive.current);
@@ -85,10 +110,11 @@ export function UploadForm({
     const form = new FormData(e.currentTarget);
     const title = String(form.get("title")).trim();
     const folderId = String(form.get("folder") ?? "");
+    const create = form.getAll("create").map(String);
     setBusy(true);
     try {
       if (mode === "text") {
-        await submit({ kind: "text", title, text: String(form.get("text")), folderId });
+        await submit({ kind: "text", title, text: String(form.get("text")), folderId, create });
         return;
       }
       const file = form.get("file");
@@ -112,7 +138,7 @@ export function UploadForm({
         (await uploadWithProgress(signed.signedUrl, file, MIME_OF[ext]!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, setUploaded));
       setUploaded(null);
       if (!ok) return setProblem({ message: "Caricamento non riuscito. Riprova.", upgrade: false });
-      await submit({ kind: "file", title: title || file.name.replace(/\.[^.]+$/, ""), storagePath, folderId, figures: ext !== "png" && ext !== "jpg" && ext !== "webp" && figures });
+      await submit({ kind: "file", title: title || file.name.replace(/\.[^.]+$/, ""), storagePath, folderId, figures: ext !== "png" && ext !== "jpg" && ext !== "webp" && figures, create });
     } catch {
       setProblem({ message: "Errore di rete. Riprova.", upgrade: false });
     } finally {
@@ -122,26 +148,34 @@ export function UploadForm({
 
   return (
     <form onSubmit={onSubmit} className="panel flex flex-col gap-4" aria-busy={busy}>
-      <fieldset className="flex w-fit gap-1 rounded-full bg-sheet p-1">
-        <legend className="sr-only">Tipo di materiale</legend>
-        {(["file", "text"] as const).map((m) => (
-          <label
-            key={m}
-            className={`flex h-9 cursor-pointer items-center rounded-full px-4 text-[15px] transition-colors duration-150 has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--focus)] ${
-              mode === m ? "bg-primary font-bold text-on-primary" : "text-muted hover:text-ink"
-            }`}
-          >
-            <input
-              type="radio"
-              name="mode"
-              value={m}
-              checked={mode === m}
-              onChange={() => setMode(m)}
-              className="sr-only"
-            />
-            {m === "file" ? "File" : "Testo o appunti"}
-          </label>
-        ))}
+      <fieldset className="flex flex-col gap-2">
+        <legend className="label mb-2">Cosa carichi?</legend>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {SOURCES.map((src) => (
+            <label
+              key={src.id}
+              className="flex cursor-pointer items-center gap-3 rounded-row border-2 border-border bg-sheet p-3.5 transition-colors duration-150 hover:border-control has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--focus)] sm:flex-col sm:items-start"
+            >
+              <input
+                type="radio"
+                name="mode"
+                value={src.id}
+                checked={mode === src.id}
+                onChange={() => {
+                  setMode(src.id);
+                  setFileName(undefined);
+                  setExt(undefined);
+                }}
+                className="sr-only"
+              />
+              <Icon name={src.icon} size={24} className="shrink-0 text-accent" />
+              <span>
+                <span className="block font-bold text-ink">{src.title}</span>
+                <span className="block text-[13px] text-muted">{src.text}</span>
+              </span>
+            </label>
+          ))}
+        </div>
       </fieldset>
 
       <div className="flex flex-col gap-2">
@@ -159,12 +193,12 @@ export function UploadForm({
 
       <div className="flex flex-col gap-2">
         <label htmlFor="upload-title" className="label">
-          Titolo{mode === "file" && <span className="font-normal text-muted"> (facoltativo)</span>}
+          Titolo{mode !== "text" && <span className="font-normal text-muted"> (facoltativo)</span>}
         </label>
         <input id="upload-title" name="title" required={mode === "text"} maxLength={200} className="field" />
       </div>
 
-      {mode === "file" ? (
+      {mode !== "text" ? (
         <div className="flex flex-col gap-2">
           <label htmlFor="upload-file" className="label">
             File
@@ -172,17 +206,21 @@ export function UploadForm({
           <div className="relative flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-card border-2 border-dashed border-accent bg-accent-soft p-6 text-center transition-colors duration-150 hover:bg-active has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--focus)]">
             <Icon name="upload" size={32} className="text-accent" />
             <span className="text-[17px] font-bold text-ink">
-              {fileName ?? "Trascina qui il file, oppure fai clic per sceglierlo"}
+              {fileName ??
+                (mode === "photo"
+                  ? "Scatta una foto o sceglila dalla galleria"
+                  : "Trascina qui il file, oppure fai clic per sceglierlo")}
             </span>
             <span className="text-[13px] text-muted">
-              {fileName ? "Fai clic per cambiarlo" : "Funziona anche con le foto degli appunti"}
+              {fileName ? "Fai clic per cambiarlo" : mode === "photo" ? "Una pagina per foto, ben illuminata" : "PDF, Word o PowerPoint"}
             </span>
             <input
               id="upload-file"
               name="file"
               type="file"
               required
-              accept={[...Object.keys(ACCEPT), ".docx", ".pptx"].join(",")}
+              accept={mode === "photo" ? PHOTO_ACCEPT : DOCUMENT_ACCEPT}
+              {...(mode === "photo" ? { capture: "environment" as const } : {})}
               onChange={(e) => {
                 const file = e.currentTarget.files?.[0];
                 const chosen = file ? fileExtension(file) : undefined;
@@ -196,7 +234,8 @@ export function UploadForm({
             />
           </div>
           <p id="upload-file-help" className="text-[13px] text-muted">
-            PDF, Word, PowerPoint, PNG, JPEG o WebP, fino a {Math.round(maxUploadBytes / 1024 / 1024)} MB.
+            {mode === "photo" ? "PNG, JPEG o WebP" : "PDF, Word (.docx) o PowerPoint (.pptx)"}, fino a{" "}
+            {Math.round(maxUploadBytes / 1024 / 1024)} MB.
           </p>
           {(ext === "pdf" || ext === "docx" || ext === "pptx") && (
             <label className="mt-2 flex cursor-pointer items-start gap-3 rounded-row border border-border bg-sheet p-3">
@@ -240,6 +279,28 @@ export function UploadForm({
           </p>
         </div>
       )}
+
+      <fieldset className="flex flex-col gap-2">
+        <legend className="label mb-1">Cosa vuoi creare?</legend>
+        <p className="mb-1 text-[13px] text-muted">
+          Li prepariamo subito dopo la lettura e li trovi nella stessa cartella. Puoi anche crearli dopo, dalla pagina del
+          materiale.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {CREATE.map((c) => (
+            <label
+              key={c.id}
+              className="flex min-h-10 cursor-pointer items-center gap-2 rounded-full border border-border px-4 text-[15px] text-muted hover:text-ink has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:font-bold has-[:checked]:text-ink has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--focus)]"
+            >
+              <input type="checkbox" name="create" value={c.id} className="peer sr-only" />
+              <span aria-hidden="true" className="hidden text-positive peer-checked:inline">
+                ✓
+              </span>
+              {c.label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       {problem && <UpgradeNotice message={problem.message} upgrade={problem.upgrade} />}
 

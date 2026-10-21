@@ -10,6 +10,7 @@ import { officeKind, readDocx, readPptx } from "@/core/office";
 import { readZip } from "@/core/zip";
 import { aiContextFor, guardAi } from "@/lib/ai";
 import { apiUser, denied, fail } from "@/lib/api";
+import { startRequested } from "@/lib/generation";
 import { failJob, JobFailure, runJob, type Work } from "@/lib/jobs";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
@@ -18,9 +19,17 @@ export const maxDuration = 300;
 const UNSUPPORTED = "Formato non supportato: carica PDF, Word (.docx), PowerPoint (.pptx), PNG, JPEG o WebP.";
 
 const folderId = z.uuid().optional();
+const create = z.array(z.enum(["mindmap", "flashcards", "summary", "quiz"])).max(4).default([]);
 const Body = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("text"), title: z.string().trim().min(1).max(200), text: z.string().trim().min(20), folderId }),
-  z.object({ kind: z.literal("file"), title: z.string().trim().min(1).max(200), storagePath: z.string().min(1), folderId, figures: z.boolean().default(false) }),
+  z.object({ kind: z.literal("text"), title: z.string().trim().min(1).max(200), text: z.string().trim().min(20), folderId, create }),
+  z.object({
+    kind: z.literal("file"),
+    title: z.string().trim().min(1).max(200),
+    storagePath: z.string().min(1),
+    folderId,
+    figures: z.boolean().default(false),
+    create,
+  }),
 ]);
 
 export async function POST(request: Request) {
@@ -43,7 +52,9 @@ export async function POST(request: Request) {
       .select("id")
       .single();
     if (error) return fail("Salvataggio non riuscito", 500);
-    return NextResponse.json({ id: data.id, href: `/notes/${data.id}` });
+    const types = [...new Set(body.create)];
+    if (types.length) after(() => startRequested(supabase, profile, types, { noteId: data.id }, body.title));
+    return NextResponse.json({ id: data.id, href: `/notes/${data.id}`, jobs: types.length });
   }
 
   const removeUpload = () => supabase.storage.from("documents").remove([body.storagePath]);
@@ -137,6 +148,7 @@ export async function POST(request: Request) {
       .select("id")
       .single();
     if (error) throw new JobFailure("Salvataggio non riuscito");
+    await startRequested(supabase, profile, [...new Set(body.create)], { documentId: data.id }, body.title);
     return `/documents/${data.id}`;
   };
 

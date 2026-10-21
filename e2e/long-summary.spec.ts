@@ -14,7 +14,7 @@ test("long summary stays inside its sheet", async ({ page }) => {
   await expect(page).toHaveURL(/\/library/);
   const sections = Array.from({ length: 12 }, (_, i) => `## Sezione ${i + 1}\n- ${"Un punto abbastanza lungo da andare a capo più volte nel foglio di lettura. ".repeat(3)}\n- Secondo punto della sezione.`).join("\n\n");
   await page.goto("/upload");
-  await page.getByText("Testo o appunti").click();
+  await page.getByText("Testo incollato", { exact: true }).click();
   await page.getByLabel("Titolo").fill("Riassunto lungo");
   await page.getByRole("textbox", { name: "Testo" }).fill(sections);
   await page.getByRole("button", { name: "Carica" }).click();
