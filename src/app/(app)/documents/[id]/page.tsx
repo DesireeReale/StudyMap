@@ -102,6 +102,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
                 idPrefix: "riassunto",
               }}
               className="w-full rounded-row border border-border bg-sheet px-[clamp(16px,4%,48px)] py-6"
+              columns
             />
           </Expandable>
         </section>

@@ -3,33 +3,57 @@ import { Icon } from "./icons";
 
 export type PageSource = { excerpts: Record<number, string>; unit: "Pagina" | "Slide"; idPrefix: string };
 
-export function SummaryView({ body, source, className = "" }: { body: string; source?: PageSource; className?: string }) {
+export function SummaryView({
+  body,
+  source,
+  className = "",
+  columns = false,
+}: {
+  body: string;
+  source?: PageSource;
+  className?: string;
+  columns?: boolean;
+}) {
   let heading = 0;
+  const render = (b: ReturnType<typeof blocks>[number], i: number) => {
+    if (b.kind === "heading") {
+      return (
+        <h3 key={i} id={`sezione-${heading++}`} className="mt-4 scroll-mt-4 text-[1.2em] font-bold first:mt-0">
+          {b.text}
+        </h3>
+      );
+    }
+    if (b.kind === "pages") {
+      return source ? (
+        <PageRefs key={i} pages={b.pages} source={source} block={i} />
+      ) : (
+        <p key={i} className="num text-[0.85em] text-muted">
+          {b.text.slice(1, -1)}
+        </p>
+      );
+    }
+    return (
+      <p key={i} className={b.kind === "point" ? "relative pl-5 before:absolute before:left-1 before:text-accent before:content-['•']" : ""}>
+        {b.text}
+      </p>
+    );
+  };
+
+  const all = blocks(body);
+  if (!columns) return <article className={`reading flex flex-col gap-2 ${className}`}>{all.map(render)}</article>;
+
+  const sections: { start: number; items: typeof all }[] = [];
+  all.forEach((b, i) => {
+    if (b.kind === "heading" || sections.length === 0) sections.push({ start: i, items: [] });
+    sections.at(-1)!.items.push(b);
+  });
   return (
-    <article className={`reading flex flex-col gap-2 ${className}`}>
-      {blocks(body).map((b, i) => {
-        if (b.kind === "heading") {
-          return (
-            <h3 key={i} id={`sezione-${heading++}`} className="mt-4 scroll-mt-4 text-[1.2em] font-bold first:mt-0">
-              {b.text}
-            </h3>
-          );
-        }
-        if (b.kind === "pages") {
-          return source ? (
-            <PageRefs key={i} pages={b.pages} source={source} block={i} />
-          ) : (
-            <p key={i} className="num text-[0.85em] text-muted">
-              {b.text.slice(1, -1)}
-            </p>
-          );
-        }
-        return (
-          <p key={i} className={b.kind === "point" ? "relative pl-5 before:absolute before:left-1 before:text-accent before:content-['•']" : ""}>
-            {b.text}
-          </p>
-        );
-      })}
+    <article className={`reading grid gap-x-12 gap-y-6 2xl:grid-cols-2 ${className}`}>
+      {sections.map((sec) => (
+        <div key={sec.start} className="flex min-w-0 flex-col gap-2">
+          {sec.items.map((b, j) => render(b, sec.start + j))}
+        </div>
+      ))}
     </article>
   );
 }

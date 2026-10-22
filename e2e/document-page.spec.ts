@@ -65,7 +65,8 @@ test("document page: create tiles, summary first, folded chat and text", async (
   await expect(page).toHaveURL(/\/notes\//);
   const sections = Array.from(
     { length: 6 },
-    (_, i) => `## Sezione ${i + 1}\n[pagina 1]\n- La catena di custodia documenta ogni passaggio della prova digitale.\n- L'acquisizione si fa con una copia bit a bit.`,
+    (_, i) =>
+      `## Sezione ${i + 1}\n[pagina 1]\n- La catena di custodia documenta chi ha avuto la prova digitale, quando e perché: se si interrompe, la prova può essere contestata in tribunale.\n- L'acquisizione si fa con una copia bit a bit del supporto, verificata con un hash, e l'analisi lavora solo sulla copia.${i % 2 ? "" : "\n- Le tecniche si basano sulla natura volatile dei dati, soprattutto nelle reti e nella live forensics."}`,
   );
   await admin.from("notes").update({ body: sections.join("\n") }).eq("document_id", docUrl.split("/").pop()!);
   await page.goto(docUrl);
