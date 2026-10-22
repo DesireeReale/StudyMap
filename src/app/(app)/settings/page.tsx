@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { BETA_TERMS } from "@/config/beta";
-import { PLANS } from "@/config/plans";
-import { shortDate } from "@/core/dates";
+import { PLAN_LABELS, PLANS } from "@/config/plans";
+import { longDay, shortDate } from "@/core/dates";
 import { DeleteAccount, ExamDate } from "@/components/AccountActions";
 import { FeedbackForm } from "@/components/FeedbackForm";
+import { UpgradeContact } from "@/components/UpgradeContact";
 import { SUPPORT_EMAIL } from "@/core/feedback";
 import { WorkspacePicker } from "@/components/StyleSwitch";
 import { getWorkspace } from "@/lib/app-style";
@@ -16,7 +17,7 @@ export const metadata: Metadata = { title: "Impostazioni" };
 const fmt = (n: number) => (Number.isFinite(n) ? String(n) : "illimitati");
 
 export default async function SettingsPage() {
-  const { profile, user } = await requireUser();
+  const { profile, subscription, user } = await requireUser();
   const free = PLANS.free;
   const pro = PLANS.pro;
   const rows: [string, string, string][] = [
@@ -34,7 +35,15 @@ export default async function SettingsPage() {
         <p className="mt-1 text-[15px] text-muted">{user.email}</p>
       </header>
 
-      <Section id="piano" title="Piano" description={`Sei sul piano ${profile.plan === "pro" ? "Pro" : "Free"}.`}>
+      <Section
+        id="piano"
+        title="Il tuo piano"
+        description={
+          subscription
+            ? `Sei sul piano ${PLAN_LABELS[profile.plan]}${subscription.ends_at ? ` fino al ${longDay(subscription.ends_at)}` : ", senza scadenza"}.`
+            : "Sei sul piano Free."
+        }
+      >
         <table className="num w-full text-left text-sm">
           <thead>
             <tr className="text-muted">
@@ -44,7 +53,7 @@ export default async function SettingsPage() {
               <th scope="col" className={`pb-2 text-right font-normal ${profile.plan === "free" ? "font-bold text-ink" : ""}`}>
                 Free
               </th>
-              <th scope="col" className={`pb-2 text-right font-normal ${profile.plan === "pro" ? "font-bold text-ink" : ""}`}>
+              <th scope="col" className={`pb-2 text-right font-normal ${profile.plan !== "free" ? "font-bold text-ink" : ""}`}>
                 Pro
               </th>
             </tr>
@@ -61,7 +70,7 @@ export default async function SettingsPage() {
             ))}
           </tbody>
         </table>
-        {profile.plan === "free" && <p className="mt-4 text-sm text-muted">L&apos;abbonamento Pro sarà disponibile a breve.</p>}
+        {profile.plan === "free" && <UpgradeContact className="mt-4 text-sm text-muted" />}
       </Section>
 
       <Section id="esame" title="Esame" description="Nella home compare il conto alla rovescia dei giorni che mancano.">

@@ -4,6 +4,10 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { activeSubscription } from "@/core/entitlements";
+import { todayIso } from "@/core/dates";
+import type { PlanId } from "@/config/plans";
 import type { Database } from "./types";
 
 export async function supabaseServer() {
@@ -32,6 +36,17 @@ export function supabaseAdmin() {
   });
 }
 
+export async function loadProfile(supabase: SupabaseClient<Database>, userId: string) {
+  const [{ data: profile }, { data: subs }] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", userId).single(),
+    supabase.from("subscriptions").select("*").eq("user_id", userId).eq("product", "studymap"),
+  ]);
+  if (!profile) return null;
+  const subscription = activeSubscription(subs ?? [], todayIso());
+  const plan: PlanId = subscription?.plan ?? "free";
+  return { profile: { ...profile, plan }, subscription };
+}
+
 export const getUser = cache(async () => {
   const supabase = await supabaseServer();
   const { data } = await supabase.auth.getClaims();
@@ -42,7 +57,7 @@ export const getUser = cache(async () => {
 export const requireUser = cache(async () => {
   const { supabase, user } = await getUser();
   if (!user) redirect("/login");
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-  if (!profile) redirect("/login");
-  return { supabase, user, profile };
+  const loaded = await loadProfile(supabase, user.id);
+  if (!loaded) redirect("/login");
+  return { supabase, user, ...loaded };
 });

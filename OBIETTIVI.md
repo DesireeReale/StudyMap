@@ -33,10 +33,11 @@
 - [x] Ripetizione dilazionata delle flashcard (SM-2 o FSRS) — fatta con SM-2; FSRS più avanti
 - [x] Chat con il documento, con riferimenti alle pagine
 - [ ] Abbonamento Stripe e pagina di gestione del piano (rimandato: i pagamenti li incassa l'utente a mano)
-- [ ] Piani Free, Pro e Pro Max in plans.ts, con l'elenco delle funzioni abilitate per piano (per esempio il podcast solo Pro Max)
-- [ ] Tabella `subscriptions` (utente, prodotto `studymap`, piano, scadenza `pro_until`, permessi extra), separata dal profilo e pronta per più app (oneiro); entitlements legge da lì
-- [ ] Ritorno automatico a Free alla scadenza (job giornaliero gratuito su Supabase)
-- [ ] Pagina di amministrazione solo per la proprietaria: cerca utente, piano, scadenza, permessi extra
+- [x] Piani Free, Pro e Pro Max in plans.ts, con l'elenco `features` per piano (Pro Max per ora uguale a Pro; servirà per il podcast)
+- [x] Tabella `subscriptions` (utente, prodotto `studymap`, piano, inizio, scadenza facoltativa, nota, chi l'ha creata e revocata), pronta per più app; il piano attivo si legge da lì
+- [x] Ritorno automatico a Free alla scadenza: calcolato dalla data a ogni richiesta, senza job
+- [x] Pagina `/admin` solo per la proprietaria (tabella `admins`): cerca per email, piano, scadenza, generazioni e costo AI del mese, "Sblocca Pro" con nota, "Revoca"
+- [ ] Pagamenti automatici (Stripe o simili): per ora si incassa a mano e si sblocca da `/admin`
 - [ ] Al lancio pubblico (non durante la beta): limiti Free a 10 generazioni al mese, 5 documenti salvati, 5 MB per file (20 pagine invariate) in plans.ts
 - [ ] Al lancio pubblico: per il Free eliminare il PDF originale dopo la lettura e tenere solo il testo estratto (spazio di Supabase); l'originale resta per il Pro
 - [ ] Keycloak: solo in futuro, come fornitore di login davanti a Supabase quando ci saranno più app (l'email resta l'identità per collegare gli account)
@@ -181,7 +182,7 @@
 - [ ] Scelta "una per capitolo" anche in "cosa vuoi creare" durante il caricamento
 
 ## Da fare tu
-- [ ] Registrarsi nell'app con aistudymap@proton.me, poi far passare il profilo al piano Pro
+- [ ] Registrarsi nell'app con aistudymap@proton.me, poi renderlo admin (vedi RIPRESA.md, "Admin")
 - [x] Credito su OpenRouter caricato (7,40 $)
 - [ ] Facoltativo: arrivare a 10 crediti acquistati in tutto su OpenRouter per alzare il limite di Gemma gratuito da 50 a 1000 richieste al giorno
 - [ ] Per ricevere i suggerimenti via email: account Resend gratuito e RESEND_API_KEY in .env.local

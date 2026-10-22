@@ -72,7 +72,7 @@ studymap/
 
 | File | A cosa serve | Modifica |
 |---|---|---|
-| [src/config/plans.ts](src/config/plans.ts) | **Tutti** i limiti free/pro e il rate limit | 🟢 |
+| [src/config/plans.ts](src/config/plans.ts) | **Tutti** i limiti free/pro/promax, `features` per piano e il rate limit | 🟢 |
 | [src/config/ai.ts](src/config/ai.ts) | Provider, modelli, prezzi, catene di fallback, `max_tokens`, dimensione dei chunk | 🟢 |
 | [prompts/mindmap.v2.md](prompts/mindmap.v2.md) | Prompt della mappa (la v1 era solo per infermieristica) | 🟢 |
 | [prompts/flashcards.v2.md](prompts/flashcards.v2.md) | Prompt delle flashcard (la v1 era solo per infermieristica) | 🟢 |
@@ -461,7 +461,7 @@ npm run typecheck
 
 | Dove | Cosa | Se lo cancelli |
 |---|---|---|
-| `profiles` | piano (`free`/`pro`), consenso AI, data dell'esame, `preferences` (stile, carattere, dimensione, spaziatura) | si ricrea solo con un nuovo login |
+| `profiles` | colonna storica `plan` (non più letta), consenso AI, data dell'esame, `preferences` (stile, carattere, dimensione, spaziatura) | si ricrea solo con un nuovo login |
 | `folders` | materie (cartelle senza `parent_id`) e sottocartelle, con colore, icona, ordine | si elimina solo se vuota |
 | `study_sessions` | minuti di studio completati con il timer | perdi lo storico dei minuti |
 | `notes` | appunti dell'utente (testo semplice, max 100.000 caratteri) dentro una cartella | perdi l'appunto |
@@ -470,6 +470,8 @@ npm run typecheck
 | `maps.graph` | nodi e archi della mappa (JSON) | perdi la mappa |
 | `decks` + `flashcards` | mazzi, carte, ultimo esito del ripasso | perdi il mazzo |
 | `chat_messages` | domande e risposte della chat, con le pagine citate, legate a un documento o a un appunto | perdi la conversazione |
+| `subscriptions` | piani sbloccati a mano: piano, inizio, scadenza (vuota = nessuna), nota, chi l'ha creato e chi l'ha revocato | lo studente torna Free |
+| `admins` | chi può aprire `/admin` | perdi l'accesso all'amministrazione |
 | `ai_usage` | log di ogni chiamata LLM e del suo costo | perdi lo storico dei costi |
 | `quota_counters` | contatori per periodo: `generation`, `chat` e `input_tokens` (mese), `quiz` (settimana), `rl:ai` (minuto) | si azzerano i limiti |
 
@@ -484,6 +486,14 @@ Lo schema iniziale è in [supabase/migrations/20261019000000_init.sql](supabase/
 - `plan` non è modificabile dal browser: [righe 100-101](supabase/migrations/20261019000000_init.sql:100) concedono all'utente solo la colonna del consenso;
 - `ai_usage` e `quota_counters` sono in sola lettura per l'utente ([:118](supabase/migrations/20261019000000_init.sql:118));
 - `consume_quota` ([:120](supabase/migrations/20261019000000_init.sql:120)) incrementa il contatore solo se resta entro il limite, in un'unica istruzione, così due richieste simultanee non lo superano. Può chiamarla solo il server (`service_role`).
+
+---
+
+Piani e amministrazione: [supabase/migrations/20261022300000_subscriptions.sql](supabase/migrations/20261022300000_subscriptions.sql).
+- Lo studente legge solo le proprie righe di `subscriptions` e non può scriverle; `admins` non è leggibile dal browser.
+- Il piano attivo è la riga non revocata e non scaduta con il piano più alto (`activeSubscription` in [entitlements.ts](src/core/entitlements.ts)); `loadProfile` in [server.ts](src/lib/supabase/server.ts) lo mette in `profile.plan`, così il resto del codice non cambia. Senza righe valide: Free. La scadenza vale fino a fine giornata, ora italiana; non serve nessun job.
+- `/admin` ([page.tsx](src/app/(app)/admin/page.tsx)) usa le funzioni `is_admin`, `admin_user_overview`, `admin_grant_plan` e `admin_revoke_subscription`: ognuna controlla nel database che chi chiama sia in `admins`, quindi la pagina non usa la chiave di servizio.
+- Per rendere admin un account: SQL editor di Supabase, `insert into public.admins (user_id) select id from auth.users where email = '...';`
 
 ---
 

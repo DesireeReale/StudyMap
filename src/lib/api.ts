@@ -1,7 +1,7 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import type { Denied } from "@/core/entitlements";
-import { supabaseServer } from "./supabase/server";
+import { loadProfile, supabaseServer } from "./supabase/server";
 
 export function fail(error: string, status: number, upgrade = false) {
   return NextResponse.json({ error, upgrade }, { status });
@@ -17,7 +17,7 @@ export async function apiUser() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-  if (!profile) return null;
-  return { supabase, user, profile };
+  const loaded = await loadProfile(supabase, user.id);
+  if (!loaded) return null;
+  return { supabase, user, ...loaded };
 }

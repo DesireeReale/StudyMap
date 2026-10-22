@@ -5,6 +5,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { PLANS } from "@/config/plans";
 import { CREATOR, SUPPORT_EMAIL } from "@/core/feedback";
 import { BrandMark } from "@/components/icons";
+import { UpgradeContact } from "@/components/UpgradeContact";
 import { HEART_FAILURE, MapArt } from "@/components/landing/MapArt";
 import { ReadingDemo } from "@/components/landing/ReadingDemo";
 import { ToolTabs } from "@/components/landing/ToolTabs";
@@ -417,7 +418,7 @@ export default async function Home() {
               <div className="flex flex-col gap-4 rounded-card border-2 border-accent bg-sheet p-6">
                 <h3 className="text-[20px] leading-tight font-semibold">Pro</h3>
                 <p className="font-display text-[36px] leading-none font-bold">
-                  In arrivo
+                  Su richiesta
                 </p>
                 <ul className="flex flex-col gap-2">
                   <Check>
@@ -454,10 +455,7 @@ export default async function Home() {
                   </Check>
                   <Check>Export PNG e PDF senza marchio</Check>
                 </ul>
-                <p className="mt-auto text-[14px] text-muted">
-                  Il piano Pro non è ancora acquistabile: il prezzo sarà
-                  indicato qui.
-                </p>
+                <UpgradeContact className="mt-auto text-[14px] text-muted" />
               </div>
             </div>
             <p className="rounded-row bg-accent-soft px-5 py-4 font-bold">

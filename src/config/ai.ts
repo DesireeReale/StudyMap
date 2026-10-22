@@ -195,6 +195,10 @@ export const CHAINS: Record<PlanId, Chains> = {
     text: ["muse-spark", "mistral-small", "deepseek-flash", "qwen-flash", "gemma-4-free"],
     vision: ["muse-spark", "mistral-small", "deepseek-flash", "qwen-flash", "gemma-4-free"],
   },
+  promax: {
+    text: ["muse-spark", "mistral-small", "deepseek-flash", "qwen-flash", "gemma-4-free"],
+    vision: ["muse-spark", "mistral-small", "deepseek-flash", "qwen-flash", "gemma-4-free"],
+  },
 };
 
 export type TaskId = "mindmap" | "flashcards" | "transcribe" | "figure" | "summary" | "quiz" | "chat";

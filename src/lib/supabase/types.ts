@@ -1,3 +1,4 @@
+import type { PlanId } from "@/config/plans";
 import type { FolderColor, FolderIcon } from "@/config/styles";
 import type { QuizQuestion } from "@/core/ai/schemas";
 import type { Graph } from "@/core/graph";
@@ -12,7 +13,8 @@ type Table<Row, Required extends keyof Row = never> = {
 
 export type Profile = {
   id: string;
-  plan: "free" | "pro";
+  /** Legacy column: the active plan comes from subscriptions (see loadProfile). */
+  plan: PlanId;
   ai_data_sharing_consent_at: string | null;
   beta_terms_accepted_at: string | null;
   beta_terms_version: string | null;
@@ -170,6 +172,28 @@ export type AiJobRow = {
   updated_at: string;
 };
 
+export type AdminOverview = {
+  id: string;
+  email: string;
+  generations: number;
+  cost_usd: number;
+  subscriptions: SubscriptionRow[];
+};
+
+export type SubscriptionRow = {
+  id: string;
+  user_id: string;
+  product: string;
+  plan: "pro" | "promax";
+  starts_at: string;
+  ends_at: string | null;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+  revoked_at: string | null;
+  revoked_by: string | null;
+};
+
 export type QuotaCounterRow = { user_id: string; period: string; kind: string; count: number };
 
 export type Database = {
@@ -190,6 +214,8 @@ export type Database = {
       chat_messages: Table<ChatMessageRow, "role" | "content">;
       feature_requests: Table<FeatureRequestRow, "kind" | "message">;
       ai_jobs: Table<AiJobRow, "user_id" | "type">;
+      subscriptions: Table<SubscriptionRow, "user_id" | "plan">;
+      admins: Table<{ user_id: string; created_at: string }, "user_id">;
       provider_usage: Table<{ provider: string; period: string; count: number }, "provider" | "period">;
     };
     Views: { [_ in never]: never };
@@ -199,6 +225,10 @@ export type Database = {
         Args: { p_provider: string; p_minute: string; p_minute_limit: number; p_day: string; p_day_limit?: number | null };
         Returns: string;
       };
+      is_admin: { Args: Record<string, never>; Returns: boolean };
+      admin_user_overview: { Args: { p_email: string; p_month: string }; Returns: AdminOverview | null };
+      admin_grant_plan: { Args: { p_user: string; p_plan: string; p_ends_at: string | null; p_note: string }; Returns: string };
+      admin_revoke_subscription: { Args: { p_id: string }; Returns: undefined };
       consume_quota: {
         Args: { p_user: string; p_kind: string; p_period: string; p_amount?: number; p_limit?: number | null };
         Returns: boolean;

@@ -1,4 +1,6 @@
-export type PlanId = "free" | "pro";
+export type PlanId = "free" | "pro" | "promax";
+
+export type Feature = "podcast";
 
 export type Plan = {
   generationsPerMonth: number;
@@ -12,9 +14,25 @@ export type Plan = {
   quizzesPerWeek: number;
   chatQuestionsPerMonth: number;
   audio: boolean;
+  features: Feature[];
 };
 
 const MB = 1024 * 1024;
+
+const pro: Plan = {
+  generationsPerMonth: 150,
+  inputTokensPerMonth: 5_000_000,
+  maxPdfPages: 200,
+  maxFigures: 200,
+  maxDocuments: Infinity,
+  maxSubjects: Infinity,
+  maxUploadBytes: 25 * MB,
+  export: { png: true, pdf: true, watermark: false },
+  quizzesPerWeek: Infinity,
+  chatQuestionsPerMonth: 300,
+  audio: true,
+  features: [],
+};
 
 export const PLANS: Record<PlanId, Plan> = {
   free: {
@@ -29,21 +47,15 @@ export const PLANS: Record<PlanId, Plan> = {
     quizzesPerWeek: 1,
     chatQuestionsPerMonth: 20,
     audio: false,
+    features: [],
   },
-  pro: {
-    generationsPerMonth: 150,
-    inputTokensPerMonth: 5_000_000,
-    maxPdfPages: 200,
-    maxFigures: 200,
-    maxDocuments: Infinity,
-    maxSubjects: Infinity,
-    maxUploadBytes: 25 * MB,
-    export: { png: true, pdf: true, watermark: false },
-    quizzesPerWeek: Infinity,
-    chatQuestionsPerMonth: 300,
-    audio: true,
-  },
+  pro,
+  promax: { ...pro, features: [] },
 };
+
+export const PLAN_ORDER: PlanId[] = ["free", "pro", "promax"];
+
+export const PLAN_LABELS: Record<PlanId, string> = { free: "Free", pro: "Pro", promax: "Pro Max" };
 
 export const RATE_LIMITS = {
   aiRequestsPerMinute: 5,

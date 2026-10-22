@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PLANS } from "@/config/plans";
+import { PLAN_LABELS, PLANS } from "@/config/plans";
 import { longDate } from "@/core/dates";
 import { childrenOf } from "@/core/folders";
 import { FolderGrid } from "@/components/FolderControls";
@@ -126,7 +126,7 @@ export default async function LibraryPage({ searchParams }: PageProps<"/library"
       )}
 
       <p className="num border-t border-rule pt-4 text-[13px] text-muted">
-        Piano {profile.plan === "pro" ? "Pro" : "Free"} · {study.used} di {fmt(plan.generationsPerMonth)} generazioni AI
+        Piano {PLAN_LABELS[profile.plan]} · {study.used} di {fmt(plan.generationsPerMonth)} generazioni AI
         questo mese · {docList.length} di {fmt(plan.maxDocuments)} documenti · {subjects.length} di {fmt(plan.maxSubjects)}{" "}
         materie ·{" "}
         <Link href="/settings#piano" className="font-bold text-accent hover:underline">

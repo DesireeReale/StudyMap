@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { openLabel, phaseText, progressRatio, type JobView } from "@/core/jobs";
 import { announceJobs, JOBS_CHANGED, markSeen, POLL_MS } from "@/lib/job-client";
 import { Icon } from "./icons";
+import { UpgradeContact } from "./UpgradeContact";
 
 const active = (j: JobView) => j.status === "queued" || j.status === "running";
 
@@ -133,9 +134,7 @@ export function JobTray() {
                       Carica di nuovo
                     </Link>
                   ) : j.upgrade ? (
-                    <Link href="/settings#piano" onClick={() => dismiss(j.id)} className="btn-secondary self-start">
-                      Scopri il Pro
-                    </Link>
+                    <UpgradeContact />
                   ) : (
                     j.retryable &&
                     (j.document_id || j.note_id) && (

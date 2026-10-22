@@ -15,6 +15,9 @@ Leggi questo file, `CLAUDE.md` (regole) e `OBIETTIVI.md` (cosa resta). Il codice
 - Scansioni (22 ottobre): prompt `transcribe.v2` con `[?parola]` e `[illeggibile]`; dopo la lettura di scansioni e foto il documento ha `review_pages` e `review_create` e lo studente passa da `/documents/[id]/controlla` (`TextReview.tsx`): i job scelti partono solo alla conferma (`POST /api/documents/[id]/review`). I PDF solo scansionati si ricomprimono nel browser (`src/lib/pdf-browser.ts`), con intervallo di pagine. Mappe per capitolo: `src/core/chapters.ts`, opzione `chapters` di `/api/generate`.
 - Documenti: `docs/ricerca-concorrenti.md`, `docs/confronto-ux-algor.md` (27 interventi UX), `docs/direzione-grafica.md`.
 
+- Piani (22 ottobre): pagamenti incassati a mano (bonifico, PayPal); il Pro si sblocca da `/admin`, che scrive in `subscriptions` (migrazione `20261022300000_subscriptions.sql`). Piano attivo = riga non revocata e non scaduta più alta, altrimenti Free (`activeSubscription` in `entitlements.ts`, letto da `loadProfile` in `lib/supabase/server.ts`). `profiles.plan` è una colonna storica: non si legge più. Nessun prezzo nell'app: il testo è "Per passare a Pro scrivi a aistudymap@proton.me" (`UpgradeContact.tsx`).
+- Admin: l'account deve stare nella tabella `admins`. Dopo la registrazione, nel SQL editor di Supabase: `insert into public.admins (user_id) select id from auth.users where email = 'aistudymap@proton.me';`
+
 ## Decisioni prese
 - Supabase solo cloud, niente Docker o database locali.
 - Si fattura prima con la web app (PWA) + Stripe; Tauri e le app mobile dopo. Tauri non riduce il carico sul server.
@@ -26,7 +29,7 @@ Leggi questo file, `CLAUDE.md` (regole) e `OBIETTIVI.md` (cosa resta). Il codice
 - VoiceStudio e OpenLess scartati: sono app desktop con licenza AGPL. scroll-craft scartato: richiede strumenti installati sul PC. humanizer: usare le sue regole nei prompt.
 
 ## Prossimi passi consigliati
-1. Dopo la registrazione di aistudymap@proton.me, passare il suo profilo a `plan = 'pro'` su Supabase di sviluppo.
+1. Dopo la registrazione di aistudymap@proton.me, renderlo admin (riga in `admins`, vedi sopra).
 2. Controllare dopo qualche giorno di beta il costo reale in `ai_usage` (somma di `cost_usd`) e il saldo su OpenRouter.
 3. Seguire la beta: leggere `feature_requests` e `ai_usage` su Supabase di sviluppo, controllare tempi ed errori dei modelli.
 3. Regole di humanizer nei prompt `prompts/*.md`.

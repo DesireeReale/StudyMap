@@ -32,3 +32,7 @@ export function todayIso(d = new Date()): string {
 export function daysUntil(isoDate: string, d = new Date()): number {
   return Math.round((Date.parse(isoDate) - Date.parse(todayIso(d))) / 86_400_000);
 }
+
+export function longDay(isoDate: string): string {
+  return new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(isoDate));
+}

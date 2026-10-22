@@ -1,5 +1,14 @@
 import { CHAINS, MODELS, type ModelConfig } from "@/config/ai";
-import { PLANS, type PlanId } from "@/config/plans";
+import { PLAN_ORDER, PLANS, type PlanId } from "@/config/plans";
+
+export type SubscriptionLike = { plan: string; starts_at: string; ends_at: string | null; revoked_at: string | null };
+
+export function activeSubscription<T extends SubscriptionLike>(subs: T[], today: string): T | null {
+  const rank = (s: T) => PLAN_ORDER.indexOf(s.plan as PlanId);
+  const end = (s: T) => s.ends_at ?? "9999-12-31";
+  const active = subs.filter((s) => rank(s) > 0 && !s.revoked_at && s.starts_at <= today && end(s) >= today);
+  return active.sort((a, b) => rank(b) - rank(a) || end(b).localeCompare(end(a)))[0] ?? null;
+}
 
 export type Denied = { ok: false; reason: string; upgrade: boolean; temporary?: boolean };
 export type Decision = { ok: true } | Denied;

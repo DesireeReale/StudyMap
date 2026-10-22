@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CHAINS, MODELS } from "@/config/ai";
 import { PLANS } from "@/config/plans";
 import {
+  activeSubscription,
   canCreateSubject,
   canSaveDocument,
   checkPdfPages,
@@ -86,5 +87,34 @@ describe("weekPeriod", () => {
     expect(weekPeriod(new Date("2026-01-01T12:00:00Z"))).toBe("2026-W01");
     expect(weekPeriod(new Date("2026-10-20T12:00:00Z"))).toBe("2026-W43");
     expect(weekPeriod(new Date("2027-01-01T12:00:00Z"))).toBe("2026-W53");
+  });
+});
+
+describe("activeSubscription", () => {
+  const sub = (plan: string, ends_at: string | null, extra: { starts_at?: string; revoked_at?: string } = {}) => ({
+    plan,
+    ends_at,
+    starts_at: extra.starts_at ?? "2026-10-01",
+    revoked_at: extra.revoked_at ?? null,
+  });
+  const today = "2026-10-22";
+
+  it("falls back to none without rows", () => {
+    expect(activeSubscription([], today)).toBeNull();
+  });
+
+  it("keeps the plan through its last day and drops it after", () => {
+    expect(activeSubscription([sub("pro", today)], today)?.plan).toBe("pro");
+    expect(activeSubscription([sub("pro", "2026-10-21")], today)).toBeNull();
+  });
+
+  it("ignores revoked and future rows", () => {
+    expect(activeSubscription([sub("pro", null, { revoked_at: "2026-10-20T10:00:00Z" })], today)).toBeNull();
+    expect(activeSubscription([sub("pro", null, { starts_at: "2026-10-23" })], today)).toBeNull();
+  });
+
+  it("picks the highest plan, then the latest end", () => {
+    expect(activeSubscription([sub("pro", null), sub("promax", "2026-11-01")], today)?.plan).toBe("promax");
+    expect(activeSubscription([sub("pro", "2026-11-01"), sub("pro", null)], today)?.ends_at).toBeNull();
   });
 });

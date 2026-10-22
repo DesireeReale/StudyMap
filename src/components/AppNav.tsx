@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PLAN_LABELS, type PlanId } from "@/config/plans";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Preferences } from "@/core/preferences";
@@ -93,7 +94,7 @@ function Links({ pathname, due }: { pathname: string; due: number }) {
   );
 }
 
-function Account({ email, plan, prefs }: { email: string; plan: "free" | "pro"; prefs: Preferences }) {
+function Account({ email, plan, prefs }: { email: string; plan: PlanId; prefs: Preferences }) {
   const router = useRouter();
   return (
     <div className="flex flex-col gap-2 border-t border-border pt-4">
@@ -104,7 +105,7 @@ function Account({ email, plan, prefs }: { email: string; plan: "free" | "pro"; 
       </p>
       <StyleToggle initial={prefs} />
       <p className="px-3 text-sm text-muted">
-        Piano <span className="font-bold text-ink">{plan === "pro" ? "Pro" : "Free"}</span>
+        Piano <span className="font-bold text-ink">{PLAN_LABELS[plan]}</span>
       </p>
       <p className="truncate px-3 text-sm text-muted" title={email}>
         {email}
@@ -132,7 +133,7 @@ export function AppNav({
   due,
 }: {
   email: string;
-  plan: "free" | "pro";
+  plan: PlanId;
   prefs: Preferences;
   due: number;
 }) {
