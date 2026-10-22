@@ -72,7 +72,7 @@ export function InlineRename({
           }}
           maxLength={table === "folders" ? 80 : 200}
           autoFocus
-          className="-mx-2 w-[calc(100%+16px)] min-w-0 rounded-lg border-2 border-accent bg-raised px-2 font-[inherit] tracking-[inherit] text-ink outline-none"
+          className="max-w-full min-w-[4ch] border-0 border-b-2 border-accent bg-transparent p-0 font-[inherit] tracking-[inherit] text-ink outline-none! [field-sizing:content]"
         />
       ) : (
         <button
