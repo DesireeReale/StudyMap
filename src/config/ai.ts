@@ -201,12 +201,17 @@ export type TaskId = "mindmap" | "flashcards" | "transcribe" | "figure" | "summa
 
 export type Reasoning = "none" | "low" | "medium";
 
-export const TASKS: Record<TaskId, { promptVersion: string; maxTokens: number; timeoutMs: number; reasoning: Reasoning }> = {
+// `chunkInputTokens` caps the input of one call when the answer grows with the input (a summary of a long document
+// would otherwise be cut at max_tokens).
+export const TASKS: Record<
+  TaskId,
+  { promptVersion: string; maxTokens: number; timeoutMs: number; reasoning: Reasoning; chunkInputTokens?: number }
+> = {
   mindmap: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000, reasoning: "none" },
   flashcards: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000, reasoning: "none" },
   transcribe: { promptVersion: "v2", maxTokens: 3000, timeoutMs: 30_000, reasoning: "none" },
   figure: { promptVersion: "v1", maxTokens: 2000, timeoutMs: 30_000, reasoning: "none" },
-  summary: { promptVersion: "v2", maxTokens: 3000, timeoutMs: 40_000, reasoning: "none" },
+  summary: { promptVersion: "v3", maxTokens: 6000, timeoutMs: 90_000, reasoning: "none", chunkInputTokens: 6_000 },
   quiz: { promptVersion: "v3", maxTokens: 4000, timeoutMs: 60_000, reasoning: "low" },
   chat: { promptVersion: "v1", maxTokens: 2000, timeoutMs: 30_000, reasoning: "none" },
 };

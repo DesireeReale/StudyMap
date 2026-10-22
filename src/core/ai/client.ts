@@ -35,6 +35,7 @@ export type ChatResponse = {
   reasoningTokens?: number;
   costUsd?: number;
   model?: string;
+  truncated?: boolean;
 };
 
 export type ChatFn = (req: ChatRequest) => Promise<ChatResponse>;
@@ -76,11 +77,17 @@ export const NO_CREDIT_ERROR = `I modelli AI dell'app sono momentaneamente senza
 export const DAILY_LIMIT_ERROR =
   "Per oggi i modelli AI gratuiti hanno raggiunto il limite di richieste dell'app. Riprova domani.";
 
+export const TRUNCATED_ERROR = `La risposta dell'AI era troppo lunga ed è stata interrotta. Riprova; se succede ancora scrivi a ${SUPPORT_EMAIL}.`;
+export const TIMEOUT_ERROR = "L'AI ha impiegato troppo tempo a rispondere. Riprova tra poco.";
+export const INVALID_ERROR = "L'AI ha risposto in un formato non valido. Riprova.";
+export const FAILED_ERROR = "Il servizio AI non ha risposto correttamente. Riprova tra poco.";
+
 export const estimateTokens = (text: string) => Math.ceil(text.length / 4);
 
 export function inputBudget(chain: ModelConfig[], task: TaskId): number {
   const context = chain[0]?.contextTokens ?? 0;
-  return Math.max(CHUNK_INPUT_TOKENS, Math.floor(context * CONTEXT_USE) - TASKS[task].maxTokens);
+  const budget = Math.max(CHUNK_INPUT_TOKENS, Math.floor(context * CONTEXT_USE) - TASKS[task].maxTokens);
+  return Math.min(budget, TASKS[task].chunkInputTokens ?? budget);
 }
 
 export function effortFor(model: ModelConfig, task: TaskId): Reasoning | undefined {
@@ -107,7 +114,11 @@ export class AiUnavailableError extends Error {
   }
 }
 
-class InvalidOutputError extends Error {}
+class InvalidOutputError extends Error {
+  constructor(readonly truncated = false) {
+    super(truncated ? "output truncated at max_tokens" : "invalid output");
+  }
+}
 
 export const openaiChat: ChatFn = async ({ task, model, messages, maxTokens, jsonSchema, fallbacks, timeoutMs }) => {
   const provider = PROVIDERS[model.provider];
@@ -142,6 +153,7 @@ export const openaiChat: ChatFn = async ({ task, model, messages, maxTokens, jso
       reasoningTokens: res.usage?.completion_tokens_details?.reasoning_tokens ?? 0,
       costUsd: (res.usage as { cost?: number } | undefined)?.cost,
       model: res.model,
+      truncated: res.choices[0]?.finish_reason === "length",
     };
   } catch (e) {
     if (e instanceof OpenAI.APIConnectionTimeoutError) throw new ProviderError(e.message, undefined, true);
@@ -279,6 +291,7 @@ export async function complete<T>(
           } catch (e) {
             error = e instanceof Error ? e.message : "JSON non valido";
           }
+          if (data === undefined && res.truncated) error = `truncated at max_tokens (${res.outputTokens} output tokens): ${error}`;
 
           await ctx.record({
             task: opts.task,
@@ -298,6 +311,7 @@ export async function complete<T>(
           });
 
           if (data !== undefined) return { data, inputTokens: totalInput };
+          if (res.truncated) throw new InvalidOutputError(true);
 
           messages.push(
             { role: "assistant", content: res.content },
@@ -325,5 +339,22 @@ export async function complete<T>(
     console.error("AI providers out of credit");
     throw new AiUnavailableError(NO_CREDIT_ERROR);
   }
+  const reason = failureMessage(failures);
+  if (reason) {
+    console.error(
+      `AI ${opts.task} failed on every model:`,
+      failures.map((e) => (e instanceof ProviderError ? `${e.status ?? (e.timeout ? "timeout" : "error")} ${e.message}` : (e as Error).message)),
+    );
+    throw new AiUnavailableError(reason);
+  }
   throw new AiUnavailableError();
+}
+
+function failureMessage(failures: unknown[]): string | null {
+  const real = failures.filter((e) => !(e instanceof ProviderError && e.status === 429));
+  if (!real.length) return null;
+  if (real.some((e) => e instanceof InvalidOutputError && e.truncated)) return TRUNCATED_ERROR;
+  if (real.some((e) => e instanceof ProviderError && e.timeout)) return TIMEOUT_ERROR;
+  if (real.some((e) => e instanceof InvalidOutputError)) return INVALID_ERROR;
+  return FAILED_ERROR;
 }

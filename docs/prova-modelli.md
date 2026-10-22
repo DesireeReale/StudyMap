@@ -109,3 +109,8 @@ Una chiamata a DeepSeek V4.1 Flash. Pagina 1 del quaderno ricompressa in JPEG qu
 
 - Nella mappa unica di ieri lo stesso argomento aveva 15 concetti, e copriva anche le pagine 30–36. Con 6 capitoli la dispensa intera arriverebbe a circa 250 concetti, per circa 0,011 $ (stima).
 - Costo ancora circa 3 volte il listino (0,00057 $ a listino), come nella trascrizione: NON VERIFICATO il motivo.
+
+### Riassunto che falliva con "servizio occupato" (22 ottobre)
+- **Causa (da `ai_usage` di sviluppo):** riassunto di Computer forensics (20 pagine nel Free, 14.445 token in ingresso) con DeepSeek: risposta troncata a `max_tokens` 3000 (`output_tokens` = 3000, JSON non chiuso), anche nel tentativo di correzione; poi Gemma gratuito ha risposto 429 e l'errore finale era "occupato".
+- **Prova della correzione (una chiamata):** con pezzi da 6.000 token e `max_tokens` 4000 la risposta è stata di nuovo troncata (6.574 in, 4.000 out, 0,0036 $, 13,9 s): il prompt v2 permetteva fino a 12 sezioni da 8 punti e DeepSeek li riempie tutti.
+- **Correzione finale (NON VERIFICATA con una chiamata reale):** prompt summary.v3 con al massimo 8 sezioni, 5 punti e 25 parole per punto; pezzi da 6.000 token, `max_tokens` 6000, timeout 90 s. Una risposta troncata non viene più "corretta" (inutile) e l'errore dice che era troppo lunga.

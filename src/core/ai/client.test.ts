@@ -4,8 +4,11 @@ import { MODELS, poolOf, RETRY_DELAYS_MS, TASKS } from "@/config/ai";
 import {
   AiUnavailableError,
   DAILY_LIMIT_ERROR,
+  INVALID_ERROR,
   NO_CREDIT_ERROR,
   ProviderError,
+  TIMEOUT_ERROR,
+  TRUNCATED_ERROR,
   complete,
   costUsd,
   effortFor,
@@ -134,6 +137,28 @@ describe("complete", () => {
     await expect(run(c)).rejects.toBeInstanceOf(AiUnavailableError);
   });
 
+  it("does not ask to repair a truncated answer and says why it failed", async () => {
+    const { c, usage } = ctx(async ({ model }) =>
+      model.id === "model-a" ? { ...ok('{"answer":"tagl'), truncated: true } : Promise.reject(new ProviderError("rate limited", 429)),
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(run(c)).rejects.toThrow(TRUNCATED_ERROR);
+    expect(usage.filter((u) => u.model === "model-a")).toHaveLength(1);
+    expect(usage[0]!.error).toMatch(/^truncated at max_tokens/);
+  });
+
+  it.each([
+    [new ProviderError("timeout", undefined, true), TIMEOUT_ERROR],
+    ["invalid", INVALID_ERROR],
+  ])("names timeouts and invalid answers instead of calling the service busy", async (failure, message) => {
+    const { c } = ctx(async () => {
+      if (failure instanceof Error) throw failure;
+      return ok('{"wrong":1}');
+    });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(run(c)).rejects.toThrow(message);
+  });
+
   it("explains when no model is configured", async () => {
     const { c } = ctx(async () => ok('{"answer":"x"}'));
     c.chain = [];
@@ -207,6 +232,7 @@ describe("provider limits", () => {
   it("sends the whole document at once when it fits the first model", () => {
     expect(inputBudget([{ ...modelC, contextTokens: 262_144 }], "mindmap")).toBe(Math.floor(262_144 * 0.8) - TASKS.mindmap.maxTokens);
     expect(inputBudget([{ ...modelC, contextTokens: 8_000 }], "mindmap")).toBe(12_000);
+    expect(inputBudget([{ ...modelC, contextTokens: 1_000_000 }], "summary")).toBe(TASKS.summary.chunkInputTokens);
   });
 });
 

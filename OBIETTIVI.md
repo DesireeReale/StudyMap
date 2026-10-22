@@ -32,7 +32,12 @@
 - [ ] Simulazione d'esame a tempo
 - [x] Ripetizione dilazionata delle flashcard (SM-2 o FSRS) — fatta con SM-2; FSRS più avanti
 - [x] Chat con il documento, con riferimenti alle pagine
-- [ ] Abbonamento Stripe e pagina di gestione del piano
+- [ ] Abbonamento Stripe e pagina di gestione del piano (rimandato: i pagamenti li incassa l'utente a mano)
+- [ ] Piani Free, Pro e Pro Max in plans.ts, con l'elenco delle funzioni abilitate per piano (per esempio il podcast solo Pro Max)
+- [ ] Tabella `subscriptions` (utente, prodotto `studymap`, piano, scadenza `pro_until`, permessi extra), separata dal profilo e pronta per più app (oneiro); entitlements legge da lì
+- [ ] Ritorno automatico a Free alla scadenza (job giornaliero gratuito su Supabase)
+- [ ] Pagina di amministrazione solo per la proprietaria: cerca utente, piano, scadenza, permessi extra
+- [ ] Keycloak: solo in futuro, come fornitore di login davanti a Supabase quando ci saranno più app (l'email resta l'identità per collegare gli account)
 - [ ] Disdetta in un clic e fatture automatiche (nuovo)
 - [x] Riassunto del documento (nuovo)
 - [x] Modifica a mano delle flashcard (nuovo)
