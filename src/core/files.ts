@@ -1,3 +1,5 @@
+export const MIN_PAGE_CHARS = 50;
+
 export type FileKind = "pdf" | "png" | "jpeg" | "webp" | "zip" | "legacy-office";
 
 export const MIME: Record<FileKind, string> = {

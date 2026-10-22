@@ -25,7 +25,7 @@ export default async function UploadPage({ searchParams }: PageProps<"/upload">)
       </header>
       <div className="grid gap-4 lg:grid-cols-12">
         <div className="lg:col-span-8">
-          <UploadForm userId={user.id} maxUploadBytes={plan.maxUploadBytes} folders={options} initialFolder={initialFolder} initialMode={mode === "text" ? "text" : "file"} />
+          <UploadForm userId={user.id} maxUploadBytes={plan.maxUploadBytes} maxPdfPages={plan.maxPdfPages} folders={options} initialFolder={initialFolder} initialMode={mode === "text" ? "text" : "file"} />
         </div>
         <aside className="flex flex-col gap-4 lg:col-span-4">
           <div role="note" className="rounded-row border border-notice-border bg-notice p-4 text-sm text-notice-ink">

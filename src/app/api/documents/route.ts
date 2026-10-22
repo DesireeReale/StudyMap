@@ -28,6 +28,8 @@ const Body = z.discriminatedUnion("kind", [
     storagePath: z.string().min(1),
     folderId,
     figures: z.boolean().default(false),
+    pageFrom: z.number().int().min(1).optional(),
+    pageTo: z.number().int().min(1).optional(),
     create,
   }),
 ]);
@@ -118,7 +120,15 @@ export async function POST(request: Request) {
     const transcribed: number[] = [];
     let pages: string[];
     try {
-      if (kind === "pdf") pages = await ingestPdf(bytes, { maxPages: plan.maxPdfPages, transcribe, figures, onPage, onTranscribed: (i) => transcribed.push(i) });
+      if (kind === "pdf")
+        pages = await ingestPdf(bytes, {
+          maxPages: plan.maxPdfPages,
+          transcribe,
+          figures,
+          onPage,
+          onTranscribed: (i) => transcribed.push(i),
+          range: body.pageFrom && body.pageTo ? { from: body.pageFrom, to: body.pageTo } : undefined,
+        });
       else if (kind === "docx") pages = await ingestOffice(readDocx(zip!), { maxPages: plan.maxPdfPages, figures, onPage });
       else if (kind === "pptx") pages = await ingestOffice(readPptx(zip!), { maxPages: plan.maxPdfPages, figures, onPage });
       else {

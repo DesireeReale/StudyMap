@@ -24,6 +24,19 @@ describe("ingestPdf", () => {
     expect(transcribed).toEqual([1]);
   });
 
+  it("reads only the chosen page range and checks the limit on it", async () => {
+    const doc = new jsPDF();
+    ["Prima pagina con abbastanza testo per non essere trascritta.", "Seconda pagina con abbastanza testo per non essere trascritta.", "Terza pagina con abbastanza testo per non essere trascritta."].forEach((t, i) => {
+      if (i) doc.addPage();
+      doc.text(t, 10, 10);
+    });
+    const bytes = new Uint8Array(doc.output("arraybuffer"));
+    const pages = await ingestPdf(bytes.slice(), { maxPages: 2, transcribe: vi.fn(), range: { from: 2, to: 3 } });
+    expect(pages).toHaveLength(2);
+    expect(pages[0]).toContain("Seconda");
+    await expect(ingestPdf(bytes.slice(), { maxPages: 2, transcribe: vi.fn() })).rejects.toBeInstanceOf(PageLimitError);
+  });
+
   it("counts only the pages that need an image pass", async () => {
     const onPage = vi.fn();
     await ingestPdf(samplePdf(), { maxPages: 5, transcribe: async () => "pagina scansionata", onPage });

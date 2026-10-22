@@ -1,7 +1,10 @@
 import { extractText, getDocumentProxy, renderPageAsImage } from "unpdf";
+import { MIN_PAGE_CHARS } from "./files";
 import { figureMarker, type SourcePage } from "./office";
 
-export const MIN_PAGE_CHARS = 50;
+export { MIN_PAGE_CHARS };
+
+export type PageRange = { from: number; to: number };
 
 export class PageLimitError extends Error {
   constructor(readonly pages: number) {
@@ -57,13 +60,22 @@ async function describeSafely(figures: Figures, dataUrl: string, context: string
 
 export async function ingestPdf(
   bytes: Uint8Array,
-  opts: { maxPages: number; transcribe: Transcribe; figures?: Figures; onPage?: OnPage; onTranscribed?: (index: number) => void },
+  opts: {
+    maxPages: number;
+    transcribe: Transcribe;
+    figures?: Figures;
+    onPage?: OnPage;
+    onTranscribed?: (index: number) => void;
+    range?: PageRange;
+  },
 ): Promise<string[]> {
   const pdf = await getDocumentProxy(new Uint8Array(bytes));
-  if (pdf.numPages > opts.maxPages) throw new PageLimitError(pdf.numPages);
-  const { text } = await extractText(pdf, { mergePages: false });
+  const from = Math.max(1, opts.range?.from ?? 1);
+  const to = Math.min(pdf.numPages, opts.range?.to ?? pdf.numPages);
+  if (to - from + 1 > opts.maxPages) throw new PageLimitError(to - from + 1);
+  const text = (await extractText(pdf, { mergePages: false })).text.slice(from - 1, to);
   const render = (page: number) =>
-    renderPageAsImage(pdf, page, { canvasImport: () => import("@napi-rs/canvas"), scale: 1.5, toDataURL: true });
+    renderPageAsImage(pdf, from - 1 + page, { canvasImport: () => import("@napi-rs/canvas"), scale: 1.5, toDataURL: true });
 
   let budget = opts.figures?.max ?? 0;
   const slow: boolean[] = [];

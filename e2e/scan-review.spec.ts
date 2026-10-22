@@ -37,6 +37,7 @@ test("the student checks the uncertain words of a scan before the generations st
 
   await page.goto("/upload");
   await page.getByTestId("file-input").setInputFiles(scannedPdf(2));
+  await expect(page.getByText(/Le pagine sono scansionate/)).toBeVisible();
   await page.locator("label", { hasText: /^✓?Riassunto$/ }).click();
   await page.getByRole("button", { name: "Carica" }).click();
   await expect(page).toHaveURL(/\/controlla$/, { timeout: 60_000 });
@@ -57,4 +58,30 @@ test("the student checks the uncertain words of a scan before the generations st
   const tray = page.getByRole("region", { name: "Lavori in corso" });
   await tray.getByRole("link", { name: "Apri il riassunto" }).click({ timeout: 60_000 });
   await expect(page).toHaveURL(/\/notes\//);
+});
+
+test("a scan longer than the plan allows is cut to the chosen pages and compressed", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByLabel("Password", { exact: true }).fill(user.password);
+  await page.getByRole("button", { name: "Accedi", exact: true }).click();
+  await expect(page).toHaveURL(/\/library/);
+
+  await page.goto("/upload");
+  await page.getByTestId("file-input").setInputFiles(scannedPdf(25));
+  await expect(page.getByLabel("Dalla pagina")).toHaveValue("1");
+  await expect(page.getByLabel("alla pagina")).toHaveValue("20");
+  await expect(page.getByText(/al massimo 20 pagine per file/)).toBeVisible();
+  await page.getByLabel("Dalla pagina").fill("24");
+  await page.getByLabel("alla pagina").fill("25");
+  const uploads: number[] = [];
+  page.on("request", (r) => {
+    if (r.method() === "PUT" && r.url().includes("/storage/")) uploads.push(r.postDataBuffer()?.length ?? 0);
+  });
+  await page.getByRole("button", { name: "Carica" }).click();
+  await expect(page).toHaveURL(/\/controlla$/, { timeout: 60_000 });
+  await expect(page.getByRole("heading", { name: "Pagina 2" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Pagina 3" })).toHaveCount(0);
+  expect(uploads.length).toBe(1);
+  expect(uploads[0]).toBeLessThan(300_000);
 });

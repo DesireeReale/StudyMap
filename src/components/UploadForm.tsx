@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { MAX_NOTE_CHARS } from "@/core/files";
 import { announceJobs, markSeen, uploadWithProgress, waitForJob } from "@/lib/job-client";
+import type { Pdf } from "@/lib/pdf-browser";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { Icon } from "./icons";
 import { UpgradeNotice } from "./UpgradeNotice";
@@ -28,6 +29,13 @@ function fileExtension(file: File): string | undefined {
 const MIME_OF = Object.fromEntries(Object.entries(ACCEPT).map(([mime, ext]) => [ext, mime]));
 
 type Problem = { message: string; upgrade: boolean };
+type PdfInfo = { pdf: Pdf; scanned: boolean[] };
+
+const readPdf = async (file: File): Promise<PdfInfo> => {
+  const { openPdf, scannedPages } = await import("@/lib/pdf-browser");
+  const pdf = await openPdf(await file.arrayBuffer());
+  return { pdf, scanned: await scannedPages(pdf) };
+};
 type Source = "document" | "photo" | "text";
 
 const SOURCES: { id: Source; title: string; text: string; icon: "file" | "upload" | "note" }[] = [
@@ -54,12 +62,14 @@ const CREATE = [
 export function UploadForm({
   userId,
   maxUploadBytes,
+  maxPdfPages,
   folders,
   initialFolder,
   initialMode = "file",
 }: {
   userId: string;
   maxUploadBytes: number;
+  maxPdfPages: number;
   folders: { id: string; name: string; depth: number }[];
   initialFolder?: string;
   initialMode?: "file" | "text";
@@ -73,6 +83,9 @@ export function UploadForm({
   const [figures, setFigures] = useState(false);
   const [uploaded, setUploaded] = useState<number | null>(null);
   const [reading, setReading] = useState(false);
+  const [pdfInfo, setPdfInfo] = useState<PdfInfo | null>(null);
+  const [range, setRange] = useState({ from: 1, to: 1 });
+  const [preparing, setPreparing] = useState<{ done: number; total: number } | null>(null);
   const alive = useRef(true);
   useEffect(() => {
     alive.current = true;
@@ -124,7 +137,24 @@ export function UploadForm({
         const message = LEGACY.test(file.name) ? "Questo è un vecchio file .doc o .ppt: aprilo e salvalo come .docx, .pptx oppure PDF." : UNSUPPORTED;
         return setProblem({ message, upgrade: false });
       }
-      if (file.size > maxUploadBytes) {
+      let upload: File = file;
+      let pageRange = {};
+      if (ext === "pdf") {
+        const info = pdfInfo ?? (await readPdf(file));
+        const count = info.scanned.length;
+        const { from, to } = pdfInfo ? range : { from: 1, to: Math.min(count, maxPdfPages) };
+        if (!(from >= 1 && to <= count && from <= to))
+          return setProblem({ message: `Scegli pagine tra 1 e ${count}, con la prima non dopo l'ultima.`, upgrade: false });
+        if (to - from + 1 > maxPdfPages)
+          return setProblem({ message: `Il tuo piano legge al massimo ${maxPdfPages} pagine per file: riduci l'intervallo.`, upgrade: true });
+        if (info.scanned.slice(from - 1, to).every(Boolean)) {
+          const { rebuildAsJpeg } = await import("@/lib/pdf-browser");
+          const blob = await rebuildAsJpeg(info.pdf, { from, to }, (done, total) => setPreparing({ done, total }));
+          setPreparing(null);
+          upload = new File([blob], file.name, { type: "application/pdf" });
+        } else if (from !== 1 || to !== count) pageRange = { pageFrom: from, pageTo: to };
+      }
+      if (upload.size > maxUploadBytes) {
         return setProblem({
           message: `Il file supera ${Math.round(maxUploadBytes / 1024 / 1024)} MB.`,
           upgrade: true,
@@ -135,13 +165,14 @@ export function UploadForm({
       setUploaded(0);
       const ok =
         !error &&
-        (await uploadWithProgress(signed.signedUrl, file, MIME_OF[ext]!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, setUploaded));
+        (await uploadWithProgress(signed.signedUrl, upload, MIME_OF[ext]!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, setUploaded));
       setUploaded(null);
       if (!ok) return setProblem({ message: "Caricamento non riuscito. Riprova.", upgrade: false });
-      await submit({ kind: "file", title: title || file.name.replace(/\.[^.]+$/, ""), storagePath, folderId, figures: ext !== "png" && ext !== "jpg" && ext !== "webp" && figures, create });
+      await submit({ kind: "file", title: title || file.name.replace(/\.[^.]+$/, ""), storagePath, folderId, figures: ext !== "png" && ext !== "jpg" && ext !== "webp" && figures, create, ...pageRange });
     } catch {
       setProblem({ message: "Errore di rete. Riprova.", upgrade: false });
     } finally {
+      setPreparing(null);
       setBusy(false);
     }
   }
@@ -227,6 +258,14 @@ export function UploadForm({
                 setFileName(file?.name);
                 setExt(chosen);
                 setFigures(chosen === "pptx" || chosen === "docx");
+                setPdfInfo(null);
+                if (file && chosen === "pdf")
+                  readPdf(file)
+                    .then((info) => {
+                      setPdfInfo(info);
+                      setRange({ from: 1, to: Math.min(info.scanned.length, maxPdfPages) });
+                    })
+                    .catch(() => setPdfInfo(null));
               }}
               aria-describedby="upload-file-help"
               className="absolute inset-0 size-full cursor-pointer opacity-0"
@@ -237,6 +276,43 @@ export function UploadForm({
             {mode === "photo" ? "PNG, JPEG o WebP" : "PDF, Word (.docx) o PowerPoint (.pptx)"}, fino a{" "}
             {Math.round(maxUploadBytes / 1024 / 1024)} MB.
           </p>
+          {ext === "pdf" && pdfInfo && (
+            <fieldset className="mt-2 flex flex-col gap-2 rounded-row border border-border bg-sheet p-3">
+              <legend className="sr-only">Pagine da leggere</legend>
+              <div className="flex flex-wrap items-center gap-2 text-[15px]">
+                <label htmlFor="upload-from">Dalla pagina</label>
+                <input
+                  id="upload-from"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={pdfInfo.scanned.length}
+                  value={range.from}
+                  onChange={(e) => setRange({ ...range, from: Number(e.currentTarget.value) })}
+                  aria-describedby="upload-range-help"
+                  className="field w-24"
+                />
+                <label htmlFor="upload-to">alla pagina</label>
+                <input
+                  id="upload-to"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={pdfInfo.scanned.length}
+                  value={range.to}
+                  onChange={(e) => setRange({ ...range, to: Number(e.currentTarget.value) })}
+                  aria-describedby="upload-range-help"
+                  className="field w-24"
+                />
+                <span className="num text-muted">di {pdfInfo.scanned.length}</span>
+              </div>
+              <p id="upload-range-help" className="text-[13px] text-muted">
+                {pdfInfo.scanned.length > maxPdfPages && `Il tuo piano legge al massimo ${maxPdfPages} pagine per file: scegli quali. `}
+                {pdfInfo.scanned.every(Boolean) &&
+                  "Le pagine sono scansionate: prima di caricarle le comprimo sul tuo dispositivo, così il file pesa meno. Dopo la lettura potrai controllare il testo."}
+              </p>
+            </fieldset>
+          )}
           {(ext === "pdf" || ext === "docx" || ext === "pptx") && (
             <label className="mt-2 flex cursor-pointer items-start gap-3 rounded-row border border-border bg-sheet p-3">
               <input
@@ -304,6 +380,23 @@ export function UploadForm({
 
       {problem && <UpgradeNotice message={problem.message} upgrade={problem.upgrade} />}
 
+      {preparing && (
+        <div className="flex flex-col gap-1.5">
+          <p className="num text-sm font-bold">
+            Preparo le pagine scansionate: {preparing.done} di {preparing.total}
+          </p>
+          <div
+            role="progressbar"
+            aria-label="Preparazione delle pagine scansionate"
+            aria-valuemin={0}
+            aria-valuemax={preparing.total}
+            aria-valuenow={preparing.done}
+            className="h-2 overflow-hidden rounded-full bg-rule"
+          >
+            <span className="block h-full rounded-full bg-accent" style={{ width: `${(preparing.done / preparing.total) * 100}%` }} />
+          </div>
+        </div>
+      )}
       {uploaded !== null && (
         <div className="flex flex-col gap-1.5">
           <p className="num text-sm font-bold">Caricamento del file: {Math.round(uploaded * 100)}%</p>
@@ -326,10 +419,10 @@ export function UploadForm({
       )}
 
       <button type="submit" className="btn-primary self-start" disabled={busy}>
-        {uploaded !== null ? "Caricamento…" : reading ? "Lettura in corso…" : busy ? "Elaborazione in corso…" : "Carica"}
+        {preparing ? "Preparazione…" : uploaded !== null ? "Caricamento…" : reading ? "Lettura in corso…" : busy ? "Elaborazione in corso…" : "Carica"}
       </button>
       <p aria-live="polite" className="sr-only">
-        {uploaded !== null ? "Caricamento del file in corso" : reading ? "File caricato. Lo sto leggendo." : ""}
+        {preparing ? "Preparo le pagine scansionate" : uploaded !== null ? "Caricamento del file in corso" : reading ? "File caricato. Lo sto leggendo." : ""}
       </p>
     </form>
   );
