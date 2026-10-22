@@ -14,6 +14,7 @@ import { Icon } from "@/components/icons";
 import { MapThumb } from "@/components/StudyMarks";
 import { SummaryView } from "@/components/SummaryView";
 import { summaryPages } from "@/core/outline";
+import { detectChapters } from "@/core/chapters";
 import { pageCount } from "@/core/files";
 import { requireUser } from "@/lib/supabase/server";
 import { folderTrail, loadFolders, pageTitle } from "@/lib/workspace";
@@ -62,7 +63,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
             {shortDate(doc.created_at)}
           </p>
         </div>
-        <GenerateButtons source={{ documentId: doc.id }} />
+        <GenerateButtons source={{ documentId: doc.id }} chapters={detectChapters(doc.pages).length} />
       </header>
 
       {doc.review_pages && (

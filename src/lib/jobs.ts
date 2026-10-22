@@ -1,7 +1,9 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AiUnavailableError } from "@/core/ai/client";
-import { generateFlashcards, generateMindMap, generateQuiz, generateSummary, summaryToText } from "@/core/ai/tasks";
+import type { MindMap } from "@/core/ai/schemas";
+import { generateFlashcards, generateMindMap, generateQuiz, generateSummary, overviewMindMap, summaryToText } from "@/core/ai/tasks";
+import { detectChapters } from "@/core/chapters";
 import { mindMapToGraph } from "@/core/graph";
 import { isStale, JOB_STALE_ERROR, type JobPhase, type JobView, type Progress } from "@/core/jobs";
 import type { AiJobRow, Database, Profile } from "@/lib/supabase/types";
@@ -36,11 +38,51 @@ function reporter(jobId: string): Progress {
 
 export type Work = (progress: Progress, onWait: (waiting: boolean) => void) => Promise<string>;
 
-export function generation(supabase: SupabaseClient<Database>, profile: Profile, type: GenerationType, doc: Source): Work {
+export type GenerationOptions = { chapters?: boolean };
+
+export function generation(
+  supabase: SupabaseClient<Database>,
+  profile: Profile,
+  type: GenerationType,
+  doc: Source,
+  options: GenerationOptions = {},
+): Work {
   return async (progress, onWait) => {
     const ctx = { ...aiContextFor(profile), onWait };
     const input = { title: doc.title, pages: doc.pages };
     const onPart = (done: number, total: number) => progress("generate", done, total);
+    const chapters = type === "mindmap" && options.chapters ? detectChapters(doc.pages) : [];
+
+    if (chapters.length) {
+      const made: { title: string; map: MindMap }[] = [];
+      const rows = [];
+      for (const [i, chapter] of chapters.entries()) {
+        progress("generate", i, chapters.length);
+        const map = await generateMindMap(ctx, { title: chapter.title, pages: doc.pages.slice(chapter.from, chapter.to + 1) });
+        made.push({ title: chapter.title, map });
+        rows.push({
+          title: `${doc.title} · ${i + 1}. ${chapter.title}`.slice(0, 200),
+          document_id: doc.id,
+          folder_id: doc.folder_id,
+          graph: mindMapToGraph(map),
+        });
+      }
+      progress("merge");
+      const { error } = await supabase.from("maps").insert(rows);
+      if (error) throw error;
+      const { data, error: overviewError } = await supabase
+        .from("maps")
+        .insert({
+          title: `${doc.title} · Mappa generale`.slice(0, 200),
+          document_id: doc.id,
+          folder_id: doc.folder_id,
+          graph: mindMapToGraph(overviewMindMap(doc.title, made)),
+        })
+        .select("id")
+        .single();
+      if (overviewError) throw overviewError;
+      return `/maps/${data.id}`;
+    }
 
     if (type === "mindmap") {
       const map = await generateMindMap(ctx, input, onPart);

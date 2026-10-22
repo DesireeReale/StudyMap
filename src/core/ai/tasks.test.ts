@@ -13,6 +13,7 @@ import {
   generateQuiz,
   generateSummary,
   mergeMindMaps,
+  overviewMindMap,
   normalizeMindMap,
   summaryToText,
 } from "./tasks";
@@ -52,6 +53,24 @@ describe("normalizeMindMap", () => {
     const roots = out.nodes.filter((n) => n.parentId === null);
     expect(roots).toEqual([{ id: "root", label: "Titolo", parentId: null, relation: null }]);
     expect(out.nodes).toHaveLength(5);
+  });
+});
+
+describe("overviewMindMap", () => {
+  it("links every chapter to the top concepts of its map", () => {
+    const chapter: MindMap = {
+      nodes: [
+        { id: "r", label: "Cuore", parentId: null, relation: null },
+        { id: "a", label: "Atri", parentId: "r", relation: "comprende" },
+        { id: "b", label: "Valvole", parentId: "a", relation: null },
+      ],
+    };
+    const map = overviewMindMap("Fisiologia", [{ title: "Il cuore", map: chapter }]);
+    expect(map.nodes.map((n) => [n.label, n.parentId])).toEqual([
+      ["Fisiologia", null],
+      ["1. Il cuore", "root"],
+      ["Atri", "ch0"],
+    ]);
   });
 });
 

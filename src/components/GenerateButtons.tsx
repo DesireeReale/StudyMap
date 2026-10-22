@@ -14,9 +14,16 @@ const PROGRESS: Record<Kind, string> = {
   quiz: "Sto preparando il quiz…",
 };
 
-export function GenerateButtons({ source }: { source: { documentId: string } | { noteId: string } }) {
+export function GenerateButtons({
+  source,
+  chapters = 0,
+}: {
+  source: { documentId: string } | { noteId: string };
+  chapters?: number;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState<Kind | null>(null);
+  const [perChapter, setPerChapter] = useState(false);
   const [problem, setProblem] = useState<{ message: string; upgrade: boolean } | null>(null);
   const alive = useRef(true);
   useEffect(() => {
@@ -33,7 +40,7 @@ export function GenerateButtons({ source }: { source: { documentId: string } | {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...source, type }),
+        body: JSON.stringify({ ...source, type, ...(type === "mindmap" && perChapter ? { chapters: true } : {}) }),
       });
       const json = await res.json();
       if (!res.ok) return setProblem({ message: json.error, upgrade: json.upgrade });
@@ -73,6 +80,19 @@ export function GenerateButtons({ source }: { source: { documentId: string } | {
           {busy === "mindmap" ? PROGRESS.mindmap : "Genera mappa concettuale"}
         </button>
       </div>
+      {chapters > 1 && (
+        <fieldset className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[15px] sm:justify-end" disabled={!!busy}>
+          <legend className="sr-only">Quante mappe creare</legend>
+          <label className="flex min-h-10 cursor-pointer items-center gap-2">
+            <input type="radio" name="map-count" checked={!perChapter} onChange={() => setPerChapter(false)} className="size-5 accent-[var(--accent)]" />
+            Una mappa
+          </label>
+          <label className="flex min-h-10 cursor-pointer items-center gap-2">
+            <input type="radio" name="map-count" checked={perChapter} onChange={() => setPerChapter(true)} className="size-5 accent-[var(--accent)]" />
+            Una per capitolo ({chapters}) e una generale
+          </label>
+        </fieldset>
+      )}
       <p aria-live="polite" className="text-sm text-muted empty:hidden">
         {busy ? `${PROGRESS[busy]} Con i documenti lunghi può servire qualche minuto. Se cambi pagina il lavoro continua e il risultato compare nella cartella della materia.` : ""}
       </p>

@@ -100,6 +100,20 @@ export function mergeMindMaps(title: string, parts: MindMap[]): MindMap {
   return { nodes };
 }
 
+export function overviewMindMap(title: string, chapters: { title: string; map: MindMap }[]): MindMap {
+  const nodes: MindMapNode[] = [{ id: "root", label: title, parentId: null, relation: null }];
+  chapters.forEach((chapter, i) => {
+    const id = `ch${i}`;
+    nodes.push({ id, label: `${i + 1}. ${chapter.title}`.slice(0, 200), parentId: "root", relation: null });
+    const map = normalizeMindMap(chapter.map, chapter.title);
+    const root = map.nodes.find((n) => n.parentId === null)!;
+    for (const n of map.nodes.filter((n) => n.parentId === root.id)) {
+      nodes.push({ id: `${id}_${n.id}`, label: n.label, parentId: id, relation: n.relation });
+    }
+  });
+  return { nodes };
+}
+
 export async function generateFlashcards(
   ctx: AiContext,
   input: { title: string; pages: string[] },

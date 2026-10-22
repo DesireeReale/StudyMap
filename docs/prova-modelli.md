@@ -99,3 +99,13 @@ Una chiamata a DeepSeek V4.1 Flash. Pagina 1 del quaderno ricompressa in JPEG qu
 - **Tre cose sono cambiate insieme** (prompt v2, JPEG compresso, provider scelto liberamente da OpenRouter), quindi la causa non è isolabile con una sola chiamata. Il passaggio peggiore ("Ad esempio se abbiamo") fa pensare a un provider diverso più che al JPEG: NON VERIFICATO.
 - **Costo:** 0,00047 $ contro circa 0,00016 $ a listino, ancora circa 3 volte il listino anche senza `deny` (NON VERIFICATO il motivo).
 - **Conseguenza:** il controllo dello studente serve, ma le parole segnate non bastano. La pagina "Controlla il testo" mostra quindi l'originale accanto alla trascrizione e permette di modificare tutto il testo.
+
+### Una mappa per capitolo (22 ottobre)
+`detectChapters` trova 6 capitoli nella dispensa di Sistemi operativi (titoli in maiuscolo a inizio pagina, raggruppati in almeno 6 pagine) e nessuno in quella di Computer forensics (niente titoli riconoscibili: lì resta solo "una mappa"). Una chiamata a DeepSeek sul capitolo "Gestione della memoria, Paginazione, Tabella delle pagine multilivello…" (pagine 24–29):
+
+| Tempo | Token in / out | Costo | Concetti |
+|---|---|---|---|
+| 6,7 s | 5.496 / 1.166 | 0,0018 $ | 45 |
+
+- Nella mappa unica di ieri lo stesso argomento aveva 15 concetti, e copriva anche le pagine 30–36. Con 6 capitoli la dispensa intera arriverebbe a circa 250 concetti, per circa 0,011 $ (stima).
+- Costo ancora circa 3 volte il listino (0,00057 $ a listino), come nella trascrizione: NON VERIFICATO il motivo.

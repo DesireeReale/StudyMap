@@ -6,7 +6,7 @@ import { generationLimitReached, monthPeriod, quizLimitReached, quotaLimit, week
 import { textToPages } from "@/core/ingest";
 import type { Database, Profile } from "@/lib/supabase/types";
 import { consumeQuota, guardAi } from "./ai";
-import { failJob, generation, runJob, type GenerationType, type Source } from "./jobs";
+import { failJob, generation, runJob, type GenerationOptions, type GenerationType, type Source } from "./jobs";
 import { supabaseAdmin } from "./supabase/server";
 
 export type GenerationSource = { documentId: string } | { noteId: string };
@@ -19,6 +19,7 @@ export async function startGeneration(
   profile: Profile,
   type: GenerationType,
   source: GenerationSource,
+  options: GenerationOptions = {},
 ): Promise<Started> {
   let doc: Source;
   if ("noteId" in source) {
@@ -68,7 +69,7 @@ export async function startGeneration(
     return denied({ ok: false, reason: "La generazione non è riuscita. Riprova.", upgrade: false }, 500);
   }
 
-  after(() => runJob(job, generation(supabase, profile, type, doc)).catch((e) => failJob(job, String(e))));
+  after(() => runJob(job, generation(supabase, profile, type, doc, options)).catch((e) => failJob(job, String(e))));
   return { ok: true, jobId: job.id };
 }
 
