@@ -162,6 +162,15 @@
 - [x] E2E instabili al login: `router.refresh()` subito dopo `router.push()` annullava la navigazione; ora `router.replace()`, e 2 test in parallelo invece di 9 (3 giri di fila tutti verdi)
 - [x] Contatto di assistenza aistudymap@proton.me in privacy, landing e Impostazioni
 - [x] Landing: argomenti verificabili al posto dei numeri (bassa, piccolo)
+- [x] Modelli a pagamento senza `data_collection: "deny"`: i provider possono conservare i dati, informativa e termini della beta aggiornati (versione 2026-10-22, da riaccettare)
+- [x] Prompt transcribe.v2: parole incerte segnate come `[?parola]` o `[illeggibile]`, elenco di sigle sanitarie e universitarie
+- [x] Pagina "Controlla il testo" dopo la lettura di scansioni e foto: parole incerte evidenziate e modificabili da tastiera, originale accanto, modifica di tutto il testo; i job scelti partono solo dopo la conferma
+- [x] PDF scansionati ricompressi nel browser (JPEG qualità 50, jspdf) con avanzamento, e campo "dalla pagina … alla pagina …" entro il limite del piano
+- [x] Una mappa per capitolo più una mappa generale nei documenti con capitoli riconoscibili (scelta nella pagina del documento)
+- [ ] E2E di scan-review e chapter-maps da far girare (bloccati da un `next dev` già acceso sulla 3000)
+- [ ] Trascrizione: con transcribe.v2 molti errori restano senza segno; capire se dipende dal provider scelto da OpenRouter, dal prompt o dal JPEG (una chiamata per variabile)
+- [ ] Costo reale ancora circa 3 volte il listino anche senza `deny`: controllare in `ai_usage` quali provider rispondono
+- [ ] Scelta "una per capitolo" anche in "cosa vuoi creare" durante il caricamento
 
 ## Da fare tu
 - [ ] Registrarsi nell'app con aistudymap@proton.me, poi far passare il profilo al piano Pro

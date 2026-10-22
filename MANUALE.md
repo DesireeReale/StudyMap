@@ -76,7 +76,10 @@ studymap/
 | [src/config/ai.ts](src/config/ai.ts) | Provider, modelli, prezzi, catene di fallback, `max_tokens`, dimensione dei chunk | 🟢 |
 | [prompts/mindmap.v2.md](prompts/mindmap.v2.md) | Prompt della mappa (la v1 era solo per infermieristica) | 🟢 |
 | [prompts/flashcards.v2.md](prompts/flashcards.v2.md) | Prompt delle flashcard (la v1 era solo per infermieristica) | 🟢 |
-| [prompts/transcribe.v1.md](prompts/transcribe.v1.md) | Prompt di trascrizione di immagini e scansioni | 🟢 |
+| [prompts/transcribe.v2.md](prompts/transcribe.v2.md) | Prompt di trascrizione di immagini e scansioni (v1 resta per confronto) | 🟢 |
+| [src/core/review.ts](src/core/review.ts) | Parole incerte `[?parola]` e `[illeggibile]`: lettura e correzioni | 🟡 |
+| [src/core/chapters.ts](src/core/chapters.ts) | Riconosce i capitoli dai titoli a inizio pagina | 🟢 |
+| [src/lib/pdf-browser.ts](src/lib/pdf-browser.ts) | PDF nel browser: pagine scansionate, ricompressione JPEG, anteprima delle pagine | 🟡 |
 | [src/core/ai/client.ts](src/core/ai/client.ts) | `complete()`: chiamata al modello, fallback, validazione, retry, costi | 🔴 |
 | [src/core/ai/tasks.ts](src/core/ai/tasks.ts) | I tre task AI e il merge delle mappe | 🟡 |
 | [src/core/ai/schemas.ts](src/core/ai/schemas.ts) | Schemi Zod dell'output dell'LLM | 🟡 |
@@ -113,6 +116,9 @@ Le parentesi in `(app)` raggruppano delle pagine senza comparire nella URL. Prim
 ### Fase A: caricamento e ingestione
 
 1. **Form.** In `/library` compili [UploadForm.tsx](src/components/UploadForm.tsx). Il browser controlla tipo e dimensione solo per l'esperienza d'uso: il controllo vero è sul server.
+   - Per i PDF il browser legge subito il numero di pagine e quali sono senza testo ([pdf-browser.ts](src/lib/pdf-browser.ts)) e mostra "dalla pagina … alla pagina …", precompilato entro `maxPdfPages`.
+   - Se tutte le pagine scelte sono scansioni, il browser le ridisegna a scala 1,5 (la stessa del server), le salva in JPEG qualità 50 (`SCAN_JPEG_QUALITY`) e ricostruisce il PDF con jspdf, mostrando "Preparo le pagine scansionate: x di y". Un quaderno di 79 pagine passa da 44 MB a circa 8 MB.
+   - Negli altri PDF il file resta com'è e l'intervallo va al server (`pageFrom`, `pageTo`): `ingestPdf` legge solo quelle pagine.
 2. **Upload diretto su Storage.** [UploadForm.tsx:57](src/components/UploadForm.tsx:57) carica il file in `documents/{tuo-user-id}/{uuid}.pdf` con il client Supabase del browser. Le policy RLS sullo storage ([migrazione:147-152](supabase/migrations/20261019000000_init.sql:147)) permettono di scrivere solo nella tua cartella.
    *Perché non passa da Next?* Le funzioni serverless (Vercel) accettano richieste fino a circa 4,5 MB, e un PDF di 200 pagine può pesare di più.
 3. **Chiamata all'API.** [UploadForm.tsx:24](src/components/UploadForm.tsx:24) chiama `POST /api/documents` con `{kind:"file", title, storagePath}`.
@@ -145,10 +151,11 @@ Le parentesi in `(app)` raggruppano delle pagine senza comparire nella URL. Prim
 
    La descrizione si aggiunge alla pagina come "Figura: …", al posto del segnaposto nei .docx. Al massimo `maxFigures` figure per documento ([plans.ts](src/config/plans.ts): Free 20, Pro 200), 4 alla volta (`CONCURRENCY` in ingest.ts). Se una descrizione fallisce, la figura viene saltata e il documento si salva lo stesso. Le forme disegnate direttamente in PowerPoint non sono immagini e non si leggono: per quelle serve caricare il PDF delle slide.
 8. **Salvataggio.** Il documento viene salvato in `documents` con `pages` (array di testi, uno per pagina). Il browser va su `/documents/{id}`.
+   - **Controlla il testo.** Se almeno una pagina è stata trascritta (scansioni e foto), il documento si salva con `review_pages` (le pagine trascritte) e `review_create` (cosa creare) e il browser va su `/documents/{id}/controlla` ([TextReview.tsx](src/components/TextReview.tsx)). Le parole `[?parola]` e `[illeggibile]` diventano caselle evidenziate, raggiungibili con Tab; accanto c'è la pagina originale e c'è "Modifica tutto il testo" per gli errori non segnati. "Conferma" chiama `POST /api/documents/{id}/review`, che salva il testo, toglie i segni rimasti, svuota `review_pages` e solo allora fa partire i job scelti. Finché il controllo non è fatto, la pagina del documento mostra un avviso.
 
 ### Fase B: generazione della mappa
 
-9. **Clic.** Premi "Genera mappa concettuale" in [GenerateButtons.tsx](src/components/GenerateButtons.tsx), che chiama `POST /api/generate` con `{documentId, type:"mindmap"}`.
+9. **Clic.** Premi "Genera mappa concettuale" in [GenerateButtons.tsx](src/components/GenerateButtons.tsx), che chiama `POST /api/generate` con `{documentId, type:"mindmap"}`. Se `detectChapters` ([chapters.ts](src/core/chapters.ts)) trova almeno 2 capitoli (titoli in maiuscolo, "Capitolo N", "1. Titolo" o `#` a inizio pagina, raggruppati fino a 8), compare la scelta "Una mappa" / "Una per capitolo": con la seconda (`chapters: true`) il job crea una mappa per capitolo e una "Mappa generale" senza chiamate in più (`overviewMindMap`: capitoli e loro concetti principali). Conta come una sola generazione.
 10. **Controlli e job.** In [generate/route.ts](src/app/api/generate/route.ts):
     - carica il documento (la RLS garantisce che sia tuo);
     - `guardAi` controlla il rate limit e il tetto di token;
@@ -257,7 +264,7 @@ Il consenso è la colonna `profiles.ai_data_sharing_consent_at`, che l'utente at
 #### c) Trascrizione di immagini e scansioni: `transcribeImage`
 - **Dove**: [tasks.ts:121](src/core/ai/tasks.ts:121), chiamata durante l'ingestione.
 - **Input**: un messaggio *user* con un'immagine `image_url` in formato `data:image/png;base64,...`.
-- **Prompt**: [transcribe.v1.md](prompts/transcribe.v1.md), cioè trascrizione fedele in Markdown, `[illeggibile]` dove serve e descrizione delle figure.
+- **Prompt**: [transcribe.v2.md](prompts/transcribe.v2.md), cioè trascrizione fedele in Markdown, `[?parola]` per le parole incerte e `[illeggibile]` per quelle che non si leggono, un elenco di sigle comuni come aiuto e la descrizione delle figure. I segni servono alla pagina "Controlla il testo". Nella prova su appunti scritti a mano molti errori restano comunque senza segno (`docs/prova-modelli.md`).
 - **Modello**: la catena *visione* (`vision: true`).
 - **Costi**: registra `ocr_pages = 1` per pagina trascritta.
 - *Perché non Mistral OCR?* È a pagamento (circa 4 $ ogni 1000 pagine) e ha un endpoint diverso. Con un modello multimodale gratuito il costo è zero; Mistral OCR si può aggiungere se la qualità non basta.
@@ -524,7 +531,7 @@ Lo schema iniziale è in [supabase/migrations/20261019000000_init.sql](supabase/
 - **Effetto**: chunk più grandi significano meno chiamate e una mappa più "globale", ma per i documenti lunghi output più lunghi e il rischio di superare `max_tokens`.
 
 **8. Cambiare la soglia che distingue una pagina scansionata**
-- **Dove**: `MIN_PAGE_CHARS` in [ingest.ts:3](src/core/ingest.ts:3).
+- **Dove**: `MIN_PAGE_CHARS` in [files.ts](src/core/files.ts) (la usano sia il server sia il browser).
 - **Effetto**: alzandola, più pagine vanno al modello con visione (più lento, consuma quota).
 
 **9. Modificare lo schema del database**
