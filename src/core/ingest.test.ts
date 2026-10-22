@@ -16,10 +16,12 @@ describe("ingestPdf", () => {
       expect(dataUrl.startsWith("data:image/png;base64,")).toBe(true);
       return "pagina scansionata";
     });
-    const pages = await ingestPdf(samplePdf(), { maxPages: 5, transcribe });
+    const transcribed: number[] = [];
+    const pages = await ingestPdf(samplePdf(), { maxPages: 5, transcribe, onTranscribed: (i) => transcribed.push(i) });
     expect(pages[0]).toContain("scompenso cardiaco");
     expect(pages[1]).toBe("pagina scansionata");
     expect(transcribe).toHaveBeenCalledTimes(1);
+    expect(transcribed).toEqual([1]);
   });
 
   it("counts only the pages that need an image pass", async () => {

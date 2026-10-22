@@ -57,7 +57,7 @@ async function describeSafely(figures: Figures, dataUrl: string, context: string
 
 export async function ingestPdf(
   bytes: Uint8Array,
-  opts: { maxPages: number; transcribe: Transcribe; figures?: Figures; onPage?: OnPage },
+  opts: { maxPages: number; transcribe: Transcribe; figures?: Figures; onPage?: OnPage; onTranscribed?: (index: number) => void },
 ): Promise<string[]> {
   const pdf = await getDocumentProxy(new Uint8Array(bytes));
   if (pdf.numPages > opts.maxPages) throw new PageLimitError(pdf.numPages);
@@ -70,7 +70,13 @@ export async function ingestPdf(
   const jobs = text.map((raw, i) => {
     const pageText = raw.trim();
     slow[i] = true;
-    if (pageText.length < MIN_PAGE_CHARS) return async () => (await opts.transcribe(await render(i + 1))).trim() || pageText;
+    if (pageText.length < MIN_PAGE_CHARS)
+      return async () => {
+        const transcribed = (await opts.transcribe(await render(i + 1))).trim();
+        if (!transcribed) return pageText;
+        opts.onTranscribed?.(i);
+        return transcribed;
+      };
     slow[i] = false;
     if (!opts.figures || budget <= 0) return async () => pageText;
     budget--;

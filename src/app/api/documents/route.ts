@@ -115,14 +115,16 @@ export async function POST(request: Request) {
     ctx.onWait = onWait;
     progress("read");
     const onPage = (done: number, total: number) => progress("transcribe", done, total);
+    const transcribed: number[] = [];
     let pages: string[];
     try {
-      if (kind === "pdf") pages = await ingestPdf(bytes, { maxPages: plan.maxPdfPages, transcribe, figures, onPage });
+      if (kind === "pdf") pages = await ingestPdf(bytes, { maxPages: plan.maxPdfPages, transcribe, figures, onPage, onTranscribed: (i) => transcribed.push(i) });
       else if (kind === "docx") pages = await ingestOffice(readDocx(zip!), { maxPages: plan.maxPdfPages, figures, onPage });
       else if (kind === "pptx") pages = await ingestOffice(readPptx(zip!), { maxPages: plan.maxPdfPages, figures, onPage });
       else {
         onPage(0, 1);
         pages = [await transcribe(`data:${MIME[kind]};base64,${Buffer.from(bytes).toString("base64")}`)];
+        transcribed.push(0);
       }
     } catch (e) {
       if (e instanceof PageLimitError) {
@@ -134,6 +136,8 @@ export async function POST(request: Request) {
       throw new JobFailure("Non è stato possibile leggere il file.");
     }
     if (!pages.some((p) => p.trim())) throw new JobFailure("Non ho trovato testo nel file.");
+    const review = transcribed.length > 0;
+    const create = [...new Set(body.create)];
 
     const { data, error } = await supabase
       .from("documents")
@@ -144,11 +148,14 @@ export async function POST(request: Request) {
         storage_path: body.storagePath,
         pages,
         page_count: pages.length,
+        review_pages: review ? transcribed.sort((a, b) => a - b) : null,
+        review_create: review ? create : [],
       })
       .select("id")
       .single();
     if (error) throw new JobFailure("Salvataggio non riuscito");
-    await startRequested(supabase, profile, [...new Set(body.create)], { documentId: data.id }, body.title);
+    if (review) return `/documents/${data.id}/controlla`;
+    await startRequested(supabase, profile, create, { documentId: data.id }, body.title);
     return `/documents/${data.id}`;
   };
 

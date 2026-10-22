@@ -53,6 +53,8 @@ export type DocumentRow = {
   storage_path: string | null;
   page_count: number;
   pages: string[];
+  review_pages: number[] | null;
+  review_create: string[];
   created_at: string;
 };
 

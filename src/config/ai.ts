@@ -204,7 +204,7 @@ export type Reasoning = "none" | "low" | "medium";
 export const TASKS: Record<TaskId, { promptVersion: string; maxTokens: number; timeoutMs: number; reasoning: Reasoning }> = {
   mindmap: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000, reasoning: "none" },
   flashcards: { promptVersion: "v2", maxTokens: 4000, timeoutMs: 40_000, reasoning: "none" },
-  transcribe: { promptVersion: "v1", maxTokens: 3000, timeoutMs: 30_000, reasoning: "none" },
+  transcribe: { promptVersion: "v2", maxTokens: 3000, timeoutMs: 30_000, reasoning: "none" },
   figure: { promptVersion: "v1", maxTokens: 2000, timeoutMs: 30_000, reasoning: "none" },
   summary: { promptVersion: "v2", maxTokens: 3000, timeoutMs: 40_000, reasoning: "none" },
   quiz: { promptVersion: "v3", maxTokens: 4000, timeoutMs: 60_000, reasoning: "low" },

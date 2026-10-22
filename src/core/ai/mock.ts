@@ -21,7 +21,7 @@ export const MOCK_OUTPUTS: Record<TaskId, unknown> = {
       { front: "Perché si monitora il peso quotidiano?", back: "Un aumento rapido del peso indica ritenzione idrica." },
     ],
   },
-  transcribe: { markdown: "# Appunti\nTesto trascritto di prova." },
+  transcribe: { markdown: "# Appunti\nTesto [?trascritto] di prova con una parola [illeggibile]." },
   figure: { markdown: "Grafico velocità-tempo: retta orizzontale, la velocità resta costante." },
   chat: { answer: "Secondo il materiale, lo scompenso si manifesta con dispnea ed edemi declivi.", pages: [1, 99] },
   summary: {

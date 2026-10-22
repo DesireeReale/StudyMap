@@ -29,7 +29,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
   const { supabase } = await requireUser();
   const { data: doc } = await supabase
     .from("documents")
-    .select("id, title, kind, page_count, storage_path, pages, created_at, folder_id")
+    .select("id, title, kind, page_count, storage_path, pages, created_at, folder_id, review_pages")
     .eq("id", id)
     .maybeSingle();
   if (!doc) notFound();
@@ -64,6 +64,15 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
         </div>
         <GenerateButtons source={{ documentId: doc.id }} />
       </header>
+
+      {doc.review_pages && (
+        <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-row border border-notice-border bg-notice px-4 py-3 text-notice-ink">
+          <p>Il testo letto dalle immagini non è ancora stato controllato.</p>
+          <Link href={`/documents/${doc.id}/controlla`} className="btn-primary">
+            Controlla il testo
+          </Link>
+        </div>
+      )}
 
       <section aria-labelledby="summary-title" className="panel flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">

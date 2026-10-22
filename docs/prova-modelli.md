@@ -87,3 +87,15 @@ Il quaderno oggi viene rifiutato: 44 MB e 79 pagine contro 10 MB e 20 pagine nel
 | JPEG 669 px, qualità 60 | 66 KB | 5,2 MB |
 
 **Proposta (non implementata):** nel browser, prima dell'upload, se il PDF supera il limite e le pagine non hanno testo, renderizzare ogni pagina a scala 1,5 e ricostruire il PDF con pagine JPEG qualità 50 (`jspdf` è già tra le dipendenze); insieme, un campo "dalla pagina … alla pagina …" per restare sotto il limite di pagine (nel Free 20 pagine diventano circa 2 MB). La qualità della trascrizione su JPEG qualità 50 non è stata provata: NON VERIFICATO, ma la risoluzione è la stessa che il modello riceve oggi.
+
+### Prompt transcribe.v2 sulla pagina 1 compressa (22 ottobre, dopo la rimozione di `data_collection: "deny"`)
+Una chiamata a DeepSeek V4.1 Flash. Pagina 1 del quaderno ricompressa in JPEG qualità 50 come farà il browser, messa in un PDF con jspdf e renderizzata dall'app a scala 1,5: a occhio l'immagine è uguale all'originale.
+
+| Tempo | Token in / out | Costo | Parole segnate |
+|---|---|---|---|
+| 4,4 s | 1.301 / 350 | 0,00047 $ | 3 ([?balle], [?M-N], [?uno]) |
+
+- **Risultato peggiore del previsto:** dei tre errori di ieri nessuno è segnato. "ALTRI COLORI" diventa "OLTRE IL BIANCO", "Quadrato" diventa "Ammattonato", "terna" diventa "terra", e "Allo zero si associa il nero" diventa "Ad esempio se abbiamo il nero": tutti senza segno. Delle tre parole segnate, una ipotesi è sbagliata ("balle" invece di "bande").
+- **Tre cose sono cambiate insieme** (prompt v2, JPEG compresso, provider scelto liberamente da OpenRouter), quindi la causa non è isolabile con una sola chiamata. Il passaggio peggiore ("Ad esempio se abbiamo") fa pensare a un provider diverso più che al JPEG: NON VERIFICATO.
+- **Costo:** 0,00047 $ contro circa 0,00016 $ a listino, ancora circa 3 volte il listino anche senza `deny` (NON VERIFICATO il motivo).
+- **Conseguenza:** il controllo dello studente serve, ma le parole segnate non bastano. La pagina "Controlla il testo" mostra quindi l'originale accanto alla trascrizione e permette di modificare tutto il testo.
