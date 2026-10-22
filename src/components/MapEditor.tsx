@@ -146,17 +146,10 @@ async function addWatermark(dataUrl: string): Promise<string> {
   canvas.height = img.height;
   const ctx = canvas.getContext("2d")!;
   ctx.drawImage(img, 0, 0);
-  const logo = new Image();
-  logo.src = "/brand/volpe-128.png";
-  await logo.decode();
   ctx.font = "bold 16px sans-serif";
   ctx.fillStyle = "rgba(28, 36, 48, 0.55)";
   ctx.textAlign = "right";
-  ctx.textBaseline = "middle";
-  const label = "Creato con StudyMap";
-  const y = img.height - 30;
-  ctx.fillText(label, img.width - 16, y);
-  ctx.drawImage(logo, img.width - 16 - ctx.measureText(label).width - 36, y - 14, 28, 28);
+  ctx.fillText("Creato con StudyMap", img.width - 16, img.height - 16);
   return canvas.toDataURL("image/png");
 }
 

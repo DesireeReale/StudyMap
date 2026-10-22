@@ -3,6 +3,7 @@ import { z } from "zod";
 export const FEEDBACK_PER_DAY = 5;
 
 export const SUPPORT_EMAIL = "aistudymap@proton.me";
+export const CREATOR = { name: "Desirèe Reale", url: "https://desireereale.netlify.app/" };
 
 export const FEEDBACK_KINDS = [
   { id: "idea", label: "Idea" },

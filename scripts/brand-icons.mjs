@@ -24,30 +24,11 @@ while (stack.length) {
 }
 bx.putImageData(img, 0, 0);
 
-function png(size, { bg, scale = 1 } = {}) {
+function png(size) {
   const c = createCanvas(size, size), x = c.getContext("2d");
   x.imageSmoothingQuality = "high";
-  if (bg) { x.fillStyle = bg; x.fillRect(0, 0, size, size); }
-  const s = size * scale, o = (size - s) / 2;
-  x.drawImage(base, o, o, s, s);
+  x.drawImage(base, 0, 0, size, size);
   return c.toBuffer("image/png");
 }
 
-writeFileSync("public/brand/volpe-128.png", png(128));
-writeFileSync("public/brand/volpe-512.png", png(512));
-writeFileSync("public/icons/icon-192.png", png(192));
-writeFileSync("public/icons/icon-512.png", png(512));
-writeFileSync("public/icons/icon-maskable-512.png", png(512, { bg: "#5ccdf0", scale: 0.8 }));
-writeFileSync("public/icons/apple-touch-icon.png", png(180, { bg: "#ffffff", scale: 0.92 }));
-
-const sizes = [16, 32, 48], pngs = sizes.map((s) => png(s));
-const head = Buffer.alloc(6 + 16 * sizes.length);
-head.writeUInt16LE(0, 0); head.writeUInt16LE(1, 2); head.writeUInt16LE(sizes.length, 4);
-let offset = head.length;
-sizes.forEach((s, k) => {
-  const e = 6 + 16 * k;
-  head.writeUInt8(s, e); head.writeUInt8(s, e + 1); head.writeUInt16LE(1, e + 4); head.writeUInt16LE(32, e + 6);
-  head.writeUInt32LE(pngs[k].length, e + 8); head.writeUInt32LE(offset, e + 12);
-  offset += pngs[k].length;
-});
-writeFileSync("src/app/favicon.ico", Buffer.concat([head, ...pngs]));
+writeFileSync("public/brand/volpe-192.png", png(192));

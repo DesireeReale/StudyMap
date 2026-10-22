@@ -1,8 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { CSSProperties, ReactNode } from "react";
 import { PLANS } from "@/config/plans";
-import { SUPPORT_EMAIL } from "@/core/feedback";
+import { CREATOR, SUPPORT_EMAIL } from "@/core/feedback";
 import { BrandMark } from "@/components/icons";
 import { HEART_FAILURE, MapArt } from "@/components/landing/MapArt";
 import { ReadingDemo } from "@/components/landing/ReadingDemo";
@@ -184,7 +185,7 @@ export default async function Home() {
             href="/"
             className="flex items-center gap-2.5 font-display text-[18px] font-bold"
           >
-            <BrandMark />
+            <BrandMark size={30} />
             StudyMap
           </Link>
           <ul className="ml-auto hidden items-center gap-[22px] text-[16px] md:flex">
@@ -528,7 +529,7 @@ export default async function Home() {
 
       <footer className="border-t border-border py-7 text-[14px] text-muted">
         <div className="mx-auto flex w-full max-w-[1180px] px-4 flex-wrap justify-between gap-x-6 gap-y-3">
-          <span>StudyMap · Italia, 2026</span>
+          <span>StudyMap · Italia</span>
           <span className="flex flex-wrap gap-4">
             <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-ink hover:underline">
               {SUPPORT_EMAIL}
@@ -540,6 +541,17 @@ export default async function Home() {
               Accedi
             </Link>
           </span>
+        </div>
+        <div className="mx-auto mt-10 flex max-w-[1180px] flex-col items-center gap-2 px-4 text-center text-[13px]">
+          <Image src="/brand/volpe-192.png" width={88} height={88} alt="" />
+          <p className="mt-2">Una mappa alla volta, fino all&apos;esame.</p>
+          <p>
+            © 2026 StudyMap, creato da{" "}
+            <a href={CREATOR.url} target="_blank" rel="noopener" className="text-ink underline underline-offset-2 hover:text-accent">
+              {CREATOR.name}
+            </a>{" "}
+            con <span aria-label="amore" className="text-negative">♥</span>
+          </p>
         </div>
       </footer>
     </div>

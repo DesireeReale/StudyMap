@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { SVGProps } from "react";
 
 const paths = {
@@ -62,6 +61,15 @@ export function Icon({ name, size = 18, ...props }: { name: IconName; size?: num
   );
 }
 
-export function BrandMark({ size = 36 }: { size?: number }) {
-  return <Image src="/brand/volpe-128.png" width={size} height={size} alt="" priority />;
+export function BrandMark({ size = 28 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+      <rect width="32" height="32" rx="8" fill="var(--accent)" />
+      <path d="M16 10.5 9.5 21M16 10.5 16 22M16 10.5 22.5 21" stroke="var(--sheet)" strokeWidth="1.8" />
+      <circle cx="16" cy="10" r="3.6" fill="var(--sheet)" />
+      <circle cx="9.5" cy="22" r="2.6" fill="var(--sheet)" />
+      <circle cx="16" cy="23" r="2.6" fill="var(--sheet)" />
+      <circle cx="22.5" cy="22" r="2.6" fill="var(--sheet)" />
+    </svg>
+  );
 }
