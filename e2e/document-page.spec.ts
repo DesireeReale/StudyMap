@@ -73,15 +73,15 @@ test("document page: create tiles, summary first, folded chat and text", async (
   await expect(page.getByRole("heading", { level: 2, name: "Riassunto", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Sezione 6" })).not.toBeInViewport();
   await shots(page, "summary");
-  await page.getByRole("button", { name: "Mostra tutto il riassunto" }).click();
-  await expect(page.getByRole("button", { name: "Mostra meno" })).toHaveAttribute("aria-expanded", "true");
-  await page.getByRole("heading", { name: "Sezione 6" }).scrollIntoViewIfNeeded();
-  await expect(page.getByRole("heading", { name: "Sezione 6" })).toBeInViewport();
-  await page.getByRole("button", { name: "Mostra meno" }).click();
   await expect(tiles.getByRole("link", { name: "Apri mappa concettuale" })).toBeVisible();
   await expect(tiles.getByText("1 riassunto")).toBeVisible();
   await tiles.getByRole("link", { name: "Leggi sotto il riassunto" }).click();
   await expect(page).toHaveURL(/#summary-title$/);
+
+  await page.getByRole("link", { name: "Apri riassunto", exact: true }).click();
+  await expect(page).toHaveURL(/\/notes\//);
+  await expect(page.getByRole("heading", { name: "Sezione 6" })).toBeVisible();
+  await page.goBack();
 
   await page.emulateMedia({ colorScheme: "dark" });
   await page.evaluate(() => (document.documentElement.dataset.style = "evidenziatore"));

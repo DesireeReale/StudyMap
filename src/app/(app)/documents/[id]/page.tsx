@@ -10,7 +10,7 @@ import { CreateTiles } from "@/components/CreateTiles";
 import { DocumentChat } from "@/components/DocumentChat";
 import { excerptsFor, reflow } from "@/core/retrieval";
 import { EditableTitle } from "@/components/EditableTitle";
-import { Expandable } from "@/components/Expandable";
+import { Preview } from "@/components/SummaryPreview";
 import { Icon } from "@/components/icons";
 import { SummaryView } from "@/components/SummaryView";
 import { summaryPages } from "@/core/outline";
@@ -84,16 +84,10 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
 
       {summary && (
         <section aria-labelledby="summary-title" className="flex scroll-mt-6 flex-col gap-3.5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 id="summary-title" className="text-[20px] font-bold">
-              Riassunto
-            </h2>
-            <Link href={`/notes/${summary.id}`} className="btn-secondary">
-              <Icon name="note" />
-              Apri e modifica
-            </Link>
-          </div>
-          <Expandable more="Mostra tutto il riassunto" less="Mostra meno">
+          <h2 id="summary-title" className="text-[20px] font-bold">
+            Riassunto
+          </h2>
+          <Preview href={`/notes/${summary.id}`} label="Apri riassunto">
             <SummaryView
               body={summary.body}
               source={{
@@ -104,7 +98,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
               className="w-full rounded-row border border-border bg-sheet px-[clamp(16px,4%,48px)] py-6"
               columns
             />
-          </Expandable>
+          </Preview>
         </section>
       )}
 
