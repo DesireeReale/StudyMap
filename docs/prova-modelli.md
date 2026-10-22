@@ -46,3 +46,38 @@ Data: 21 ottobre 2026, dalle 14:27 alle 14:33 (ora italiana). Una richiesta alla
 ## Catene risultanti (`src/config/ai.ts`)
 - **Testo:** MiniMax (fino al ritiro), Gemma 4 26B, Gemma 4 31B, Nemotron VL, `openrouter/free`.
 - **Immagini:** MiniMax (fino al ritiro), Gemma 4 26B, Gemma 4 31B, Nemotron VL.
+
+## Materiale reale, 22 ottobre
+Tre PDF veri di studenti (non nel repository): un quaderno scansionato scritto a mano (79 pagine, 44 MB, nessun testo estraibile) e due dispense con testo (44 e 33 pagine). Codice dell'app (`transcribeImage`, `generateMindMap`, `complete`), catena di un solo modello, ragionamento spento, `data_collection: "deny"`, prompt `transcribe.v1` e `mindmap.v2`. Pagine renderizzate come fa l'app: unpdf a scala 1,5 in PNG (892×1262 px). Nessun nuovo tentativo è servito. Costo da `usage.cost`.
+
+### Trascrizione delle prime 5 pagine scritte a mano
+| Modello | Tempo per pagina | Costo 5 pagine | Costo per pagina | [illeggibile] | Errori evidenti a pagina 1 |
+|---|---|---|---|---|---|
+| deepseek/deepseek-v4.1-flash | 1,1–2,6 s (media 1,8 s) | 0,0033 $ | 0,00066 $ | 0 | "dell'immagine" invece di "delle Immagini"; etichetta del grafico "ALTRI COLORI" letta "OLTRE I 100"; "Quadrato M×N" letto "Ampiezza M x N" |
+| qwen/qwen3.7-flash | 6,4–20,5 s (media 10,6 s) | 0,00043 $ | 0,00009 $ | 0 | "ALTRI COLORI" letto "ALTRI GRIGI"; "Si parte da 1" letto "Sparte da 1!"; "una terna (R, G, B)" letto "una terra" |
+
+- **Qualità:** su una pagina tre errori a testa, sul resto testo fedele (titoli, formule `1 bit [0,1]`, `HDR = High Dynamic Range`). Entrambi descrivono i due schemi tra parentesi quadre; le frecce che collegano 1 bit e 8 bit a "Range di colori" diventano una riga con `→`, senza perdere il senso. Confronto fatto a occhio solo sulla pagina 1.
+- **[illeggibile] mai usato:** sulla grafia incerta i modelli tirano a indovinare invece di segnalarlo, quindi gli errori non si vedono.
+- **Quaderno intero (79 pagine, 4 alla volta come fa l'app), stima:** DeepSeek circa 0,05 $ e 40 s; Qwen circa 0,007 $ e 3–4 minuti.
+
+### Mappa dalle dispense con testo (DeepSeek, una sola chiamata ciascuna)
+| PDF | Pagine | Token in / out | Tempo | Costo | Concetti |
+|---|---|---|---|---|---|
+| Sistemi operativi | 44 | 39.886 / 2.130 | 6,5 s | 0,0102 $ | 75 |
+| Computer forensics | 33 | 21.648 / 1.676 | 4,3 s | 0,0064 $ | 40 |
+
+- **Qualità:** rami ordinati e fedeli all'indice delle dispense (processi, scheduling, memoria, file system; fasi del reperto, aspetti giuridici). Mappa però sommaria: meno di 2 concetti per pagina, i dettagli dei capitoli lunghi restano fuori.
+- **Costo più alto del previsto:** DeepSeek ha pagato circa 0,24 $ per milione di token in ingresso, dieci volte il listino scritto in `src/config/ai.ts` (0,024 $). Probabile effetto di `data_collection: "deny"` (provider più cari), NON VERIFICATO. Con Qwen la stessa mappa costerebbe circa 0,0015 $ a listino (NON VERIFICATO). Le stime della sezione precedente vanno quindi alzate per DeepSeek.
+
+### Limiti di upload
+Il quaderno oggi viene rifiutato: 44 MB e 79 pagine contro 10 MB e 20 pagine nel Free, 25 MB e 200 pagine nel Pro. Ricomprimendo le 5 pagine renderizzate in JPEG (napi-rs canvas, stesse dimensioni che usa l'app):
+
+| Formato per pagina | Media per pagina | Stima 79 pagine |
+|---|---|---|
+| Originale nel PDF | 569 KB | 44 MB |
+| PNG a scala 1,5 (quello che oggi va al modello) | 755 KB | 60 MB |
+| JPEG 892 px, qualità 70 | 128 KB | 10,1 MB |
+| JPEG 892 px, qualità 50 | 97 KB | 7,6 MB |
+| JPEG 669 px, qualità 60 | 66 KB | 5,2 MB |
+
+**Proposta (non implementata):** nel browser, prima dell'upload, se il PDF supera il limite e le pagine non hanno testo, renderizzare ogni pagina a scala 1,5 e ricostruire il PDF con pagine JPEG qualità 50 (`jspdf` è già tra le dipendenze); insieme, un campo "dalla pagina … alla pagina …" per restare sotto il limite di pagine (nel Free 20 pagine diventano circa 2 MB). La qualità della trascrizione su JPEG qualità 50 non è stata provata: NON VERIFICATO, ma la risoluzione è la stessa che il modello riceve oggi.

@@ -55,3 +55,6 @@ next-env.d.ts
 /.agents/
 /.taste-skill/
 desktop.ini
+
+# real course material used for local model tests
+/prove-ocr/
