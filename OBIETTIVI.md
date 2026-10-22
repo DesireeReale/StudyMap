@@ -38,7 +38,7 @@
 - [x] Ritorno automatico a Free alla scadenza: calcolato dalla data a ogni richiesta, senza job
 - [x] Pagina `/admin` solo per la proprietaria (tabella `admins`): cerca per email, piano, scadenza, generazioni e costo AI del mese, "Sblocca Pro" con nota, "Revoca"
 - [ ] Pagamenti automatici (Stripe o simili): per ora si incassa a mano e si sblocca da `/admin`
-- [ ] Al lancio pubblico (non durante la beta): limiti Free a 10 generazioni al mese, 5 documenti salvati, 5 MB per file (20 pagine invariate) in plans.ts
+- [x] Limiti Free a 10 generazioni al mese, 5 documenti salvati, 5 MB per file (20 pagine invariate) in plans.ts: applicati già dalla beta (22 ottobre), su decisione dell'utente
 - [ ] Al lancio pubblico: per il Free eliminare il PDF originale dopo la lettura e tenere solo il testo estratto (spazio di Supabase); l'originale resta per il Pro
 - [ ] Keycloak: solo in futuro, come fornitore di login davanti a Supabase quando ci saranno più app (l'email resta l'identità per collegare gli account)
 - [ ] Disdetta in un clic e fatture automatiche (nuovo)

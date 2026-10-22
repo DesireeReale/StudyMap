@@ -36,13 +36,13 @@ const pro: Plan = {
 
 export const PLANS: Record<PlanId, Plan> = {
   free: {
-    generationsPerMonth: 20,
+    generationsPerMonth: 10,
     inputTokensPerMonth: 1_000_000,
     maxPdfPages: 20,
     maxFigures: 20,
-    maxDocuments: 10,
+    maxDocuments: 5,
     maxSubjects: 3,
-    maxUploadBytes: 10 * MB,
+    maxUploadBytes: 5 * MB,
     export: { png: true, pdf: false, watermark: true },
     quizzesPerWeek: 1,
     chatQuestionsPerMonth: 20,
