@@ -10,6 +10,7 @@ const atkinsonNext = Atkinson_Hyperlegible_Next({
   subsets: ["latin"],
   preload: false,
   adjustFontFallback: false,
+  fallback: ["system-ui", "sans-serif"],
 });
 const plexMono = IBM_Plex_Mono({ variable: "--font-plex-mono", subsets: ["latin"], weight: ["400"], preload: false });
 
