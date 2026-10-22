@@ -16,8 +16,8 @@ export type Source = { id: string | null; title: string; pages: string[]; folder
 export class JobFailure extends Error {}
 
 export function toView(job: AiJobRow): JobView {
-  const { id, type, status, phase, done, total, title, href, error, document_id, note_id } = job;
-  const view = { id, type, status, phase, done, total, title, href, error, document_id, note_id };
+  const { id, type, status, phase, done, total, title, href, error, document_id, note_id, retryable, upgrade } = job;
+  const view = { id, type, status, phase, done, total, title, href, error, document_id, note_id, retryable, upgrade };
   return isStale(job) ? { ...view, status: "error", phase: "error", error: JOB_STALE_ERROR } : view;
 }
 

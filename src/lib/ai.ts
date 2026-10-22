@@ -107,7 +107,7 @@ export async function guardAi(profile: Profile): Promise<Decision> {
     RATE_LIMITS.aiRequestsPerMinute,
   );
   if (!withinRate) {
-    return { ok: false, reason: "Troppe richieste in poco tempo. Riprova tra un minuto.", upgrade: false };
+    return { ok: false, reason: "Troppe richieste in poco tempo. Riprova tra un minuto.", upgrade: false, temporary: true };
   }
   const { data } = await supabaseAdmin()
     .from("quota_counters")

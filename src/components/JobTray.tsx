@@ -132,7 +132,12 @@ export function JobTray() {
                     <Link href="/upload" onClick={() => dismiss(j.id)} className="btn-secondary self-start">
                       Carica di nuovo
                     </Link>
+                  ) : j.upgrade ? (
+                    <Link href="/settings#piano" onClick={() => dismiss(j.id)} className="btn-secondary self-start">
+                      Scopri il Pro
+                    </Link>
                   ) : (
+                    j.retryable &&
                     (j.document_id || j.note_id) && (
                       <button type="button" onClick={() => retry(j)} className="btn-secondary self-start">
                         Riprova

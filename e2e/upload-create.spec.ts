@@ -44,6 +44,30 @@ test("choose the source with tiles and what to create while uploading", async ({
   await expect(status).toHaveText(/\d+/);
 });
 
+test("a plan limit offers the Pro plan instead of a retry", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(user.email);
+  await page.getByLabel("Password", { exact: true }).fill(user.password);
+  await page.getByRole("button", { name: "Accedi", exact: true }).click();
+  await expect(page).toHaveURL(/\/library/);
+
+  const tray = page.getByRole("region", { name: "Lavori in corso" });
+  for (const title of ["Primo quiz", "Secondo quiz"]) {
+    await page.goto("/upload?mode=text");
+    await page.getByText("Testo incollato", { exact: true }).click();
+    await page.getByLabel("Titolo").fill(title);
+    await page
+      .getByRole("textbox", { name: "Testo" })
+      .fill("La diuresi oraria normale nell'adulto è di circa 0,5-1 ml per kg di peso corporeo all'ora.");
+    await page.locator("label", { hasText: /^✓?Quiz$/ }).click();
+    await page.getByRole("button", { name: "Carica" }).click();
+    await expect(page).toHaveURL(/\/notes\//);
+  }
+  await expect(tray.getByText(/1 quiz a settimana/)).toBeVisible({ timeout: 60_000 });
+  await expect(tray.getByRole("link", { name: "Scopri il Pro" })).toBeVisible();
+  await expect(tray.getByRole("button", { name: "Riprova" })).toHaveCount(0);
+});
+
 test("a file upload starts the chosen generations once it has been read", async ({ page }) => {
   const pdfPath = path.join(process.cwd(), "e2e", ".tmp", "create.pdf");
   const doc = new jsPDF();

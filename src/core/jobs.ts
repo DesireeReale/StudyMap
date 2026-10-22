@@ -15,6 +15,8 @@ export type JobView = {
   error: string | null;
   document_id: string | null;
   note_id: string | null;
+  retryable: boolean;
+  upgrade: boolean;
 };
 
 export const JOB_STALE_MS = 6 * 60_000;

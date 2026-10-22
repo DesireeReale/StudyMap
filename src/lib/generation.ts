@@ -66,7 +66,7 @@ export async function startGeneration(
   if (error) {
     await consumeQuota(profile.id, "generation", period, -1, null);
     await refundQuiz();
-    return denied({ ok: false, reason: "La generazione non è riuscita. Riprova.", upgrade: false }, 500);
+    return denied({ ok: false, reason: "La generazione non è riuscita. Riprova.", upgrade: false, temporary: true }, 500);
   }
 
   after(() => runJob(job, generation(supabase, profile, type, doc, options)).catch((e) => failJob(job, String(e))));
@@ -94,6 +94,8 @@ export async function startRequested(
         status: "error",
         phase: "error",
         error: started.reason.slice(0, 500),
+        retryable: !!started.temporary,
+        upgrade: started.upgrade,
       });
   }
 }

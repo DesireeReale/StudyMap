@@ -164,6 +164,8 @@ export type AiJobRow = {
   quiz_period: string | null;
   seen_at: string | null;
   duration_ms: number | null;
+  retryable: boolean;
+  upgrade: boolean;
   created_at: string;
   updated_at: string;
 };

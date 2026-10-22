@@ -1,7 +1,7 @@
 import { CHAINS, MODELS, type ModelConfig } from "@/config/ai";
 import { PLANS, type PlanId } from "@/config/plans";
 
-export type Denied = { ok: false; reason: string; upgrade: boolean };
+export type Denied = { ok: false; reason: string; upgrade: boolean; temporary?: boolean };
 export type Decision = { ok: true } | Denied;
 
 const allow: Decision = { ok: true };
