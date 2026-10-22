@@ -14,3 +14,6 @@ PWA di studio con AI per studenti universitari di qualsiasi corso di laurea (nat
 
 ## Comunicazione
 Con l'utente in italiano, concetti spiegati in modo semplice: sta imparando e vuole sapere dove mettere mano. Codice, identificatori e README in inglese.
+
+## Piani e pagamenti
+Due piani normali: Free e Pro, più un livello futuro (Pro Max). Nessun prezzo fondatore e nessun prezzo nell'app: i prezzi li gestisce l'utente, i pagamenti sono privati e il Pro si sblocca a mano da `/admin`.
