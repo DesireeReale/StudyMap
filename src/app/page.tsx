@@ -184,7 +184,7 @@ export default async function Home() {
             href="/"
             className="flex items-center gap-2.5 font-display text-[18px] font-bold"
           >
-            <BrandMark size={30} />
+            <BrandMark />
             StudyMap
           </Link>
           <ul className="ml-auto hidden items-center gap-[22px] text-[16px] md:flex">

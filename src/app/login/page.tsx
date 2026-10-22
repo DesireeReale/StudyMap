@@ -10,7 +10,7 @@ export default function LoginPage() {
     <main className="flex min-h-dvh flex-col items-center justify-center bg-sheet px-4 py-16">
       <div className="flex w-full max-w-sm flex-col gap-6">
         <Link href="/" className="flex items-center gap-2 self-start text-[17px] font-bold">
-          <BrandMark size={28} />
+          <BrandMark />
           StudyMap
         </Link>
         <h1 className="text-[28px] leading-tight font-bold">Accedi per studiare</h1>

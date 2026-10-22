@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   title: { default: "StudyMap", template: "%s · StudyMap" },
   description: "Trasforma appunti, slide e PDF in mappe concettuali e flashcard.",
   applicationName: "StudyMap",
+  icons: { apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {
