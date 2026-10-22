@@ -69,6 +69,12 @@ Tre PDF veri di studenti (non nel repository): un quaderno scansionato scritto a
 - **Qualità:** rami ordinati e fedeli all'indice delle dispense (processi, scheduling, memoria, file system; fasi del reperto, aspetti giuridici). Mappa però sommaria: meno di 2 concetti per pagina, i dettagli dei capitoli lunghi restano fuori.
 - **Costo più alto del previsto:** DeepSeek ha pagato circa 0,24 $ per milione di token in ingresso, dieci volte il listino scritto in `src/config/ai.ts` (0,024 $). Probabile effetto di `data_collection: "deny"` (provider più cari), NON VERIFICATO. Con Qwen la stessa mappa costerebbe circa 0,0015 $ a listino (NON VERIFICATO). Le stime della sezione precedente vanno quindi alzate per DeepSeek.
 
+### Dal 22 ottobre senza `data_collection: "deny"`
+Decisione dell'utente: il materiale sono appunti, non dati sensibili, e l'accettazione della beta (versione 2026-10-22) copre la conservazione dei dati da parte dei provider. Tolto il vincolo, OpenRouter può scegliere anche i provider più economici: il prezzo dovrebbe tornare vicino al listino (DeepSeek 0,024 / 0,375 $ per milione, Qwen 0,03 / 0,13 $), NON VERIFICATO fino alla prossima chiamata reale.
+- Mappa da 44 pagine (40.000 token in, 2.000 out) con DeepSeek: circa 0,002 $ invece di 0,010 $.
+- Trascrizione di una pagina scritta a mano: circa 0,0001–0,0002 $ invece di 0,00066 $; quaderno da 79 pagine circa 0,01–0,02 $.
+- Un mese di beta con 10 studenti (stime della prima sezione): resta sotto i 2 $.
+
 ### Limiti di upload
 Il quaderno oggi viene rifiutato: 44 MB e 79 pagine contro 10 MB e 20 pagine nel Free, 25 MB e 200 pagine nel Pro. Ricomprimendo le 5 pagine renderizzate in JPEG (napi-rs canvas, stesse dimensioni che usa l'app):
 

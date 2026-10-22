@@ -20,7 +20,7 @@ describe("modelChain", () => {
     modelChain(plan, { consent: opts.consent ?? true, vision: opts.vision, now: opts.now ?? before }).map((m) => m.key);
 
   it("excludes models that train on data without consent", () => {
-    expect(keys("free", { consent: false })).toEqual(["deepseek-flash", "qwen-flash"]);
+    expect(keys("free", { consent: false })).toEqual([]);
   });
 
   it("follows the configured text and vision chains", () => {

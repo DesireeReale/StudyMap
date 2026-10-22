@@ -31,7 +31,7 @@ export const PROVIDERS = {
 // Gemini's OpenAI-compatible endpoint rejects our JSON schemas in json_schema mode, so it uses json_object + Zod.
 // Models with `reasoning` get the task's effort (TASKS), or the lowest one when they cannot turn it off;
 // reasoning tokens are billed as output and count against max_tokens, so they get `extraTokens` more.
-// Paid OpenRouter models are routed only to providers that do not collect data (`data_collection: "deny"`).
+// OpenRouter models with `usesDataForTraining: false` are routed only to providers that do not collect data (`data_collection: "deny"`).
 // A model with `expiresAt` leaves the chains automatically after that instant.
 export const MODELS: ModelConfig[] = [
   {
@@ -43,7 +43,7 @@ export const MODELS: ModelConfig[] = [
     contextTokens: 1_000_000,
     vision: true,
     structuredOutput: "json_object",
-    usesDataForTraining: false,
+    usesDataForTraining: true,
     enabled: true,
     reasoning: { extraTokens: 4000 },
   },
@@ -56,7 +56,7 @@ export const MODELS: ModelConfig[] = [
     contextTokens: 1_048_576,
     vision: true,
     structuredOutput: "json_object",
-    usesDataForTraining: false,
+    usesDataForTraining: true,
     enabled: true,
     reasoning: { extraTokens: 4000 },
   },

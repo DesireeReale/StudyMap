@@ -40,17 +40,17 @@ export default function PrivacyPage() {
         account): salviamo la data e la versione del testo che hai accettato.
       </p>
       <p>
-        Per creare mappe, flashcard, quiz, riassunti e risposte il testo dei tuoi materiali viene inviato, tramite
-        OpenRouter (Stati Uniti), a questi provider di modelli gratuiti:
+        Per creare mappe, flashcard, quiz, riassunti e risposte il testo e le immagini dei tuoi materiali vengono inviati, tramite
+        OpenRouter (Stati Uniti), a questi provider di modelli:
       </p>
       <ul>
-        <li>MiniMax, società con sede in Cina (modello MiniMax M3.1 Flash);</li>
-        <li>Google (modelli Gemma);</li>
-        <li>NVIDIA (modelli Nemotron);</li>
-        <li>altri modelli gratuiti scelti da OpenRouter, solo come ultima riserva.</li>
+        <li>DeepSeek, società con sede in Cina (modello DeepSeek V4.1 Flash);</li>
+        <li>Alibaba, società con sede in Cina (modello Qwen 3.7 Flash);</li>
+        <li>Google (modelli Gemma), solo come riserva.</li>
       </ul>
       <p>
-        Questi servizi conservano i contenuti e possono usarli per migliorare i propri modelli. I testi vengono quindi
+        OpenRouter può inoltrare la richiesta a uno qualsiasi dei server che offrono questi modelli: questi servizi
+        possono conservare i contenuti e usarli per migliorare i propri modelli. I testi vengono quindi
         trasferiti fuori dall&apos;Unione Europea, anche verso paesi per cui non esiste una decisione di adeguatezza
         della Commissione europea, come la Cina.
       </p>
