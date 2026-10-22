@@ -21,7 +21,7 @@ const SECTION_ICONS: Record<SectionSlug, IconName> = {
   documenti: "file",
 };
 
-function groups(due: number): { title?: string; links: NavLink[] }[] {
+function groups(due: number, admin: boolean): { title?: string; links: NavLink[] }[] {
   return [
     {
       links: [
@@ -43,6 +43,7 @@ function groups(due: number): { title?: string; links: NavLink[] }[] {
       links: [
         { href: "/upload", label: "Carica materiale", icon: "upload", match: (p) => p.startsWith("/upload") },
         { href: "/settings", label: "Impostazioni", icon: "settings", match: (p) => p.startsWith("/settings") },
+        ...(admin ? [{ href: "/admin", label: "Amministrazione", icon: "eye" as const, match: (p: string) => p.startsWith("/admin") }] : []),
       ],
     },
   ];
@@ -57,10 +58,10 @@ function Brand() {
   );
 }
 
-function Links({ pathname, due }: { pathname: string; due: number }) {
+function Links({ pathname, due, admin }: { pathname: string; due: number; admin: boolean }) {
   return (
     <div className="flex flex-col gap-3">
-      {groups(due).map((g, i) => (
+      {groups(due, admin).map((g, i) => (
         <div key={i} className="flex flex-col gap-0.5">
           {g.title && <p className="px-3 pb-1 text-[12px] font-bold tracking-[0.04em] text-muted uppercase">{g.title}</p>}
           <ul className="flex flex-col gap-0.5">
@@ -131,11 +132,13 @@ export function AppNav({
   plan,
   prefs,
   due,
+  admin,
 }: {
   email: string;
   plan: PlanId;
   prefs: Preferences;
   due: number;
+  admin: boolean;
 }) {
   const pathname = usePathname();
   const [openOn, setOpenOn] = useState<string | null>(null);
@@ -148,7 +151,7 @@ export function AppNav({
         className="sticky top-0 hidden h-dvh w-56 shrink-0 flex-col gap-6 px-3 py-5 md:flex"
       >
         <Brand />
-        <Links pathname={pathname} due={due} />
+        <Links pathname={pathname} due={due} admin={admin} />
         <div className="mt-auto">
           <Account email={email} plan={plan} prefs={prefs} />
         </div>
@@ -173,7 +176,7 @@ export function AppNav({
           aria-label="Principale"
           className="fixed inset-x-0 top-14 bottom-0 z-20 flex flex-col gap-6 overflow-y-auto bg-chrome px-3 pb-6 md:hidden"
         >
-          <Links pathname={pathname} due={due} />
+          <Links pathname={pathname} due={due} admin={admin} />
           <Account email={email} plan={plan} prefs={prefs} />
         </nav>
       )}

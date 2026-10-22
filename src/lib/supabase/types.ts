@@ -172,12 +172,27 @@ export type AiJobRow = {
   updated_at: string;
 };
 
-export type AdminOverview = {
+export type AdminUserRow = {
   id: string;
   email: string;
+  created_at: string;
+  active_id: string | null;
+  plan: PlanId;
+  ends_at: string | null;
+  last_note: string | null;
   generations: number;
+  documents: number;
   cost_usd: number;
-  subscriptions: SubscriptionRow[];
+  last_active: string | null;
+};
+
+export type AdminUsersPage = {
+  total_users: number;
+  pro_users: number;
+  expiring: number;
+  cost_month: number;
+  count: number;
+  rows: AdminUserRow[];
 };
 
 export type SubscriptionRow = {
@@ -226,7 +241,19 @@ export type Database = {
         Returns: string;
       };
       is_admin: { Args: Record<string, never>; Returns: boolean };
-      admin_user_overview: { Args: { p_email: string; p_month: string }; Returns: AdminOverview | null };
+      admin_users_page: {
+        Args: {
+          p_today: string;
+          p_month: string;
+          p_filter?: string;
+          p_email?: string;
+          p_sort?: string;
+          p_desc?: boolean;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: AdminUsersPage;
+      };
       admin_grant_plan: { Args: { p_user: string; p_plan: string; p_ends_at: string | null; p_note: string }; Returns: string };
       admin_revoke_subscription: { Args: { p_id: string }; Returns: undefined };
       consume_quota: {

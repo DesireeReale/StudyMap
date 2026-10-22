@@ -35,8 +35,9 @@ describe("subscriptions", () => {
     expect(insert.error).not.toBeNull();
     const grant = await a.client.rpc("admin_grant_plan", { p_user: a.id, p_plan: "promax", p_ends_at: null, p_note: "" });
     expect(grant.error?.code).toBe("42501");
-    const overview = await a.client.rpc("admin_user_overview", { p_email: a.email, p_month: "2026-10" });
-    expect(overview.error?.code).toBe("42501");
+    const list = await a.client.rpc("admin_users_page", { p_today: "2026-10-22", p_month: "2026-10" });
+    expect(list.error?.code).toBe("42501");
+    expect(list.data).toBeNull();
     expect((await a.client.rpc("is_admin")).data).toBe(false);
     const admins = await a.client.from("admins").select("user_id");
     expect(admins.data ?? []).toEqual([]);
@@ -55,9 +56,31 @@ describe("subscriptions", () => {
     const { data } = await admin.from("subscriptions").select("created_by, revoked_by, revoked_at").eq("id", id!).single();
     expect(data).toMatchObject({ created_by: owner.id, revoked_by: owner.id });
     expect(data?.revoked_at).not.toBeNull();
+  });
 
-    const { data: overview } = await owner.client.rpc("admin_user_overview", { p_email: a.email.toUpperCase(), p_month: "2026-10" });
-    expect(overview).toMatchObject({ id: a.id, generations: 0 });
-    expect(overview?.subscriptions).toHaveLength(1);
+  it("the owner lists users with their active plan, filtered and paginated", async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data, error } = await owner.client.rpc("admin_users_page", {
+      p_today: today,
+      p_month: today.slice(0, 7),
+      p_email: a.email.toUpperCase(),
+    });
+    expect(error).toBeNull();
+    expect(data?.count).toBe(1);
+    expect(data?.rows[0]).toMatchObject({ id: a.id, plan: "pro", last_note: "a", generations: 0, documents: 0 });
+    expect(data!.total_users).toBeGreaterThanOrEqual(3);
+
+    const free = await owner.client.rpc("admin_users_page", { p_today: today, p_month: today.slice(0, 7), p_filter: "free", p_limit: 200 });
+    expect(free.data?.rows.some((r) => r.id === a.id)).toBe(false);
+    expect(free.data?.rows.some((r) => r.id === owner.id)).toBe(true);
+
+    const sorted = await owner.client.rpc("admin_users_page", {
+      p_today: today,
+      p_month: today.slice(0, 7),
+      p_sort: "email; drop table public.admins",
+      p_limit: 1,
+    });
+    expect(sorted.error).toBeNull();
+    expect(sorted.data?.rows).toHaveLength(1);
   });
 });

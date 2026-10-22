@@ -21,23 +21,33 @@ async function signIn(page: Page, user: { email: string; password: string }) {
   await expect(page).toHaveURL(/\/library/);
 }
 
-test("the owner unlocks Pro and the student sees it", async ({ browser }) => {
+test("the owner unlocks Pro from the users table and the student sees it", async ({ browser }) => {
   const studentPage = await (await browser.newContext()).newPage();
   await signIn(studentPage, student);
+  await expect(studentPage.getByRole("link", { name: "Amministrazione" })).toHaveCount(0);
   await studentPage.goto("/admin");
   await expect(studentPage.getByRole("heading", { name: "Amministrazione" })).toHaveCount(0);
 
   const ownerPage = await (await browser.newContext()).newPage();
   await signIn(ownerPage, owner);
-  await ownerPage.goto("/admin");
-  await ownerPage.getByLabel("Email dello studente").fill(student.email);
+  await ownerPage.getByRole("navigation", { name: "Principale" }).getByRole("link", { name: "Amministrazione" }).first().click();
+  await expect(ownerPage.getByRole("heading", { name: "Amministrazione" })).toBeVisible();
+  await expect(ownerPage.getByText("Pro attivi")).toBeVisible();
+
+  await ownerPage.getByLabel("Cerca per email").fill(student.email);
   await ownerPage.getByRole("button", { name: "Cerca" }).click();
-  const card = ownerPage.getByRole("region", { name: "Studente" });
-  await card.getByLabel("Scadenza (facoltativa)").fill("2099-01-31");
-  await card.getByLabel("Nota").fill("pagato 25/10");
-  await card.getByRole("button", { name: "Sblocca Pro" }).click();
-  await expect(card.getByText("pagato 25/10")).toBeVisible();
-  await expect(card.getByRole("definition").filter({ hasText: /^Pro$/ })).toBeVisible();
+  const row = ownerPage.getByRole("row", { name: student.email });
+  await expect(row).toContainText("Free");
+  await row.getByText("Sblocca Pro").click();
+  await row.getByLabel("Scadenza (facoltativa)").fill("2099-01-31");
+  await row.getByLabel("Nota").fill("pagato 25/10");
+  await row.getByRole("button", { name: "Conferma" }).click();
+  await expect(row).toContainText("pagato 25/10");
+
+  await ownerPage.getByRole("link", { name: "Pro", exact: true }).click();
+  await expect(ownerPage).toHaveURL(/filter=pro/);
+  await expect(ownerPage.getByRole("row", { name: student.email })).toContainText("Pro");
+  await expect(ownerPage.getByRole("row", { name: student.email }).getByRole("button", { name: "Revoca" })).toBeVisible();
 
   await studentPage.goto("/settings#piano");
   await expect(studentPage.getByText("Sei sul piano Pro fino al 31 gennaio 2099.")).toBeVisible();
