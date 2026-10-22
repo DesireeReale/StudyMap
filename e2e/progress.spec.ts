@@ -47,7 +47,7 @@ test("upload a long PDF, browse elsewhere and follow the progress until the map 
   await page.getByRole("button", { name: "Conferma il testo" }).click();
   await expect(page).toHaveURL(/\/documents\/[^/]+$/);
 
-  await page.getByRole("button", { name: "Genera mappa concettuale" }).click();
+  await page.getByRole("button", { name: "Crea mappa concettuale" }).click();
   await page.getByRole("link", { name: "Home", exact: true }).first().click();
   await expect(page).toHaveURL(/\/library/);
   await expect(tray.getByText(/Creo la mappa/)).toBeVisible({ timeout: 20_000 });

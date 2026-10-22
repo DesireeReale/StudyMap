@@ -34,7 +34,7 @@ test("log in, upload a PDF, generate and edit a concept map", async ({ page }) =
   await expect(page).toHaveURL(/\/documents\//);
   await expect(page.getByText("PDF · 1 pagina")).toBeVisible();
 
-  await page.getByRole("button", { name: "Genera mappa concettuale" }).click();
+  await page.getByRole("button", { name: "Crea mappa concettuale" }).click();
   await expect(page).toHaveURL(/\/maps\//);
   const node = page.locator(".react-flow__node").filter({ hasText: /^Dispnea$/ });
   await expect(node).toBeVisible();

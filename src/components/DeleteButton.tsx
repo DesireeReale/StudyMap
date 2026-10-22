@@ -12,6 +12,7 @@ export function DeleteButton({
   label,
   confirm: question,
   redirect = "/library",
+  className = "btn-danger",
 }: {
   table: "documents" | "maps" | "decks" | "notes" | "quizzes";
   id: string;
@@ -19,6 +20,7 @@ export function DeleteButton({
   label: string;
   confirm: string;
   redirect?: string;
+  className?: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +37,7 @@ export function DeleteButton({
 
   return (
     <div>
-      <button type="button" className="btn-danger" onClick={onClick}>
+      <button type="button" className={className} onClick={onClick}>
         <Icon name="trash" />
         {label}
       </button>

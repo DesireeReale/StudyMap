@@ -46,7 +46,7 @@ test("create a subject and a subfolder, upload a PDF there, the map shows up in 
   await page.getByRole("button", { name: "Carica" }).click();
   await expect(page).toHaveURL(/\/documents\//);
 
-  await page.getByRole("button", { name: "Genera mappa concettuale" }).click();
+  await page.getByRole("button", { name: "Crea mappa concettuale" }).click();
   await expect(page).toHaveURL(/\/maps\//);
   await expect(page.getByRole("navigation", { name: "Percorso" }).getByRole("link", { name: "Scritto" })).toBeVisible();
 

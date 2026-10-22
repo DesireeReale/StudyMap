@@ -38,11 +38,12 @@ test("a long document with chapters gets one map per chapter and an overview", a
   const docUrl = page.url();
 
   await page.getByRole("radio", { name: "Una per capitolo (2) e una generale" }).check();
-  await page.getByRole("button", { name: "Genera mappa concettuale" }).click();
+  await page.getByRole("button", { name: "Crea mappa concettuale" }).click();
   await expect(page).toHaveURL(/\/maps\//, { timeout: 60_000 });
 
   await page.goto(docUrl);
-  const made = page.getByRole("region", { name: "Creato da questo documento" });
+  const made = page.getByRole("region", { name: "Crea da questo documento" });
+  await made.getByText("Elenco completo (3)").click();
   await expect(made.getByText(/· Mappa generale$/)).toBeVisible();
   await expect(made.getByText(/· 1\. Capitolo 1 il cuore$/)).toBeVisible();
   await expect(made.getByText(/· 2\. Capitolo 2 il rene$/)).toBeVisible();

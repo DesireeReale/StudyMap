@@ -13,11 +13,13 @@ export function DocumentChat({
   unit,
   initial,
   excerpts: initialExcerpts,
+  fold = false,
 }: {
   source: Source;
   unit: "Pagina" | "Slide";
   initial: ChatMessage[];
   excerpts: Record<number, string>;
+  fold?: boolean;
 }) {
   const [messages, setMessages] = useState(initial);
   const [excerpts, setExcerpts] = useState(initialExcerpts);
@@ -58,17 +60,13 @@ export function DocumentChat({
     setMessages([]);
   }
 
-  return (
-    <section aria-label="Chiedi al documento" className="panel flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-[17px] font-bold">Chiedi al documento</h2>
-        {messages.length > 0 && (
-          <button type="button" className="btn-ghost" onClick={reset}>
-            Nuova conversazione
-          </button>
-        )}
-      </div>
-
+  const newChat = messages.length > 0 && (
+    <button type="button" className="btn-ghost" onClick={reset}>
+      Nuova conversazione
+    </button>
+  );
+  const body = (
+    <>
       {messages.length === 0 ? (
         <p className="text-sm text-muted">
           Fai una domanda sul materiale: la risposta usa solo questo documento e indica da quale {unit.toLowerCase()} viene.
@@ -146,6 +144,37 @@ export function DocumentChat({
         </p>
       </form>
       {problem && <UpgradeNotice message={problem.message} upgrade={problem.upgrade} />}
+    </>
+  );
+
+  if (fold) {
+    return (
+      <section aria-label="Chiedi al documento">
+        <details className="panel group py-4" open={initial.length > 0}>
+          <summary className="flex min-h-7 cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2 font-bold">
+              <Icon name="chat" />
+              Chiedi al documento
+            </span>
+            <span className="text-sm text-muted group-open:hidden max-sm:hidden">Fai una domanda</span>
+            <span className="hidden text-sm text-muted group-open:inline">Nascondi</span>
+          </summary>
+          <div className="mt-4 flex flex-col gap-4">
+            {newChat && <div className="flex justify-end">{newChat}</div>}
+            {body}
+          </div>
+        </details>
+      </section>
+    );
+  }
+
+  return (
+    <section aria-label="Chiedi al documento" className="panel flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-[17px] font-bold">Chiedi al documento</h2>
+        {newChat}
+      </div>
+      {body}
     </section>
   );
 }

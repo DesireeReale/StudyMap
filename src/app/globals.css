@@ -547,6 +547,64 @@ a:hover .folder-face {
 [data-style="evidenziatore"] .study-btn-ghost {
   border-width: 2px;
 }
+.create-tile {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--raised);
+}
+.create-tile[data-lead] {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+.create-tile-icon {
+  border-radius: 12px;
+  color: var(--text);
+}
+[data-style="corsia"] .create-tile-icon[data-tone="1"] {
+  background: var(--node-area-1);
+}
+[data-style="corsia"] .create-tile-icon[data-tone="2"] {
+  background: var(--node-area-2);
+}
+[data-style="corsia"] .create-tile-icon[data-tone="3"] {
+  background: var(--node-area-3);
+}
+[data-style="corsia"] .create-tile-icon[data-tone="4"] {
+  background: var(--node-neutro);
+}
+[data-style="evidenziatore"] .create-tile {
+  border: 2px solid var(--text);
+  border-radius: 10px;
+  box-shadow: 3px 3px 0 var(--text);
+}
+[data-style="evidenziatore"] .create-tile-icon {
+  border: 2px solid var(--text);
+  border-radius: 8px;
+  color: #121212;
+}
+[data-style="evidenziatore"] .create-tile-icon[data-tone="1"] {
+  background: var(--node-radice);
+}
+[data-style="evidenziatore"] .create-tile-icon[data-tone="2"] {
+  background: var(--node-area-1);
+}
+[data-style="evidenziatore"] .create-tile-icon[data-tone="3"] {
+  background: var(--node-area-2);
+}
+[data-style="evidenziatore"] .create-tile-icon[data-tone="4"] {
+  background: var(--node-area-3);
+}
+[data-style="evidenziatore"] details.panel {
+  border: 2px solid var(--border);
+}
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  color: var(--muted);
+}
 .timer-popover:popover-open {
   display: flex;
 }

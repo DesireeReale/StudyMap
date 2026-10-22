@@ -122,6 +122,7 @@
 - [x] Documento: riassunto in primo piano, testo estratto richiudibile (nuovo)
 - [x] Impostazioni: dimensione del testo "Piccola" (nuovo)
 - [ ] Riassunti: lunghezza e registro prima di generare (media, medio)
+- [x] Documento: fascia "Crea da questo documento" con quattro riquadri uguali, chat richiudibile, elimina in fondo (nuovo)
 - [x] Riassunti: pagina di provenienza per paragrafo (alta, medio)
 - [ ] Riassunti: azioni sul testo selezionato (media, medio)
 - [ ] Riassunti: lettura ad alta voce del browser (media, medio)

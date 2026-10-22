@@ -6,24 +6,19 @@ import { announceJobs, markSeen, waitForJob } from "@/lib/job-client";
 import { Icon } from "./icons";
 import { UpgradeNotice } from "./UpgradeNotice";
 
-type Kind = "mindmap" | "flashcards" | "summary" | "quiz";
-const PROGRESS: Record<Kind, string> = {
+export type Kind = "mindmap" | "flashcards" | "summary" | "quiz";
+export const PROGRESS: Record<Kind, string> = {
   mindmap: "Sto creando la mappa…",
   flashcards: "Sto creando le flashcard…",
   summary: "Sto scrivendo il riassunto…",
   quiz: "Sto preparando il quiz…",
 };
+export const WAIT_HINT =
+  "Con i documenti lunghi può servire qualche minuto. Se cambi pagina il lavoro continua e il risultato compare nella cartella della materia.";
 
-export function GenerateButtons({
-  source,
-  chapters = 0,
-}: {
-  source: { documentId: string } | { noteId: string };
-  chapters?: number;
-}) {
+export function useGenerate(source: { documentId: string } | { noteId: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState<Kind | null>(null);
-  const [perChapter, setPerChapter] = useState(false);
   const [problem, setProblem] = useState<{ message: string; upgrade: boolean } | null>(null);
   const alive = useRef(true);
   useEffect(() => {
@@ -33,7 +28,7 @@ export function GenerateButtons({
     };
   }, []);
 
-  async function generate(type: Kind) {
+  async function generate(type: Kind, perChapter = false) {
     setBusy(type);
     setProblem(null);
     try {
@@ -59,6 +54,20 @@ export function GenerateButtons({
       setBusy(null);
     }
   }
+
+  return { busy, problem, generate };
+}
+
+export function GenerateButtons({
+  source,
+  chapters = 0,
+}: {
+  source: { documentId: string } | { noteId: string };
+  chapters?: number;
+}) {
+  const { busy, problem, generate: run } = useGenerate(source);
+  const [perChapter, setPerChapter] = useState(false);
+  const generate = (type: Kind) => run(type, perChapter);
 
   return (
     <div className="flex max-w-md flex-col items-start gap-2 sm:items-end">
@@ -94,7 +103,7 @@ export function GenerateButtons({
         </fieldset>
       )}
       <p aria-live="polite" className="text-sm text-muted empty:hidden">
-        {busy ? `${PROGRESS[busy]} Con i documenti lunghi può servire qualche minuto. Se cambi pagina il lavoro continua e il risultato compare nella cartella della materia.` : ""}
+        {busy ? `${PROGRESS[busy]} ${WAIT_HINT}` : ""}
       </p>
       {problem && <UpgradeNotice message={problem.message} upgrade={problem.upgrade} />}
     </div>

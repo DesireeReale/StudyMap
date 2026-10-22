@@ -41,6 +41,7 @@ test("upload PowerPoint slides, read their pictures and summarise them", async (
   await expect(text).toContainText("Note del relatore:");
 
   const chat = page.getByRole("region", { name: "Chiedi al documento" });
+  await chat.locator("summary").click();
   await chat.getByLabel("La tua domanda").fill("Quali sono i sintomi?");
   await chat.getByRole("button", { name: "Chiedi" }).click();
   await expect(chat.getByText(/lo scompenso si manifesta con dispnea/)).toBeVisible();
@@ -53,7 +54,7 @@ test("upload PowerPoint slides, read their pictures and summarise them", async (
   await chat.getByRole("button", { name: "Nuova conversazione" }).click();
   await expect(chat.getByText("Quali sono i sintomi?")).toBeHidden();
 
-  await page.getByRole("button", { name: "Riassunto" }).click();
+  await page.getByRole("button", { name: "Crea riassunto" }).click();
   await expect(page).toHaveURL(/\/notes\//);
   await page.getByRole("button", { name: "slide 1" }).first().click();
   await expect(page.getByText("Introduzione alla cinematica").first()).toBeVisible();
