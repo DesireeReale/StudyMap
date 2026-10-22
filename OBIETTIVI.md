@@ -37,6 +37,8 @@
 - [ ] Tabella `subscriptions` (utente, prodotto `studymap`, piano, scadenza `pro_until`, permessi extra), separata dal profilo e pronta per più app (oneiro); entitlements legge da lì
 - [ ] Ritorno automatico a Free alla scadenza (job giornaliero gratuito su Supabase)
 - [ ] Pagina di amministrazione solo per la proprietaria: cerca utente, piano, scadenza, permessi extra
+- [ ] Al lancio pubblico (non durante la beta): limiti Free a 10 generazioni al mese, 5 documenti salvati, 5 MB per file (20 pagine invariate) in plans.ts
+- [ ] Al lancio pubblico: per il Free eliminare il PDF originale dopo la lettura e tenere solo il testo estratto (spazio di Supabase); l'originale resta per il Pro
 - [ ] Keycloak: solo in futuro, come fornitore di login davanti a Supabase quando ci saranno più app (l'email resta l'identità per collegare gli account)
 - [ ] Disdetta in un clic e fatture automatiche (nuovo)
 - [x] Riassunto del documento (nuovo)
@@ -120,9 +122,9 @@
 - [x] Riassunti: indice laterale delle sezioni (alta, piccolo)
 - [x] Riassunti: foglio largo come un A4, modalità Leggi/Modifica (nuovo)
 - [x] Documento: riassunto in primo piano, testo estratto richiudibile (nuovo)
+- [x] Documento: fascia "Crea da questo documento" con quattro riquadri uguali, chat richiudibile, elimina in fondo (nuovo)
 - [x] Impostazioni: dimensione del testo "Piccola" (nuovo)
 - [ ] Riassunti: lunghezza e registro prima di generare (media, medio)
-- [x] Documento: fascia "Crea da questo documento" con quattro riquadri uguali, chat richiudibile, elimina in fondo (nuovo)
 - [x] Riassunti: pagina di provenienza per paragrafo (alta, medio)
 - [ ] Riassunti: azioni sul testo selezionato (media, medio)
 - [ ] Riassunti: lettura ad alta voce del browser (media, medio)
