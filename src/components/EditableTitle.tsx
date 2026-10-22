@@ -1,71 +1,101 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
+import { folderError } from "@/core/folders";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import { Icon } from "./icons";
 
 const H1 = "text-[32px] leading-[1.05] font-bold tracking-[-0.025em] break-words md:text-[44px]";
 
 export function EditableTitle({ table, id, title, label }: { table: "documents" | "decks"; id: string; title: string; label: string }) {
+  return (
+    <h1 className={`min-w-0 ${H1}`}>
+      <InlineRename table={table} id={id} value={title} label={label} />
+    </h1>
+  );
+}
+
+export function InlineRename({
+  table,
+  id,
+  value,
+  label,
+}: {
+  table: "documents" | "decks" | "folders";
+  id: string;
+  value: string;
+  label: string;
+}) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(title);
-  const [error, setError] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const [shown, setShown] = useState(value);
+  const [error, setError] = useState<string | null>(null);
+  const hintId = useId();
 
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
-    const next = value.trim();
-    if (!next) return;
-    const { error } = await supabaseBrowser().from(table).update({ title: next }).eq("id", id);
-    setError(!!error);
-    if (error) return;
+  async function save() {
+    const next = draft.trim();
     setEditing(false);
+    if (!next || next === shown) return setDraft(shown);
+    setShown(next);
+    const db = supabaseBrowser();
+    const { error } =
+      table === "folders"
+        ? await db.from("folders").update({ name: next }).eq("id", id)
+        : await db.from(table).update({ title: next }).eq("id", id);
+    if (error) {
+      setShown(shown);
+      setDraft(shown);
+      return setError(table === "folders" ? folderError(error) : "Non è stato possibile rinominare. Riprova.");
+    }
+    setError(null);
     router.refresh();
   }
 
-  if (!editing) {
-    return (
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
-        <h1 className={`min-w-0 ${H1}`}>{title}</h1>
-        <button type="button" className="btn-ghost h-8 px-3 text-sm" onClick={() => setEditing(true)}>
-          Rinomina
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <form onSubmit={save} className="flex min-w-0 flex-wrap items-center gap-2">
-      <label htmlFor={`title-${id}`} className="sr-only">
-        {label}
-      </label>
-      <input
-        id={`title-${id}`}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        required
-        maxLength={200}
-        autoFocus
-        className="field h-11 max-w-md flex-1 text-[18px] font-bold"
-      />
-      <button type="submit" className="btn-primary h-10">
-        Salva
-      </button>
-      <button
-        type="button"
-        className="btn-ghost h-10"
-        onClick={() => {
-          setValue(title);
-          setEditing(false);
-        }}
-      >
-        Annulla
-      </button>
-      {error && (
-        <p role="alert" className="w-full text-sm text-negative">
-          Non è stato possibile rinominare. Riprova.
-        </p>
+    <>
+      {editing ? (
+        <input
+          aria-label={label}
+          aria-describedby={hintId}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onFocus={(e) => e.currentTarget.select()}
+          onBlur={save}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+            if (e.key === "Escape") {
+              setDraft(shown);
+              setEditing(false);
+            }
+          }}
+          maxLength={table === "folders" ? 80 : 200}
+          autoFocus
+          className="-mx-2 w-[calc(100%+16px)] min-w-0 rounded-lg border-2 border-accent bg-raised px-2 font-[inherit] tracking-[inherit] text-ink outline-none"
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          aria-describedby={hintId}
+          className="group/rename -mx-2 inline cursor-text rounded-lg px-2 text-left [font:inherit] tracking-[inherit] break-words text-inherit hover:bg-active"
+        >
+          {shown.slice(0, shown.lastIndexOf(" ") + 1)}
+          <span className="whitespace-nowrap">
+            {shown.slice(shown.lastIndexOf(" ") + 1)}
+            <Icon name="pencil" size={18} className="ml-2 inline-block align-middle text-muted opacity-60 group-hover/rename:opacity-100" />
+          </span>
+        </button>
       )}
-    </form>
+      <span id={hintId} className={editing ? "mt-1 block text-[13px] font-normal tracking-normal text-muted" : "sr-only"}>
+        {editing ? "Invio per salvare, Esc per annullare" : "Premi per rinominare"}
+      </span>
+      {error && (
+        <span role="alert" className="mt-1 block text-sm font-normal tracking-normal text-negative">
+          {error}
+        </span>
+      )}
+    </>
   );
 }

@@ -47,6 +47,19 @@ test("document page: create tiles, summary first, folded chat and text", async (
   await expect(page).toHaveURL(/\/documents\//);
   const docUrl = page.url();
 
+  await page.getByRole("heading", { level: 1 }).getByRole("button", { name: "Computer Forensics" }).click();
+  const titleInput = page.getByLabel("Titolo del documento");
+  await expect(titleInput).toBeFocused();
+  await titleInput.fill("Computer Forensics I");
+  await shots(page, "rename");
+  await titleInput.press("Escape");
+  await expect(page.getByRole("heading", { level: 1, name: "Computer Forensics" })).toBeVisible();
+  await page.getByRole("heading", { level: 1 }).getByRole("button").click();
+  await page.getByLabel("Titolo del documento").fill("Computer Forensics I");
+  await page.keyboard.press("Enter");
+  await page.reload();
+  await expect(page.getByRole("heading", { level: 1, name: "Computer Forensics I" })).toBeVisible();
+
   const tiles = page.getByRole("region", { name: "Crea da questo documento" });
   await expect(tiles.getByRole("listitem")).toHaveCount(4);
   await expect(tiles.getByRole("button", { name: "Crea riassunto" })).toHaveClass(/btn-primary/);

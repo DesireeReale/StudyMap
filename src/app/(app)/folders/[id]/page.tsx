@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { daysUntil } from "@/core/dates";
 import { childrenOf, MAX_FOLDER_DEPTH, moveTargets, pathTo, subtreeIds } from "@/core/folders";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { InlineRename } from "@/components/EditableTitle";
 import { FolderGrid, FolderSettings } from "@/components/FolderControls";
 import { Icon } from "@/components/icons";
 import { EmptyAction, FolderBadge, PageHeader, SearchForm, Section } from "@/components/LibraryLists";
@@ -73,7 +74,9 @@ export default async function FolderPage({ params, searchParams }: PageProps<"/f
           title={
             <span className="flex items-center gap-3">
               <FolderBadge color={folder.color} icon={folder.icon} size={44} />
-              <span className="min-w-0">{folder.name}</span>
+              <span className="min-w-0">
+                <InlineRename table="folders" id={folder.id} value={folder.name} label="Nome della cartella" />
+              </span>
             </span>
           }
           actions={
