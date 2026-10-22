@@ -38,7 +38,7 @@ flowchart LR
 | Mappe | `@xyflow/react` (React Flow) + `@dagrejs/dagre` per il layout automatico |
 | PDF | `unpdf` (estrazione del testo) + `@napi-rs/canvas` (pagina → immagine) |
 | Test | Vitest (unitari e test RLS/quote su un progetto Supabase di test), Playwright |
-| Ambienti | Supabase **cloud** (niente Docker): un progetto di sviluppo e uno separato per i test, entrambi in UE. Deploy previsto su Vercel (non ancora fatto) |
+| Ambienti | Supabase **cloud** (niente Docker), due progetti in UE: **test** (sviluppo locale e test automatici) e **produzione** (studenti veri). Deploy previsto su Vercel (non ancora fatto) |
 
 > **RLS (Row Level Security)**: regole scritte *dentro* Postgres che dicono "questo utente vede solo le sue righe". Anche se il codice sbaglia una query, il database non restituisce dati di altri utenti.
 
@@ -444,7 +444,13 @@ npm run test:e2e
 ```
 Playwright: login → PDF → mappa → rinomina → ricarica, con AI finta, contro il progetto di **test**. Verificato il 19/10/2026: passa in circa 25 secondi e alla fine il progetto di test resta vuoto.
 
-**Perché un secondo progetto Supabase.** Questi test creano e cancellano utenti veri. Farli girare sul progetto di sviluppo sporcherebbe i tuoi dati, quindi usano `.env.test` (copialo da [.env.test.example](.env.test.example)). [tests/test-env.ts](tests/test-env.ts) si rifiuta di partire se `.env.test` manca o punta allo stesso URL di `.env.local`, e forza sempre `AI_MOCK=1`. Gli utenti di test nascono già confermati tramite l'API admin e vengono cancellati alla fine.
+**Due progetti Supabase.** Il piano gratuito ne consente due attivi:
+- **test**: lo usi in locale con `npm run dev` e lo usano i test automatici. Le sue chiavi stanno sia in `.env.local` sia in `.env.test`.
+- **produzione**: i dati veri degli studenti. Le chiavi stanno in `.env.production.local` (git lo ignora) e andranno nelle variabili d'ambiente di Vercel. Attenzione: `npm run build` e `npm start` in locale leggono anche questo file, quindi parlano con la produzione.
+
+I test creano e cancellano utenti veri, quindi non devono mai toccare la produzione: [tests/test-env.ts](tests/test-env.ts) si rifiuta di partire se `.env.test` manca o punta allo stesso URL di `.env.production.local`, e forza sempre `AI_MOCK=1`.
+
+**Procedura delle migrazioni.** Ogni migrazione va prima su **test**, poi si lancia `npm run test:db`; solo se passa va su **produzione**. Con la CLI: `npx supabase link --project-ref <ref-test>`, `npm run db:push`, test, poi `npx supabase link --project-ref <ref-produzione>` e di nuovo `npm run db:push`. Gli utenti di test nascono già confermati tramite l'API admin e vengono cancellati alla fine.
 
 I vecchi test pgTAP (SQL) sono stati convertiti in Vitest: pgTAP sul cloud richiede di collegarsi direttamente al database, mentre il client Supabase con due utenti veri verifica la RLS come la vede l'app.
 
@@ -548,7 +554,7 @@ Piani e amministrazione: [supabase/migrations/20261022300000_subscriptions.sql](
 
 **9. Modificare lo schema del database**
 - **Come**: **non** modificare la migrazione esistente. Crea un nuovo file `supabase/migrations/AAAAMMGGhhmmss_descrizione.sql`, poi aggiorna `src/lib/supabase/types.ts`.
-- **Verifica**: `npm run db:push` sul progetto di test (collegato con `npx supabase link`), poi `npm run test:db`; infine `db:push` sul progetto di sviluppo. Ogni nuova tabella deve avere `enable row level security` e le sue policy.
+- **Verifica**: `npm run db:push` sul progetto di test (collegato con `npx supabase link`), poi `npm run test:db`; infine `db:push` sul progetto di produzione. Ogni nuova tabella deve avere `enable row level security` e le sue policy.
 
 **10. Cambiare il rate limit**
 - **Dove**: `RATE_LIMITS.aiRequestsPerMinute` in [plans.ts:42](src/config/plans.ts:42).
@@ -613,7 +619,7 @@ Piani e amministrazione: [supabase/migrations/20261022300000_subscriptions.sql](
 | Messaggio / sintomo | Significato | Rimedio |
 |---|---|---|
 | "Il servizio AI è momentaneamente occupato" (503) | tutta la catena ha fallito | guarda `ai_usage.error`: 429 = limite del provider; catena vuota = manca la chiave API |
-| "Hai usato tutte le N generazioni" (402) | quota mensile esaurita | aumenta il limite in `plans.ts`, oppure, nel progetto di sviluppo, svuota `quota_counters` dal Table Editor |
+| "Hai usato tutte le N generazioni" (402) | quota mensile esaurita | aumenta il limite in `plans.ts`, oppure, nel progetto di test, svuota `quota_counters` dal Table Editor |
 | "Troppe richieste in poco tempo" (429) | rate limit dell'app | aspetta un minuto |
 | "Your project's URL and Key are required…" | mancano le variabili Supabase | completa `.env.local` |
 | La mappa non si salva ("Salvataggio non riuscito") | update rifiutato o Supabase non raggiungibile | console del browser e stato di Supabase |

@@ -15,5 +15,8 @@ PWA di studio con AI per studenti universitari di qualsiasi corso di laurea (nat
 ## Comunicazione
 Con l'utente in italiano, concetti spiegati in modo semplice: sta imparando e vuole sapere dove mettere mano. Codice, identificatori e README in inglese.
 
+## Database e migrazioni
+Due progetti Supabase (il piano gratuito ne consente due): **test**, usato anche per lo sviluppo locale (`.env.local` e `.env.test`), e **produzione**, con i dati veri degli studenti (chiavi in `.env.production.local`, ignorato da git, e su Vercel). Ogni migrazione va prima su test, si verifica con `npm run test:db`, poi su produzione. Mai test o dati di prova su produzione.
+
 ## Piani e pagamenti
 Due piani normali: Free e Pro, più un livello futuro (Pro Max). Nessun prezzo fondatore e nessun prezzo nell'app: i prezzi li gestisce l'utente, i pagamenti sono privati e il Pro si sblocca a mano da `/admin`.

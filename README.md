@@ -185,7 +185,7 @@ When a limit is hit, the API returns `{ error, upgrade }` and the UI shows an up
 
 No test calls a real model: the test setup forces `AI_MOCK=1`.
 
-**Supabase test project.** `test:db` and `test:e2e` create and delete real users and rows, so they run against a second, separate Supabase project, never the development one. Setup:
+**Two Supabase projects.** The free plan allows two active projects: **test** (local development, `test:db` and `test:e2e`; keys in both `.env.local` and `.env.test`) and **production** (real students; keys in `.env.production.local`, git-ignored, and in the hosting settings). `tests/test-env.ts` refuses to run if `.env.test` points to the production URL. Every migration goes to test first, is checked with `npm run test:db`, then goes to production. Setup:
 
 1. Create a second project on supabase.com, e.g. `studymap-test` (EU region).
 2. Apply the same migrations to it:
@@ -198,11 +198,9 @@ No test calls a real model: the test setup forces `AI_MOCK=1`.
    npm run db:push
    ```
 
-   Re-link to the development project afterwards:
+   Then link the production project and run `npm run db:push` again.
 
-   ```bash
-   npx supabase link --project-ref <dev-ref>
-   ```
+   Note: `next build` and `next start` also read `.env.production.local`, so a local production build talks to the production database.
 
 3. Create the test env file and fill it with the **test** project's URL and keys:
 

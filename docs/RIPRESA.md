@@ -18,6 +18,9 @@ Leggi questo file, `CLAUDE.md` (regole) e `OBIETTIVI.md` (cosa resta). Il codice
 - Piani (22 ottobre): pagamenti incassati a mano (bonifico, PayPal); il Pro si sblocca da `/admin`, che scrive in `subscriptions` (migrazione `20261022300000_subscriptions.sql`). Piano attivo = riga non revocata e non scaduta più alta, altrimenti Free (`activeSubscription` in `entitlements.ts`, letto da `loadProfile` in `lib/supabase/server.ts`). `profiles.plan` è una colonna storica: non si legge più. Nessun prezzo nell'app: il testo è "Per passare a Pro scrivi a aistudymap@proton.me" (`UpgradeContact.tsx`).
 - Admin: l'account deve stare nella tabella `admins`. Dopo la registrazione, nel SQL editor di Supabase: `insert into public.admins (user_id) select id from auth.users where email = 'aistudymap@proton.me';`
 
+- Database (22 ottobre): il progetto Supabase che si chiamava "sviluppo" (`twihesdysuacqvmzrbah`) ora è la **produzione** degli studenti, ripulito dai dati di prova (resta solo aistudymap@proton.me, admin). Il progetto **test** (`npskcysthjgppgwtawvo`) serve anche per lo sviluppo locale: `.env.local` punta lì, le chiavi della produzione sono in `.env.production.local`. Ogni migrazione va prima su test (`npm run test:db`), poi su produzione.
+- Da sistemare con il deploy su Vercel, sul progetto di produzione: conferma email attiva, Site URL e Redirect URLs con l'indirizzo Vercel (anche su Google OAuth), SMTP (Resend), policy della password, backup (sul piano gratuito: NON VERIFICATO). Regione già UE (eu-west-1).
+
 ## Decisioni prese
 - Supabase solo cloud, niente Docker o database locali.
 - Si fattura prima con la web app (PWA) + Stripe; Tauri e le app mobile dopo. Tauri non riduce il carico sul server.
@@ -31,7 +34,7 @@ Leggi questo file, `CLAUDE.md` (regole) e `OBIETTIVI.md` (cosa resta). Il codice
 ## Prossimi passi consigliati
 1. Dopo la registrazione di aistudymap@proton.me, renderlo admin (riga in `admins`, vedi sopra).
 2. Controllare dopo qualche giorno di beta il costo reale in `ai_usage` (somma di `cost_usd`) e il saldo su OpenRouter.
-3. Seguire la beta: leggere `feature_requests` e `ai_usage` su Supabase di sviluppo, controllare tempi ed errori dei modelli.
+3. Seguire la beta: leggere `feature_requests` e `ai_usage` sul progetto Supabase di produzione (o dalla pagina `/admin`), controllare tempi ed errori dei modelli.
 3. Regole di humanizer nei prompt `prompts/*.md`.
 4. Generazione AI in background: fatta con `after()`; coda vera solo se le generazioni superano i 300 s.
 5. Sessione di solo piano per podcast e registrazione delle lezioni (UI di riferimento: card scura, onda animata, testo che scorre, tasto microfono).
