@@ -10,6 +10,7 @@ import { CreateTiles } from "@/components/CreateTiles";
 import { DocumentChat } from "@/components/DocumentChat";
 import { excerptsFor, reflow } from "@/core/retrieval";
 import { EditableTitle } from "@/components/EditableTitle";
+import { Expandable } from "@/components/Expandable";
 import { Icon } from "@/components/icons";
 import { SummaryView } from "@/components/SummaryView";
 import { summaryPages } from "@/core/outline";
@@ -48,7 +49,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
   const preview = fullText.slice(0, 4000);
 
   return (
-    <div className="mx-auto flex max-w-[1100px] flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Breadcrumb trail={folderTrail(folders, doc.folder_id)} current={doc.title} />
         <MoveToFolder table="documents" id={doc.id} current={doc.folder_id} options={treeOptions(folders)} />
@@ -92,15 +93,17 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
               Apri e modifica
             </Link>
           </div>
-          <SummaryView
-            body={summary.body}
-            source={{
-              excerpts: excerptsFor(doc.pages, summaryPages(summary.body)),
-              unit: doc.kind === "pptx" ? "Slide" : "Pagina",
-              idPrefix: "riassunto",
-            }}
-            className="mx-auto w-full max-w-[72ch] rounded-row border border-border bg-sheet px-[clamp(16px,5%,48px)] py-6"
-          />
+          <Expandable more="Mostra tutto il riassunto" less="Mostra meno">
+            <SummaryView
+              body={summary.body}
+              source={{
+                excerpts: excerptsFor(doc.pages, summaryPages(summary.body)),
+                unit: doc.kind === "pptx" ? "Slide" : "Pagina",
+                idPrefix: "riassunto",
+              }}
+              className="w-full rounded-row border border-border bg-sheet px-[clamp(16px,4%,48px)] py-6"
+            />
+          </Expandable>
         </section>
       )}
 

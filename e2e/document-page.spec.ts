@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 import { jsPDF } from "jspdf";
-import { createTestUser, deleteTestUser } from "../tests/supabase";
+import { admin, createTestUser, deleteTestUser } from "../tests/supabase";
 
 const dir = path.join(process.cwd(), "e2e", ".tmp");
 const pdfPath = path.join(dir, "forensics.pdf");
@@ -26,7 +26,7 @@ test.afterAll(async () => {
 async function shots(page: Page, state: string) {
   await expect(page.getByText(/caricato il/)).toBeVisible();
   await page.waitForLoadState("networkidle");
-  for (const width of [1280, 375]) {
+  for (const width of [1920, 1280, 375]) {
     await page.setViewportSize({ width, height: 900 });
     await page.screenshot({ path: path.join(dir, `${label}-${state}-${width}.png`), fullPage: true });
   }
@@ -63,13 +63,24 @@ test("document page: create tiles, summary first, folded chat and text", async (
   await page.goto(docUrl);
   await tiles.getByRole("button", { name: "Crea riassunto" }).click();
   await expect(page).toHaveURL(/\/notes\//);
+  const sections = Array.from(
+    { length: 6 },
+    (_, i) => `## Sezione ${i + 1}\n[pagina 1]\n- La catena di custodia documenta ogni passaggio della prova digitale.\n- L'acquisizione si fa con una copia bit a bit.`,
+  );
+  await admin.from("notes").update({ body: sections.join("\n") }).eq("document_id", docUrl.split("/").pop()!);
   await page.goto(docUrl);
   await expect(page.getByRole("heading", { level: 2, name: "Riassunto", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sezione 6" })).not.toBeInViewport();
+  await shots(page, "summary");
+  await page.getByRole("button", { name: "Mostra tutto il riassunto" }).click();
+  await expect(page.getByRole("button", { name: "Mostra meno" })).toHaveAttribute("aria-expanded", "true");
+  await page.getByRole("heading", { name: "Sezione 6" }).scrollIntoViewIfNeeded();
+  await expect(page.getByRole("heading", { name: "Sezione 6" })).toBeInViewport();
+  await page.getByRole("button", { name: "Mostra meno" }).click();
   await expect(tiles.getByRole("link", { name: "Apri mappa concettuale" })).toBeVisible();
   await expect(tiles.getByText("1 riassunto")).toBeVisible();
   await tiles.getByRole("link", { name: "Leggi sotto il riassunto" }).click();
   await expect(page).toHaveURL(/#summary-title$/);
-  await shots(page, "summary");
 
   await page.emulateMedia({ colorScheme: "dark" });
   await page.evaluate(() => (document.documentElement.dataset.style = "evidenziatore"));

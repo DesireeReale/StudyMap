@@ -85,30 +85,43 @@ export function CreateTiles({
                   </ul>
                 </details>
               )}
-              {running ? (
-                <button type="button" className="btn-secondary h-[34px] w-full text-sm" disabled>
-                  In corso…
-                </button>
-              ) : latest ? (
-                <>
-                  <Link href={t.kind === "summary" ? summaryAnchor : latest.href} aria-label={t.kind === "summary" ? "Leggi sotto il riassunto" : `Apri ${name}`} className="btn-secondary h-[34px] w-full text-sm">
-                    {t.kind === "summary" ? "Leggi sotto" : "Apri"}
-                  </Link>
-                  <button type="button" className="btn-ghost h-[34px] w-full text-sm font-normal text-muted" aria-label={`Crea di nuovo: ${name}`} disabled={!!busy} onClick={() => generate(t.kind, perChapter)}>
-                    Crea di nuovo
+              <div className="flex gap-2">
+                {running ? (
+                  <button type="button" className="btn-secondary h-[34px] flex-1 text-sm" disabled>
+                    In corso…
                   </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  className={`${t.kind === "summary" ? "btn-primary" : "btn-secondary"} h-[34px] w-full text-sm`}
-                  aria-label={`Crea ${name}`}
-                  disabled={!!busy}
-                  onClick={() => generate(t.kind, perChapter)}
-                >
-                  Crea
-                </button>
-              )}
+                ) : latest ? (
+                  <>
+                    <Link
+                      href={t.kind === "summary" ? summaryAnchor : latest.href}
+                      aria-label={t.kind === "summary" ? "Leggi sotto il riassunto" : `Apri ${name}`}
+                      className="btn-secondary h-[34px] min-w-0 flex-1 text-sm"
+                    >
+                      {t.kind === "summary" ? "Leggi sotto" : "Apri"}
+                    </Link>
+                    <button
+                      type="button"
+                      className="btn-secondary size-[34px] shrink-0 px-0"
+                      aria-label={`Crea di nuovo: ${name}`}
+                      title="Crea di nuovo"
+                      disabled={!!busy}
+                      onClick={() => generate(t.kind, perChapter)}
+                    >
+                      <Icon name="redo" />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    className={`${t.kind === "summary" ? "btn-primary" : "btn-secondary"} h-[34px] flex-1 text-sm`}
+                    aria-label={`Crea ${name}`}
+                    disabled={!!busy}
+                    onClick={() => generate(t.kind, perChapter)}
+                  >
+                    Crea
+                  </button>
+                )}
+              </div>
             </li>
           );
         })}
