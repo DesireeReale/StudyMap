@@ -36,6 +36,7 @@ test("the student checks the uncertain words of a scan before the generations st
   await expect(page).toHaveURL(/\/library/);
 
   await page.goto("/upload");
+  await page.waitForLoadState("networkidle");
   await page.getByTestId("file-input").setInputFiles(scannedPdf(2));
   await expect(page.getByText(/Le pagine sono scansionate/)).toBeVisible();
   await page.locator("label", { hasText: /^✓?Riassunto$/ }).click();
@@ -53,7 +54,7 @@ test("the student checks the uncertain words of a scan before the generations st
   await page.getByRole("button", { name: "Conferma e crea" }).click();
   await expect(page).toHaveURL(/\/documents\/[^/]+$/);
 
-  await page.getByText("Testo estratto").click();
+  await page.locator("summary", { hasText: "Testo estratto" }).click();
   await expect(page.getByText(/Testo trascritto bene di prova con una parola leggibile/)).toBeVisible();
   const tray = page.getByRole("region", { name: "Lavori in corso" });
   await tray.getByRole("link", { name: "Apri il riassunto" }).click({ timeout: 60_000 });
@@ -68,12 +69,13 @@ test("a scan longer than the plan allows is cut to the chosen pages and compress
   await expect(page).toHaveURL(/\/library/);
 
   await page.goto("/upload");
+  await page.waitForLoadState("networkidle");
   await page.getByTestId("file-input").setInputFiles(scannedPdf(25));
-  await expect(page.getByLabel("Dalla pagina")).toHaveValue("1");
-  await expect(page.getByLabel("alla pagina")).toHaveValue("20");
+  await expect(page.getByLabel("Dalla pagina", { exact: true })).toHaveValue("1");
+  await expect(page.getByLabel("alla pagina", { exact: true })).toHaveValue("20");
   await expect(page.getByText(/al massimo 20 pagine per file/)).toBeVisible();
-  await page.getByLabel("Dalla pagina").fill("24");
-  await page.getByLabel("alla pagina").fill("25");
+  await page.getByLabel("Dalla pagina", { exact: true }).fill("24");
+  await page.getByLabel("alla pagina", { exact: true }).fill("25");
   const uploads: number[] = [];
   page.on("request", (r) => {
     if (r.method() === "PUT" && r.url().includes("/storage/")) uploads.push(r.postDataBuffer()?.length ?? 0);

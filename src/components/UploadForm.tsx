@@ -265,7 +265,10 @@ export function UploadForm({
                       setPdfInfo(info);
                       setRange({ from: 1, to: Math.min(info.scanned.length, maxPdfPages) });
                     })
-                    .catch(() => setPdfInfo(null));
+                    .catch((e) => {
+                      console.error("pdf inspection failed", e);
+                      setPdfInfo(null);
+                    });
               }}
               aria-describedby="upload-file-help"
               className="absolute inset-0 size-full cursor-pointer opacity-0"

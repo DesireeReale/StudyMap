@@ -167,7 +167,7 @@
 - [x] Pagina "Controlla il testo" dopo la lettura di scansioni e foto: parole incerte evidenziate e modificabili da tastiera, originale accanto, modifica di tutto il testo; i job scelti partono solo dopo la conferma
 - [x] PDF scansionati ricompressi nel browser (JPEG qualità 50, jspdf) con avanzamento, e campo "dalla pagina … alla pagina …" entro il limite del piano
 - [x] Una mappa per capitolo più una mappa generale nei documenti con capitoli riconoscibili (scelta nella pagina del documento)
-- [ ] E2E di scan-review e chapter-maps da far girare (bloccati da un `next dev` già acceso sulla 3000)
+- [x] E2E di scan-review, chapter-maps e progress (aggiornato per il passaggio da "Controlla il testo"): tutta la suite verde, 15 test
 - [ ] Trascrizione: con transcribe.v2 molti errori restano senza segno; capire se dipende dal provider scelto da OpenRouter, dal prompt o dal JPEG (una chiamata per variabile)
 - [ ] Costo reale ancora circa 3 volte il listino anche senza `deny`: controllare in `ai_usage` quali provider rispondono
 - [ ] Scelta "una per capitolo" anche in "cosa vuoi creare" durante il caricamento

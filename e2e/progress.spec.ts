@@ -43,7 +43,9 @@ test("upload a long PDF, browse elsewhere and follow the progress until the map 
   await tray.screenshot({ path: path.join(dir, "progress-reading.png") });
 
   await tray.getByRole("link", { name: "Apri il documento" }).click({ timeout: 60_000 });
-  await expect(page).toHaveURL(/\/documents\//);
+  await expect(page).toHaveURL(/\/documents\/[^/]+\/controlla$/);
+  await page.getByRole("button", { name: "Conferma il testo" }).click();
+  await expect(page).toHaveURL(/\/documents\/[^/]+$/);
 
   await page.getByRole("button", { name: "Genera mappa concettuale" }).click();
   await page.getByRole("link", { name: "Home", exact: true }).first().click();
