@@ -136,18 +136,21 @@ export function LoginForm() {
             </div>
           </div>
           {mode === "signup" && (
-            <label className="flex cursor-pointer items-start gap-3 rounded-row border border-border bg-sheet p-3 text-sm">
-              <input type="checkbox" name="beta" required className="mt-0.5 size-5 shrink-0 accent-[var(--accent)]" />
-              <span>
-                <span className="block font-bold">Accetto le condizioni della beta</span>
-                <span className="block text-muted">
+            <div className="rounded-row border border-border bg-sheet p-3 text-sm">
+              <label className="flex cursor-pointer items-start gap-3">
+                <input type="checkbox" name="beta" required className="mt-0.5 size-5 shrink-0 accent-[var(--accent)]" />
+                <span className="font-bold">Accetto le condizioni della beta</span>
+              </label>
+              <details className="mt-2 pl-8">
+                <summary className="cursor-pointer font-bold text-accent">Leggi le condizioni</summary>
+                <p className="mt-2 text-muted">
                   {BETA_TERMS}{" "}
                   <a href="/privacy" target="_blank" className="font-bold text-accent hover:underline">
                     Informativa privacy
                   </a>
-                </span>
-              </span>
-            </label>
+                </p>
+              </details>
+            </div>
           )}
           {error && (
             <p role="alert" className="text-sm text-negative">
