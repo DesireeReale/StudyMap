@@ -39,7 +39,7 @@
 - [x] Pagina `/admin` solo per la proprietaria (tabella `admins`): cerca per email, piano, scadenza, generazioni e costo AI del mese, "Sblocca Pro" con nota, "Revoca"
 - [ ] Pagamenti automatici (Stripe o simili): per ora si incassa a mano e si sblocca da `/admin`
 - [x] Limiti Free a 10 generazioni al mese, 5 documenti salvati, 5 MB per file (20 pagine invariate) in plans.ts: applicati già dalla beta (22 ottobre), su decisione dell'utente
-- [ ] Al lancio pubblico: per il Free eliminare il PDF originale dopo la lettura e tenere solo il testo estratto (spazio di Supabase); l'originale resta per il Pro
+- [ ] Al lancio pubblico: per il Free eliminare il PDF originale dopo la lettura e tenere solo il testo estratto (spazio di Supabase); l'originale resta per il Pro — controllato il 23 ottobre: non ancora fatto
 - [ ] Keycloak: solo in futuro, come fornitore di login davanti a Supabase quando ci saranno più app (l'email resta l'identità per collegare gli account)
 - [ ] Disdetta in un clic e fatture automatiche (nuovo)
 - [x] Riassunto del documento (nuovo)
@@ -89,7 +89,7 @@
 - [ ] Trascinamento delle cartelle con il dito su telefono (nuovo)
 - [x] Appunti propri nella materia, scritti a mano o incollati (nuovo)
 - [x] Ricerca nella libreria e dentro le materie (nuovo) — titoli e testo degli appunti; il testo dei PDF non ancora
-- [ ] Pagina prezzi che promette: i contenuti restano tuoi (nuovo)
+- [x] Pagina prezzi che promette: i contenuti restano tuoi (nuovo) — nella landing
 
 ## Direzione grafica
 - [x] Ricerca dei riferimenti (docs/direzione-grafica.md)
@@ -115,11 +115,11 @@
 - [x] Quiz: impostazioni prima di iniziare (alta, medio)
 - [x] Quiz: barra di avanzamento e tasti 1-4 (media, piccolo)
 - [x] Quiz: riepilogo sbagliate e "rifai le sbagliate" (alta, medio)
-- [ ] Quiz: esito per argomento (media, grande)
+- [ ] Quiz: esito per argomento (media, grande) — c'è già il filtro per argomento nelle impostazioni, manca il punteggio per argomento alla fine
 - [x] Upload: area di trascinamento grande (alta, piccolo)
 - [x] Upload: scelta della fonte a riquadri (alta, medio)
 - [x] Upload: "cosa vuoi creare" già nel caricamento (alta, medio)
-- [ ] Upload: avanzamento a passi con stato (media, medio)
+- [x] Upload: avanzamento a passi con stato (media, medio) — nella barra dei lavori (`phaseText` in `core/jobs.ts`)
 - [x] Riassunti: indice laterale delle sezioni (alta, piccolo)
 - [x] Riassunti: foglio largo come un A4, modalità Leggi/Modifica (nuovo)
 - [x] Documento: riassunto in primo piano, testo estratto richiudibile (nuovo)
