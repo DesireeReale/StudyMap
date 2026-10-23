@@ -542,7 +542,6 @@ export default async function Home() {
         </div>
         <div className="mx-auto mt-10 flex max-w-[1180px] flex-col items-center gap-2 px-4 text-center text-[13px]">
           <Image src="/brand/volpe-192.png" width={88} height={88} alt="" />
-          <p className="mt-2">Una mappa alla volta, fino all&apos;esame.</p>
           <p>
             © 2026 StudyMap, creato da{" "}
             <a href={CREATOR.url} target="_blank" rel="noopener" className="text-ink underline underline-offset-2 hover:text-accent">
