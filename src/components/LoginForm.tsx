@@ -22,7 +22,7 @@ export function LoginForm() {
   const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
+  const [sentTo, setSentTo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [pose, setPose] = useState<MascotPose>("idle");
   const [showPassword, setShowPassword] = useState(false);
@@ -35,7 +35,6 @@ export function LoginForm() {
     const password = String(form.get("password"));
     setBusy(true);
     setError(null);
-    setInfo(null);
     const supabase = supabaseBrowser();
     const { data, error } =
       mode === "signin"
@@ -50,7 +49,7 @@ export function LoginForm() {
           });
     setBusy(false);
     if (error) return setError(mode === "signin" ? "Email o password non corrette." : error.message);
-    if (!data.session) return setInfo("Controlla la tua email per confermare la registrazione.");
+    if (!data.session) return setSentTo(email);
     router.replace("/library");
   }
 
@@ -60,6 +59,31 @@ export function LoginForm() {
       options: { redirectTo: `${location.origin}/auth/callback` },
     });
   }
+
+  if (sentTo)
+    return (
+      <div className="flex flex-col">
+        <LoginMascot pose="idle" look={0} />
+        <div role="status" className="panel flex flex-col gap-3 text-center">
+          <h2 className="text-lg font-bold">Controlla la tua email</h2>
+          <p className="text-sm">
+            Abbiamo mandato un link di conferma a <span className="font-bold">{sentTo}</span>. Aprilo per attivare
+            l&apos;account.
+          </p>
+          <p className="text-sm text-muted">Non la trovi? Guarda nello spam o nella posta indesiderata.</p>
+          <button
+            type="button"
+            className="btn-secondary h-11"
+            onClick={() => {
+              setSentTo(null);
+              setMode("signin");
+            }}
+          >
+            Torna all&apos;accesso
+          </button>
+        </div>
+      </div>
+    );
 
   return (
     <div className="flex flex-col">
@@ -130,7 +154,6 @@ export function LoginForm() {
               {error}
             </p>
           )}
-          {info && <p role="status" className="text-sm">{info}</p>}
           <button type="submit" className="btn-primary h-11" disabled={busy}>
             {mode === "signin" ? "Accedi" : "Crea account"}
           </button>
