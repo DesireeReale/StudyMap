@@ -182,7 +182,7 @@
 - [ ] Scelta "una per capitolo" anche in "cosa vuoi creare" durante il caricamento
 
 ## Da fare tu
-- [ ] Registrarsi nell'app con aistudymap@proton.me, poi renderlo admin (vedi RIPRESA.md, "Admin")
+- [x] Registrarsi nell'app con aistudymap@proton.me, poi renderlo admin (vedi RIPRESA.md, "Admin")
 - [x] Credito su OpenRouter caricato (7,40 $)
 - [ ] Facoltativo: arrivare a 10 crediti acquistati in tutto su OpenRouter per alzare il limite di Gemma gratuito da 50 a 1000 richieste al giorno
 - [ ] Per ricevere i suggerimenti via email: account Resend gratuito e RESEND_API_KEY in .env.local
@@ -198,5 +198,5 @@
 - [ ] Scegliere un modello a pagamento UE per la produzione
 - [ ] Creare l'account Stripe e i prodotti Pro
 - [x] Deploy su Vercel in regione UE (https://aistudymap.vercel.app, funzioni a Dublino)
-- [ ] Aggiungere l'URL di produzione ai redirect di Supabase e Google
+- [x] Aggiungere l'URL di produzione ai redirect di Supabase e Google
 - [ ] Fissare il prezzo Pro (7-10 €/mese, sconto annuale)
