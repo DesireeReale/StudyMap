@@ -111,7 +111,7 @@
 - [x] Mappa: colore per ramo ereditato dai figli (alta, medio)
 - [x] Mappa: comprimi ed espandi i rami (alta, medio)
 - [ ] Mappa: barra contestuale e schermo intero (media, medio)
-- [ ] Mappa: una mappa per capitolo nei documenti lunghi (media, grande)
+- [x] Mappa: una mappa per capitolo nei documenti lunghi (media, grande) — `src/core/chapters.ts`; manca la scelta durante il caricamento
 - [x] Quiz: impostazioni prima di iniziare (alta, medio)
 - [x] Quiz: barra di avanzamento e tasti 1-4 (media, piccolo)
 - [x] Quiz: riepilogo sbagliate e "rifai le sbagliate" (alta, medio)
