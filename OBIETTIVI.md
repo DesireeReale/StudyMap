@@ -197,6 +197,6 @@
 - [ ] Configurare un SMTP per le email di conferma
 - [ ] Scegliere un modello a pagamento UE per la produzione
 - [ ] Creare l'account Stripe e i prodotti Pro
-- [ ] Deploy su Vercel in regione UE
+- [x] Deploy su Vercel in regione UE (https://aistudymap.vercel.app, funzioni a Dublino)
 - [ ] Aggiungere l'URL di produzione ai redirect di Supabase e Google
 - [ ] Fissare il prezzo Pro (7-10 €/mese, sconto annuale)

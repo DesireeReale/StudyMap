@@ -19,7 +19,7 @@ Leggi questo file, `CLAUDE.md` (regole) e `OBIETTIVI.md` (cosa resta). Il codice
 - Admin: l'account deve stare nella tabella `admins`. Dopo la registrazione, nel SQL editor di Supabase: `insert into public.admins (user_id) select id from auth.users where email = 'aistudymap@proton.me';`
 
 - Database (22 ottobre): il progetto Supabase che si chiamava "sviluppo" (`twihesdysuacqvmzrbah`) ora è la **produzione** degli studenti, ripulito dai dati di prova (resta solo aistudymap@proton.me, admin). Il progetto **test** (`npskcysthjgppgwtawvo`) serve anche per lo sviluppo locale: `.env.local` punta lì, le chiavi della produzione sono in `.env.production.local`. Ogni migrazione va prima su test (`npm run test:db`), poi su produzione.
-- Da sistemare con il deploy su Vercel, sul progetto di produzione: conferma email attiva, Site URL e Redirect URLs con l'indirizzo Vercel (anche su Google OAuth), SMTP (Resend), policy della password, backup (sul piano gratuito: NON VERIFICATO). Regione già UE (eu-west-1).
+- Online dal 23 ottobre su https://aistudymap.vercel.app (Vercel Hobby, funzioni `dub1` da `vercel.json`, variabili prese da `.env.production.local` senza Gemini). Da controllare sul progetto di produzione: conferma email attiva, Site URL e Redirect URLs con l'indirizzo Vercel (anche su Google OAuth), SMTP (Resend), policy della password, backup (sul piano gratuito: NON VERIFICATO). Regione già UE (eu-west-1).
 
 ## Decisioni prese
 - Supabase solo cloud, niente Docker o database locali.
